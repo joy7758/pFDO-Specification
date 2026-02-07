@@ -26,6 +26,7 @@ Current IoT infrastructures are trapped in "Centralized Silos" and "Energy Black
 ## 3. Global Strategy / 全球策略
 Targeting EU Digital Product Passport (DPP) compliance and global decentralized asset indexing. pFDO encapsulates PID, Kernel Metadata, and Machine-actionable DMP (maDMP).
 致力于解决欧盟数字产品护照 (DPP) 合规需求与全球去中心化资产索引。pFDO 封装了 PID、内核元数据与机器可执行管理计划 (maDMP)。
+## Interactive Demonstrator 章节。
 
 ---
 **Author**: Zhangbin (FDO Architect)
