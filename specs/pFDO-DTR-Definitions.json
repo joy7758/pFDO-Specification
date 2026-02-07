@@ -1,0 +1,25 @@
+{
+  "@context": "https://schema.metadatacenter.org/core/context.json",
+  "dtr_record": {
+    "registry_id": "DTR-PFDO-2026-ALPHA",
+    "type_definitions": [
+      {
+        "type_name": "pFDO_Epitope_v1",
+        "description": "Physical layer manifold fingerprint for AmBC signals.",
+        "properties": {
+          "decay_slope": { "unit": "dB/m", "datatype": "float64" },
+          "multipath_entropy": { "unit": "bit", "datatype": "float32" }
+        },
+        "verification_logic": "https://github.com/joy7758/pFDO-Specification/blob/main/docs/Mathematical-Foundation.md"
+      },
+      {
+        "type_name": "pFDO_Metabolism_v1",
+        "description": "Thermodynamic cost mapping for machine-actionable state changes.",
+        "properties": {
+          "landauer_limit_ratio": { "unit": "dimensionless", "datatype": "float32" },
+          "energy_per_bit": { "unit": "microjoule/bit", "datatype": "float64" }
+        }
+      }
+    ]
+  }
+}
