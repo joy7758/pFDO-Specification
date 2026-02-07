@@ -1,16 +1,28 @@
-# 立场文件：解决全球 DPP 合规中的能耗与隐私悖论
+# Position Paper: Solving the Energy-Privacy Paradox in Global DPP Compliance via Carbon-Silicon Synergy
 
-**作者**: Zhangbin (FDO Architect)
-**版本**: 1.0 (2026-02)
+**Author**: Zhangbin (FDO Architect)
+**Version**: 1.0 (Feb 2026)
+**Category**: Technical Framework / Strategic Position
 
-## 1. 行业痛点
-当前数字产品护照 (DPP) 面临“能耗”与“隐私”的冲突。主动式电子标签维护成本极高，且中心化存储威胁资产主权。
+## 1. The Critical Bottleneck
+As the EU Digital Product Passport (DPP) mandates become pervasive, global supply chains face two irreconcilable challenges:
+- **The Energy Paradox**: Maintaining active electronic tags for billions of assets is ecologically unsustainable.
+- **The Privacy Paradox**: Centralized cloud tracking compromises the physical sovereignty of individual assets.
 
-## 2. pFDO 架构解决方案
-我们通过三大原则重构底层逻辑：
-- **进化参照论**：利用环境反向散射实现 μW 级感知。
-- **受控共荣论**：建立物质免疫协议 (MIP)，将安全边界锁定在物理主权范围内。
-- **未知探索论**：预留语义扩展接口，支持资产自组织。
+## 2. The pFDO Architecture Solution
+We propose **Physical FAIR Digital Objects (pFDO)**—a decentralized framework rooted in three fundamental principles to bridge the gap between atoms and bits:
 
-## 3. 结论
-pFDO 是物理世界与数字世界在进化逻辑上的握手，旨在建立一套去中心化的全球资产索引标准。
+### I. Evolutionary Reference (Addressing Energy)
+By adopting **Ambient Backscatter (AmBC)**, pFDOs leverage existing RF energy (Wi-Fi/5G) to achieve $\mu W$-level perception. This mimics biological sensory systems, allowing assets to exist in a "low-entropy" digital state without the need for active batteries.
+
+### II. Controlled Co-prosperity (Addressing Sovereignty)
+We introduce the **Matter-Immune Protocol (MIP)**. By utilizing physical-layer fingerprinting (e.g., multipath decay signatures), we ensure that security is derived from physical laws rather than pure computational power. In this framework, **Physical Proximity equals Security**, preventing remote data hijacking.
+
+### III. Unknown Exploration (Addressing Interoperability)
+The pFDO kernel utilizes decoupled metadata schemas, allowing assets to engage in emergent, self-organizing collaborations within complex logistics ecosystems without pre-defined central logic.
+
+## 3. Conclusion and Call to Action
+The pFDO framework is not merely a tracking technology but a "Digital Proprioception" for the physical world. We invite the International FDO Forum to adopt **Carbon-Silicon Synergy** as the foundational logic for the next generation of global asset indexing standards.
+
+---
+*For technical specifications and metadata kernels, refer to the `/specs` and `/docs` directories in this repository.*
