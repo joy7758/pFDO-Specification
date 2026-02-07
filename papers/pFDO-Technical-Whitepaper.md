@@ -23,3 +23,32 @@ The transition $\delta$ is triggered by the input vector $\Sigma = \langle V, E 
 | S_0 (Dormant) | V=1, E > E_min | S_1 (Active) | Wake up & Pulse |
 | S_1 (Active) | V=1, E > E_metabolic | S_2 (Metabolic) | Open Thermodynamic Gate |
 | S_2 (Metabolic) | Update Complete | S_0 (Dormant) | Reset & Cool down |
+---
+
+## Section 2: Data Type Registry (DTR) Mapping / 数据类型注册表映射
+
+To achieve machine-actionability, pFDO defines specific data types to be registered in the FDO-DTR ecosystem.
+为实现机器可执行性，pFDO 定义了需在 FDO-DTR 生态中注册的特定数据类型。
+
+### 2.1 Physical Epitope Profile (Type ID: pFDO_Epitope_v1)
+A digital representation of the signal manifold decay signatures.
+信号流形衰减特征的数字表示。
+- **Attributes**: `decay_slope`, `spatial_entropy`, `rssi_gradient`.
+- **Validation**: Cross-referenced with the MIP-Manifold distance function.
+
+### 2.2 Metabolic Cost Metrics (Type ID: pFDO_Metabolism_v1)
+Defines the mapping between digital operations and thermodynamic costs.
+定义数字操作与热力学代价之间的映射关系。
+- **Unit**: `$\mu J/bit$` (Micro-Joules per bit updated).
+- **Constraint**: $\Delta E \ge k_B T \ln 2$.
+
+---
+
+## Section 3: PID Kernel Metadata Extension / PID 内核元数据扩展
+
+The PID (Persistent Identifier) for a pFDO must resolve to a kernel record containing the following attributes:
+pFDO 的 PID（持久标识符）解析后必须包含以下内核记录属性：
+
+1. **`hasMIPCapability`**: Boolean. Indicates if the asset supports physical-layer auth.
+2. **`energyHarvestingProfile`**: Describes the AmBC (Ambient Backscatter) frequency range.
+3. **`authoritativeLocation`**: The physical sovereignty coordinate defined by the last verified MIP event.
