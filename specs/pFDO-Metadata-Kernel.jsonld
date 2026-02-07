@@ -1,1 +1,15 @@
-
+{
+  "@context": {
+    "fdo": "https://purl.org/fdo/vocabulary#",
+    "schema": "https://schema.org/",
+    "principles": "https://your-namespace.org/principles#"
+  },
+  "@type": "fdo:PhysicalDigitalObject",
+  "fdo:identifier": "PID:PLACEHOLDER_FOR_YOUR_ASSET",
+  "fdo:profile": "https://your-namespace.org/profiles/v1.0",
+  "schema:name": "Carbon-Silicon Synergy Instance",
+  "principles:methodology": "Evolutionary Reference (Ambient Backscatter)",
+  "principles:security": "Matter-Immune Protocol (MIP)",
+  "principles:governance": "Controlled Co-prosperity",
+  "fdo:status": "Machine-Actionable"
+}
