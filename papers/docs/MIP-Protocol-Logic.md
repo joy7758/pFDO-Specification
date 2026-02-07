@@ -1,12 +1,16 @@
-# 物质免疫协议 (Matter-Immune Protocol, MIP) 逻辑说明
+# Thermodynamic Logic Gates & Digital Metabolism
+# 热力学逻辑门与数字代谢
 
-## 1. 核心定义
-MIP 是一种基于物理层特征 (Physical Layer Security) 的轻量化身份认证协议。它模仿生物免疫系统的 MHC 识别机制。
+## 1. Physical Context / 物理背景
+Based on Landauer's Principle, any logical erasure of information has a thermodynamic cost. In pFDO architecture, we reject the premise of "cost-free data exchange."
+基于兰道尔原理（Landauer's Principle），任何逻辑上的信息抹除操作都会产生热力学代价。在 pFDO 架构中，我们拒绝“无成本数据交换”的假想。
 
-## 2. 验证逻辑
-- **物理表位 (Physical Epitope)**：利用反向散射信号的多径衰减斜率作为物品天然指纹。
-- **近场主权验证**：验证仅在信号强度 (RSSI) 处于安全预设值内开启，实现物理边界即安全。
-- **零算力开销**：验证过程由环境激发层本地完成，标签端无需耗电计算。
+## 2. Definitions / 定义
+- **Metabolic Cost / 代谢成本**: The CPU cycles or electrical energy required for a state update is defined as the "Metabolic Cost" of the object.
+  我们将状态更新所需的 CPU 循环或电能定义为该对象的“代谢成本”。
+- **Logic Gate Control / 逻辑门控制**: pFDO state changes are executed only when the ambient energy harvested is sufficient to power the "Thermodynamic Logic Gate."
+  只有当环境激发的能量足以支撑该次“热力学逻辑门”的开启时，pFDO 才会执行状态变更。
 
-## 3. 核心价值
-该协议实现了“物理局限即安全”，确保资产数据不会泄露给物理边界之外的第三方。
+## 3. Strategic Value / 战略价值
+This design prevents "Resource Exhaustion Attacks" in decentralized data spaces, ensuring system resilience in extreme energy-constrained environments.
+这一设计防止了针对去中心化数据空间的“资源枯竭攻击”，确保系统在极端资源匮乏环境下依然具备自律的生存能力。
