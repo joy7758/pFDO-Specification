@@ -1,0 +1,23 @@
+{
+  "dmp": {
+    "title": "pFDO Autonomous Governance Plan",
+    "description": "Machine-actionable management plan for physical assets under MIP protocol.",
+    "contact": { "name": "Zhangbin", "role": "FDO Architect" },
+    "dataset": [
+      {
+        "title": "Carbon-Silicon Synergy Dataset",
+        "personal_data": "no",
+        "sensitive_data": "no",
+        "security_and_privacy": [
+          {
+            "title": "MIP Physical Boundary Protection",
+            "description": "Access is physically restricted by signal manifold distance."
+          }
+        ],
+        "data_quality_assurance": "Thermodynamic logic gate validation"
+      }
+    ],
+    "ethical_issues_exist": "no",
+    "fdo_compatibility": "Full compliance with FDO Forum v1.0"
+  }
+}
