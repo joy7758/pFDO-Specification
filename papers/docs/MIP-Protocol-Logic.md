@@ -1,16 +1,18 @@
-# Thermodynamic Logic Gates & Digital Metabolism
-# 热力学逻辑门与数字代谢
+# Matter-Immune Protocol (MIP) / 物质免疫协议
+*(Also referred to as **Metabolic Interface Protocol** / 亦称为 **代谢接口协议**)*
 
-## 1. Physical Context / 物理背景
-Based on Landauer's Principle, any logical erasure of information has a thermodynamic cost. In pFDO architecture, we reject the premise of "cost-free data exchange."
-基于兰道尔原理（Landauer's Principle），任何逻辑上的信息抹除操作都会产生热力学代价。在 pFDO 架构中，我们拒绝“无成本数据交换”的假想。
+## 1. Core Definition / 核心定义
+MIP is a lightweight authentication protocol based on physical-layer features, mimicking the **MHC (Major Histocompatibility Complex)** recognition mechanism in biological immune systems.
+MIP 是一种基于物理层特征的轻量化身份认证协议。它模仿生物免疫系统的 **MHC（主要组织相容性复合体）** 识别机制。
 
-## 2. Definitions / 定义
-- **Metabolic Cost / 代谢成本**: The CPU cycles or electrical energy required for a state update is defined as the "Metabolic Cost" of the object.
-  我们将状态更新所需的 CPU 循环或电能定义为该对象的“代谢成本”。
-- **Logic Gate Control / 逻辑门控制**: pFDO state changes are executed only when the ambient energy harvested is sufficient to power the "Thermodynamic Logic Gate."
-  只有当环境激发的能量足以支撑该次“热力学逻辑门”的开启时，pFDO 才会执行状态变更。
+## 2. Verification Mechanism / 验证机制
+- **Physical Epitope / 物理表位**: Utilizing multipath decay signatures of backscatter signals as a natural fingerprint.
+  利用反向散射信号在特定空间内的多径衰减斜率作为物品的天然指纹。
+- **Near-field Sovereignty / 近场主权**: Verification is only activated within the "Physical Sovereignty Range" (RSSI/CSI constraints).
+  验证逻辑仅在信号强度与信道状态信息符合预设的“物理主权范围”时激活。
+- **Zero-Compute Auth / 零算力认证**: Authentication logic is handled by the environment layer, requiring zero battery power from the asset tag.
+  验证过程由环境层完成，资产标签端无需耗电计算。
 
-## 3. Strategic Value / 战略价值
-This design prevents "Resource Exhaustion Attacks" in decentralized data spaces, ensuring system resilience in extreme energy-constrained environments.
-这一设计防止了针对去中心化数据空间的“资源枯竭攻击”，确保系统在极端资源匮乏环境下依然具备自律的生存能力。
+## 3. Technical Value / 技术价值
+Ensures "Physical Proximity equals Security," preventing remote hijacking of decentralized assets.
+确立了“物理距离即安全”的原则，有效防止了针对去中心化资产的远程劫持。
