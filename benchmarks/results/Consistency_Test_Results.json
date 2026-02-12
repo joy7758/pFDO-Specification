@@ -1,0 +1,17 @@
+{
+    "status": "PASSED",
+    "pre_purge": {
+        "facts_count": 1000000,
+        "accuracy": 1.0,
+        "latency_us": 2.0339488983154297
+    },
+    "post_purge": {
+        "facts_count": 10000,
+        "accuracy": 1.0,
+        "latency_us": 2.0127296447753906
+    },
+    "integrity_check": {
+        "logic_core_preserved": true,
+        "latency_stability": "STABLE"
+    }
+}

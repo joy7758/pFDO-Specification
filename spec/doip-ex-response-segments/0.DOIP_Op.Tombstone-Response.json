@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema#",
+  "type": "object",
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "description": "requestId: the identifier of the request to which this is a response. The DOIP service must include in its response the requestId provided by the client."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "0.DOIP/Status.001"
+      ],
+      "description": "status: an identifier that indicates the status of the request. Status codes shall have associated unique identifiers resolvable as specified in the IRP."
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "The following message is returned to the client: Tombstoned: FDO-PID"
+        }
+      },
+      "required": [
+        "message"
+      ]
+    }
+  },
+  "required": [
+    "status",
+    "output"
+  ],
+  "additionalProperties": false,
+  "description": "response of a O.DOIP/Op.Tombstone request"
+}

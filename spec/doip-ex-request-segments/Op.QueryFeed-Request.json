@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema#",
+  "type": "object",
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "description": "requestId: the identifier of the request provided by the client; shall be unique within a given DOIP session so clients can distinguish between DOIP service responses. The requestId shall be a string not exceeding 4096 bits."
+    },
+    "clientId": {
+      "type": "string",
+      "description": "clientId: the identifier of the client."
+    },
+    "targetId": {
+      "type": "string",
+      "description": "targetId: the identifier of the DOIP service"
+    },
+    "operationId": {
+      "type": "string",
+      "const": "Op.QueryFeed",
+      "description": "operationId: the identifier of the operation to be performed."
+    },
+    "authentication": {
+      "type": "object",
+      "anyOf": [
+        {
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "username",
+            "password"
+          ]
+        },
+        {
+          "properties": {
+            "token": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "token"
+          ]
+        },
+        {
+          "properties": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "key"
+          ]
+        }
+      ],
+      "description": "authentication: optional JSON object used by clients to authenticate."
+    },
+    "attributes": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "Agent ID for which all published FDOs should be queried."
+        }
+      },
+      "required": [
+        "input"
+      ],
+      "description": "attributes: mandatory JSON object to specify the input"
+    }
+  },
+  "required": [
+    "targetId",
+    "operationId",
+    "attributes"
+  ],
+  "additionalProperties": false,
+  "description": "An operation to create a digital object within the DOIP service and the corresponding PID record in the Handle system. The target of a creation operation is the DOIP service itself."
+}

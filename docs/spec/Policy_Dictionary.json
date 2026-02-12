@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "jurisdiction": "CN (China)",
+  "framework": "Data Security Law (DSL)",
+  "policy_mappings": [
+    {
+      "policy_id": "0x0001",
+      "category_name": "Core Data (DSL Article 21)",
+      "legal_reference": "Data related to national security, lifelines of the national economy, important aspects of people's livelihood, and major public interests.",
+      "sensitivity_level": "0xFF",
+      "enforcement_action": "DROP",
+      "encryption_required": true,
+      "cross_border_transfer": "PROHIBITED"
+    },
+    {
+      "policy_id": "0x0002",
+      "category_name": "Important Data (DSL Article 21)",
+      "legal_reference": "Specific data defined by regional or sectoral catalogs that may impact national security, economic operation, social stability, or public health if tampered with, destroyed, leaked, or illegally obtained/used.",
+      "sensitivity_level": "0x02",
+      "enforcement_action": "INSPECT_AND_LOG",
+      "encryption_required": true,
+      "cross_border_transfer": "RESTRICTED (Security Assessment Required)"
+    },
+    {
+      "policy_id": "0x0003",
+      "category_name": "General Research Data (Scientific/Public)",
+      "legal_reference": "Non-sensitive scientific data intended for global collaboration and open access.",
+      "sensitivity_level": "0x00",
+      "enforcement_action": "FORWARD",
+      "encryption_required": false,
+      "cross_border_transfer": "ALLOWED"
+    },
+    {
+      "policy_id": "0x0004",
+      "category_name": "Personal Information (PII) - Sensitive",
+      "legal_reference": "Personal Information Protection Law (PIPL) Article 28: Biometrics, religious beliefs, specific identity, medical health, financial accounts, whereabouts, and tracks.",
+      "sensitivity_level": "0x03",
+      "enforcement_action": "ENCRYPT_OR_DROP",
+      "encryption_required": true,
+      "cross_border_transfer": "RESTRICTED (Standard Contract/Certification Required)"
+    }
+  ]
+}

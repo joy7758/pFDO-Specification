@@ -1,0 +1,85 @@
+\section{Methodology}
+\label{sec:methodology}
+
+This section details the proposed Active Governance Header (AGH) mechanism within the Digital Object Interface Protocol (DOIP) architecture. We formally define the governance function, analyze its computational efficiency compared to traditional Deep Packet Inspection (DPI), and provide a concrete mapping for regulatory compliance, specifically targeting China's Data Security Law (DSL).
+
+\subsection{Formal Governance Function}
+The core of our methodology is the governance decision function, denoted as $\Psi$. This function operates on the semantic information encapsulated in the DOIP segment header ($S_{\text{header}}$) and the current network context ($N_{\text{context}}$).
+
+The formal definition is as follows:
+\begin{equation}
+    \Psi(S_{\text{header}}, N_{\text{context}}) \rightarrow \{ \text{FORWARD}, \text{DROP}, \text{INSPECT}, \text{ENCRYPT} \}
+\end{equation}
+
+Where:
+\begin{itemize}
+    \item $S_{\text{header}}$ represents the structured metadata within the DOIP packet header, specifically containing the \texttt{governance\_policy\_id} and \texttt{classification\_level}.
+    \item $N_{\text{context}}$ represents the environmental variables at the enforcement point, such as source IP reputation, time of day, and current threat level.
+    \item The output set defines the enforcement actions:
+    \begin{itemize}
+        \item \texttt{FORWARD}: Allow the packet to proceed to its destination.
+        \item \texttt{DROP}: Discard the packet immediately due to policy violation.
+        \item \texttt{INSPECT}: Divert the packet for detailed content analysis (e.g., when anomaly scores are elevated but not conclusive).
+        \item \texttt{ENCRYPT}: Enforce mandatory encryption before transmission, typically for cross-border data flows.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Efficiency Analysis: AGH vs. DPI}
+A critical advantage of the AGH approach is its computational efficiency. Traditional governance often relies on Deep Packet Inspection (DPI), which requires parsing the entire payload of a packet.
+
+\begin{itemize}
+    \item \textbf{DPI Complexity ($O(N)$)}: Let $N$ be the size of the packet payload. DPI algorithms, such as regex matching or signature scanning, scale linearly with $N$. As data volumes increase, the latency introduced by DPI becomes a significant bottleneck for high-speed networks.
+    
+    \item \textbf{AGH Complexity ($O(1)$)}: The Active Governance Header mechanism evaluates policies based solely on fixed-length header fields. The lookup and decision logic are independent of the payload size. Therefore, the computational complexity is constant time, or $O(1)$.
+\end{itemize}
+
+This shift from $O(N)$ to $O(1)$ enables line-rate governance enforcement even in multi-gigabit FDO (Fair Digital Object) ecosystems, removing the performance penalty associated with granular compliance checks.
+
+\subsection{Policy ID Mapping: China Data Security Law (DSL)}
+To demonstrate the practical application of AGH, we define a mapping table for China's Data Security Law (DSL). This table associates specific Policy IDs embedded in the DOIP header with regulatory requirements and corresponding technical actions.
+
+\begin{table}[h]
+\centering
+\caption{Policy ID Mapping for China Data Security Law (DSL)}
+\label{tab:dsl_mapping}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Policy ID} & \textbf{DSL Category} & \textbf{Description} & \textbf{Enforced Action ($\Psi$ Output)} \\ \hline
+\texttt{DSL-001} & Core Data & State secrets or critical infrastructure data. & \texttt{DROP} (if dest $\neq$ internal) \\ \hline
+\texttt{DSL-002} & Important Data & Data impacting national security/public interest. & \texttt{ENCRYPT} + \texttt{INSPECT} (Audit Log) \\ \hline
+\texttt{DSL-003} & Personal Info & General PII (Personal Identifiable Information). & \texttt{ENCRYPT} \\ \hline
+\texttt{DSL-004} & General Data & Public or non-sensitive organizational data. & \texttt{FORWARD} \\ \hline
+\texttt{DSL-005} & Cross-Border & Data approved for international transfer. & \texttt{INSPECT} (Export Control Check) \\ \hline
+\end{tabular}
+\end{table}
+
+Table \ref{tab:dsl_mapping} illustrates how abstract legal requirements are translated into machine-executable codes contained within the \texttt{governance\_policy\_id} field, allowing routers and gateways to enforce national sovereignty laws automatically.
+
+\subsection{Mathematical Derivation of Decoupling}
+\label{subsec:math_decoupling}
+
+To address the ``Memory Wall'' problem inherent in large language models, where parameter access becomes the bottleneck, we introduce the Reinforcement Learning Compliance Protocol (RLCP). RLCP utilizes a specialized loss function to decouple the logic kernel from static factual knowledge.
+
+The total loss function $L_{total}$ is defined as:
+\begin{equation}
+    L_{total} = L_{survival} + \alpha L_{unlearning} + \gamma L_{KL}
+\end{equation}
+
+Where:
+\begin{itemize}
+    \item $L_{survival}$ represents the standard survival loss, encouraging the model to maintain high accuracy and low latency in its core reasoning tasks.
+    \item $L_{unlearning}$ is the critical unlearning term, which imposes a penalty on the retention of static factual knowledge within the model's parameters. By introducing negative entropy, this term discourages the model from memorizing facts that can be retrieved externally.
+    \item $L_{KL}$ is the Kullback-Leibler divergence term, ensuring the model's policy distribution does not deviate excessively from a safe baseline.
+    \item $\alpha$ and $\gamma$ are hyperparameters controlling the strength of the unlearning and safety constraints, respectively.
+\end{itemize}
+
+As the unlearning coefficient $\alpha$ increases, the optimization process drives the model to minimize $L_{unlearning}$, effectively purging static facts from its weights. This forces the model to rely on external retrieval mechanisms (Layer 5) for factual queries, thereby reducing the parameter count required for high-performance reasoning and mitigating the memory bandwidth constraints imposed by the Memory Wall.
+
+Figure \ref{fig:loss_curve} illustrates the convergence behavior of these loss components during training.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{loss_curve.pdf}
+    \caption{RLCP Loss Convergence: Impact of increasing $\alpha$ on knowledge decoupling. The divergence of $\alpha \cdot L_{unlearning}$ from $L_{survival}$ marks the effective decoupling of logic from memory.}
+    \label{fig:loss_curve}
+\end{figure}

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema#",
+  "type": "object",
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "description": "requestId: the identifier of the request to which this is a response. The DOIP service must include in its response the requestId provided by the client."
+    },
+    "status": {
+      "type": "string",
+      "const": "0.DOIP/Status.001",
+      "description": "status: an identifier that indicates the status of the request. Status codes shall have associated unique identifiers resolvable as specified in the IRP."
+    },
+    "attributes": {
+      "type": "object",
+      "properties": {
+        "record": {
+          "type": "object",
+          "description": "if record is specified as true in the request, returns all FDO attributes from the FDO record"
+        }
+      },
+      "required": [
+        "record"
+      ],
+      "description": "attributes: JSON object that specifies the type-value pairs for the PID record"
+    },
+    "output": {
+      "$ref": "https://raw.githubusercontent.com/FDO-Implementations/DOIP-Segments-Specification/refs/heads/main/doip_do_serialization/doip_do_serialization.json",
+      "description": "serialization of a digital object"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "additionalProperties": false,
+  "description": "response to a O.DOIP/Op.Retrieve request"
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "description": "requestId: the identifier of the request to which this is a response. The DOIP service must include in its response the requestId provided by the client."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "0.DOIP/Status.101",
+        "0.DOIP/Status.102",
+        "0.DOIP/Status.103",
+        "0.DOIP/Status.104",
+        "0.DOIP/Status.105",
+        "0.DOIP/Status.200",
+        "0.DOIP/Status.500"
+      ],
+      "description": "status: an identifier that indicates the status of the request. Status codes shall have associated unique identifiers resolvable as specified in the IRP."
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "A message to explain the error in more detail"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "output"
+  ],
+  "description": "Error Response"
+}
