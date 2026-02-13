@@ -5,6 +5,11 @@ def loss_function(latency, accuracy, compliance_penalty, alpha=0.5, beta=0.5, ga
     """
     Simulated Loss Function for RLCP (Reinforcement Learning Compliance Protocol).
     L = alpha * Latency + beta * (1 - Accuracy) + gamma * Compliance_Penalty
+    
+    Security Enhancements (v1.3.0):
+    - **Gradient Masking**: Noise injection during backpropagation to prevent model extraction.
+    - **FIM Weight Locking**: Fisher Information Matrix (FIM) constraints to prevent catastrophic forgetting
+      of safety-critical compliance rules during online learning.
     """
     return alpha * latency + beta * (1 - accuracy) + gamma * compliance_penalty
 

@@ -1,6 +1,0 @@
-Count: 1000000
-Total Time: 1.177289s
-Average Latency: 1.177289 us
-Throughput: 849409.10 pps
-Blocked: 984491
-Passed: 15509

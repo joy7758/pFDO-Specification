@@ -11,11 +11,6 @@ def send_request(proc, method, params=None, req_id=1):
         "id": req_id
     }
     if params:
-        # Merge params if needed or just use as is.
-        # The MCP spec says params should be an object or array.
-        # If params is passed, it should be the full params object.
-        # But wait, our mcp_server.py expects params to have 'name' and 'arguments' for 'tools/call'
-        # Let's adjust how we pass params.
         request["params"] = params
     
     json_req = json.dumps(request)
@@ -144,7 +139,7 @@ def run_simulation():
         result = json.loads(resp['result']['content'][0]['text'])
         print(f"Defense Result: {result}")
         if not result['valid'] and "rejected by MsBV" in result['message']:
-            print("🛡️ Attack Blocked: Unknown Policy ID rejected by O(1) MsBV lookup.")
+            print("🛡️ Attack Blocked: Unknown Policy ID rejected by Priority Arbitration Pipeline (MsBV+).")
         else:
              print("❌ Policy check failed!")
 

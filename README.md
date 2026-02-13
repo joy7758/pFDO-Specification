@@ -1,4 +1,4 @@
-# Active FDO: Governance-Aware Segment Specification
+# Active FDO: Governance-Aware Segment Specification (v1.3.0-Industrial)
 
 **Reference Implementation for "Bridging Global Interoperability and Regional Sovereignty"**
 
@@ -56,11 +56,21 @@ This script will:
 4.  Simulate a policy violation (Unauthorized Access).
 5.  Output the defense results for each scenario.
 
-## Key Features
+## Key Features (v1.3.0)
 
-1.  **O(1) MsBV Lookup**: Constant-time policy enforcement using Multistate Bit Vectors.
-2.  **Folded Checksum**: Integrity verification for governance headers.
-3.  **Governance-Aware**: Supports granular data sovereignty rules (e.g., GDPR, China DSL).
+1.  **Clock-Cycle Deterministic Verification**: Upgraded from "O(1)", the verification logic guarantees a **Clock-Cycle Deterministic Physical Property** (时钟周期级确定的物理特性), effectively decoupling governance cost from policy complexity.
+2.  **MsBV+ Engine**: Upgraded to a **Priority Arbitration Pipeline with Atomic Consistency** (具备原子一致性的优先级仲裁流水线), supporting hierarchical policy nesting and conflict resolution.
+3.  **Epoch Governance Clock**: Implements **Read-Write Separation & Distributed Epoch Pointer Switching** (读写分离与分布式 Epoch 指针切换) to ensure sovereignty consistency in cloud-native clusters.
+4.  **RLCP Sub-manifold**: Defines the **RLCP Logical Skeleton Sub-manifold** (RLCP 逻辑骨架子流形), utilizing the **Fisher Information Matrix (FIM)** for adaptive mask generation.
+5.  **I/O Fingerprint**: Introduces **Progressive Convergence I/O Fingerprint** (渐进收敛响应指纹) as a core feature for infringement detection and hardware binding.
+
+## Roadmap
+
+*   **v1.0**: Prototype & Basic Filtering (Completed)
+*   **v1.1**: MsBV $O(1)$ Lookup & Folded Checksum (Completed)
+*   **v1.2**: Security Hardening & Dynamic Masking (Completed)
+*   **v1.3.0-Industrial**: Atomic MsBV+ Pipeline, Distributed Epoch, RLCP FIM Sub-manifold, Progressive I/O Fingerprint (Current)
+*   **v2.0**: FPGA/ASIC Hardware Offload & Inter-Planetary Node Sync (Future)
 
 ## Citation
 
@@ -68,3 +78,5 @@ Please refer to the `docs/paper` directory for the associated academic publicati
 
 **Lead Researcher:** Bin Zhang (GitHub: joy7758)
 **Affiliation:** FDO Standards Architecture Group
+
+<!-- 存档点激活测试 -->

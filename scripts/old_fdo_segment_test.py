@@ -10,6 +10,7 @@ class TestFDOGate(unittest.TestCase):
     def create_valid_packet(self, policy_id=0x01, seq=100, payload=b"payload_data"):
         # Helper to create a valid packet using the gate's internal logic
         # Magic 0x1000 (Version 1, Type 0)
+        # Note: 'seq' argument is ignored in v1.3.0 create_packet as it enforces current Epoch
         magic = 0x1000 
         return self.gate.create_packet(magic, seq, policy_id, payload)
 
@@ -20,23 +21,24 @@ class TestFDOGate(unittest.TestCase):
         self.assertEqual(result["policy_id"], 0x01)
 
     def test_masked_policy_id(self):
-        # Manually construct to verify masking logic
-        seq = 0x12345678
+        # Create packet. epoch is determined inside create_packet
         policy_id = 0x02
-        masked_pid = policy_id ^ seq
-        
-        # Create packet with this specific seq and masked_pid
-        packet = self.gate.create_packet(0x1000, seq, policy_id, b"")
+        packet = self.gate.create_packet(0x1000, 0, policy_id, b"")
         
         # Verify raw bytes
         header = packet[:16]
-        _, _, _, raw_masked_pid, _ = struct.unpack('!HIIIH', header)
-        self.assertEqual(raw_masked_pid, masked_pid)
+        # v1.3.0 layout: Magic(H), Epoch(I), Fingerprint(I), MaskedPID(I), RLCP_Cksum(H)
+        magic, epoch, fingerprint, raw_masked_pid, rlcp_checksum = struct.unpack('!HIIIH', header)
+        
+        # Verify masking logic: MaskedPID = PolicyID ^ Epoch
+        expected_masked_pid = policy_id ^ epoch
+        self.assertEqual(raw_masked_pid, expected_masked_pid)
         
         # Verify processing
         result = self.gate.process_packet(packet)
         self.assertEqual(result["status"], "forwarded")
         self.assertEqual(result["policy_id"], policy_id)
+        self.assertEqual(result["epoch"], epoch)
 
     def test_checksum_verification(self):
         # Create a valid packet
@@ -49,67 +51,67 @@ class TestFDOGate(unittest.TestCase):
         self.assertEqual(result["status"], "dropped")
         self.assertIn("Checksum Mismatch", result["reason"])
 
-    def test_timestamp_window_expired(self):
-        # Create a packet with old timestamp (more than 2 seconds ago)
+    def test_epoch_replay_expired(self):
+        # Test Epoch Expiration (v1.3.0)
         packet = self.create_valid_packet()
         
-        # Manually inject old timestamp
+        # Manually inject old epoch
         header = bytearray(packet[:16])
         # Unpack, Modify, Repack
-        magic, seq, ts, mpid, cksum = struct.unpack('!HIIIH', header)
+        magic, epoch, fingerprint, mpid, rlcp_checksum = struct.unpack('!HIIIH', header)
         
-        # Set TS to 3 seconds ago (30,000,000 ticks)
-        old_ts = (ts - 30000000) & 0xFFFFFFFF
+        # Extract RLCP flags
+        rlcp_flags = (rlcp_checksum >> 12) & 0xF
         
-        # Need to recalculate checksum for the modified header
-        # Using internal helper for convenience, though in real attack this is harder
-        # Here we want to test the TIMESTAMP logic, so we must provide valid checksum for the old TS
-        # to ensure it fails on TIMESTAMP, not CHECKSUM.
+        # Set Epoch to 3 seconds ago (3000 ms)
+        old_epoch = (epoch - 3000) & 0xFFFFFFFF
         
-        # Re-create packet with explicit old timestamp logic if possible, 
-        # or just modify and fix checksum.
-        # Let's use the create_packet helper but patch time.time
-        
-        # Easier: Modify source code momentarily? No.
-        # Let's just recalculate the checksum manually here.
-        header_parts = (magic, seq, old_ts, mpid)
+        # Recalculate checksum for the old epoch
+        header_parts = (magic, old_epoch, fingerprint, mpid, rlcp_flags)
         payload = packet[16:]
-        new_cksum = self.gate.calculate_folded_checksum(header_parts, payload[:2])
+        new_checksum_val = self.gate.calculate_folded_checksum(header_parts, payload[:2])
         
-        new_header = struct.pack('!HIIIH', magic, seq, old_ts, mpid, new_cksum)
+        # Reconstruct RLCP+Checksum field
+        new_rlcp_checksum = (rlcp_flags << 12) | (new_checksum_val & 0xFFF)
+        
+        new_header = struct.pack('!HIIIH', magic, old_epoch, fingerprint, mpid, new_rlcp_checksum)
         packet = new_header + payload
         
         result = self.gate.process_packet(packet)
         self.assertEqual(result["status"], "dropped")
-        self.assertIn("Timestamp Replay/Expired", result["reason"])
+        self.assertIn("Epoch Replay/Expired", result["reason"])
 
-    def test_timestamp_future_rejection(self):
-        # Create a packet with future timestamp (more than 2 seconds ahead)
+    def test_epoch_future_rejection(self):
+        # Test Future Epoch Rejection
         packet = self.create_valid_packet()
         header = bytearray(packet[:16])
-        magic, seq, ts, mpid, cksum = struct.unpack('!HIIIH', header)
+        magic, epoch, fingerprint, mpid, rlcp_checksum = struct.unpack('!HIIIH', header)
         
-        # Set TS to +3 seconds
-        future_ts = (ts + 30000000) & 0xFFFFFFFF
+        rlcp_flags = (rlcp_checksum >> 12) & 0xF
+        
+        # Set Epoch to +3 seconds (3000 ms)
+        future_epoch = (epoch + 3000) & 0xFFFFFFFF
         
         # Recalculate checksum
-        header_parts = (magic, seq, future_ts, mpid)
+        header_parts = (magic, future_epoch, fingerprint, mpid, rlcp_flags)
         payload = packet[16:]
-        new_cksum = self.gate.calculate_folded_checksum(header_parts, payload[:2])
+        new_checksum_val = self.gate.calculate_folded_checksum(header_parts, payload[:2])
         
-        new_header = struct.pack('!HIIIH', magic, seq, future_ts, mpid, new_cksum)
+        new_rlcp_checksum = (rlcp_flags << 12) | (new_checksum_val & 0xFFF)
+        
+        new_header = struct.pack('!HIIIH', magic, future_epoch, fingerprint, mpid, new_rlcp_checksum)
         packet = new_header + payload
         
         result = self.gate.process_packet(packet)
         self.assertEqual(result["status"], "dropped")
-        self.assertIn("Timestamp Replay/Expired", result["reason"])
+        self.assertIn("Epoch Replay/Expired", result["reason"])
 
     def test_invalid_msbv_lookup(self):
-        # Policy ID 0xFF is not in MsBV
+        # Policy ID 0xFF is not in MsBV+
         packet = self.create_valid_packet(policy_id=0xFF)
         result = self.gate.process_packet(packet)
         self.assertEqual(result["status"], "dropped")
-        self.assertIn("rejected by MsBV", result["reason"])
+        self.assertIn("rejected by MsBV+", result["reason"])
 
 if __name__ == '__main__':
     unittest.main()
