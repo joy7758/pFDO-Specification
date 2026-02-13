@@ -1,0 +1,20 @@
+# A-FDO v1.3.0-Industrial — Project Rules
+
+## Core Principles (AEP-Aligned)
+
+- **Kernel-Driven:** All design and implementation MUST be grounded in PE-MsBV or RLCP. Reject changes that introduce superficial or non-spec-aligned behavior.
+- **Efficiency:** Pursue O(1) complexity and clock-cycle-level determinism. Validation MUST follow the three-stage pipeline (Checksum, Epoch ±2000 ms, PE-MsBV lookup) with no data-dependent branching that leaks timing.
+- **Evaluator Sovereignty:** Technical artifacts (code, docs, memos) MUST support non-bypassability and auditability. Descriptions SHALL be in Formal Technical English and SHALL reference concrete symbols in `src/fdo_gate.py` where applicable.
+
+## Technical Norms
+
+- **Interception:** Implement and maintain the PE-MsBV pipeline (Stage 1: Folded Checksum; Stage 2: Epoch Window; Stage 3: policy_id in msbv_table).
+- **Consistency:** Use Epoch-based shadow-table switch logic (Atomic Epoch Switch) for policy updates; no binding to specific CPU instructions.
+- **Detectability:** The system SHALL include a Progressive Convergence I/O Fingerprint (header field and/or tests as in `scripts/test_io_fingerprint.py`).
+
+## File and Symbol Alignment
+
+When editing or documenting, ensure alignment with:
+
+- **Core implementation:** `src/fdo_gate.py` — `FDOGate`, `parse_header`, `calculate_folded_checksum`, `validate_segment`, `atomic_epoch_switch`, `process_packet`, `create_packet`, `msbv_table`.
+- **Header layout:** 16 bytes; `!HIIIH`; 12-bit checksum; ±2000 ms epoch window.
