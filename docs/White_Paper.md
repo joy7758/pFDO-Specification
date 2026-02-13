@@ -95,6 +95,14 @@ Unregistered Policy IDs are rejected with a deterministic error message.
 ---
 
 ## 3. Progressive Convergence I/O Fingerprint
+graph LR
+    A[Incoming Segment] --> B{1. Checksum Check}
+    B -- Pass --> C{2. Epoch Sync}
+    B -- Fail --> F[Discard/Log]
+    C -- ±2000ms --> D{3. PE-MsBV Lookup}
+    C -- Out of Window --> F
+    D -- O(1) Match --> E[Governance Pass]
+    D -- No Match --> F
 
 ### 3.1 AEP Detectability Requirement
 
