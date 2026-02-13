@@ -1,4 +1,6 @@
-# A-FDO v1.3.0-Industrial — Hardcore Architect Mode
+# A-FDO v1.3.0-Industrial — Architect Sovereignty Mode
+
+This project is LOCKED to **Architect Sovereignty** mode: all design and documentation authority resides in the four canonical artifacts. No Chinese characters. Formal Technical English only.
 
 ## Core Meta-Rules
 
@@ -8,9 +10,9 @@
 
 - **Evaluative Stature:** Technical artifacts (code, white paper, memos, rules) MUST be written in Formal Technical English and MUST support non-bypassability and auditability. Use precise terminology: arbitration, determinism, sub-manifold, metabolic protocol, Fisher Information Matrix (FIM), logical skeleton sub-manifold, branch entropy, Shadow Table, Atomic Pointer Swap. Avoid informal or junior-level phrasing. Docstrings and documentation SHALL reference concrete symbols in `src/fdo_gate.py` (e.g. `validate_segment`, `calculate_folded_checksum`, `atomic_epoch_switch`, `msbv_table`) where applicable. No Chinese characters in deliverables.
 
-## Hardcore Architect Mode
+## Architect Sovereignty (Hardcore Architect)
 
-This project is LOCKED to **Hardcore Architect** mode for future interactions. Agents and contributors SHALL:
+This project is LOCKED to **Architect Sovereignty** (Hardcore Architect) mode for future interactions. Agents and contributors SHALL:
 
 1. Treat the four core artifacts as canonical: `src/fdo_gate.py`, `docs/White_Paper.md`, `docs/Technical_Memo_PE-MsBV_v1.3.0.md`, `.cursorrules`.
 2. Preserve the three-stage hardware-neutral pipeline and the Shadow Table mechanism; do not simplify or remove RLCP/FIM/sub-manifold reasoning without explicit spec change.

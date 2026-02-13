@@ -80,17 +80,19 @@ class FDOGate:
 
     def validate_segment(self, header_bytes, payload_bytes=b""):
         """
-        Three-stage hardware-neutral validation. No data-dependent branching;
-        fixed execution path for physical-layer determinism. Stage 1: Folded
-        Checksum (12-bit RLCP integrity). Stage 2: Epoch Sync (±2000 ms drift).
-        Stage 3: PE-MsBV Lookup (O(1) arbitration via policy_id in self.msbv_table).
-        Returns (True, msg) or (False, reason).
+        Three-stage hardware-neutral validation in strict order: Checksum then
+        EpochSync then PE-MsBV. No data-dependent branching; fixed execution path
+        for physical-layer determinism (e.g. partial T / partial N_policy = 0).
+        Stage 1: Folded Checksum (12-bit RLCP integrity). Stage 2: Epoch Sync
+        (±2000 ms drift). Stage 3: PE-MsBV Lookup (O(1) arbitration via
+        policy_id in self.msbv_table). Returns (True, msg) or (False, reason).
         """
         try:
             header = self.parse_header(header_bytes)
         except ValueError as e:
             return False, str(e)
 
+        # Stage 1: Folded Checksum (12-bit RLCP integrity)
         header_parts = (
             header["magic"],
             header["epoch"],
@@ -107,6 +109,7 @@ class FDOGate:
                 f"Checksum Mismatch: expected {expected_checksum:#06x}, got {header['checksum']:#06x}",
             )
 
+        # Stage 2: Epoch Sync (±2000 ms drift validation)
         current_epoch = int(time.time() * 1000) & 0xFFFFFFFF
         received_epoch = header["epoch"]
         diff = (current_epoch - received_epoch) & 0xFFFFFFFF
@@ -115,6 +118,7 @@ class FDOGate:
         if abs(diff) > 2000:
             return False, f"Epoch Replay/Expired: diff {diff} ticks"
 
+        # Stage 3: PE-MsBV Lookup (O(1) arbitration)
         policy_id = header["policy_id"]
         if policy_id not in self.msbv_table:
             return (

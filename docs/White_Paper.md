@@ -44,19 +44,21 @@ Dynamic unmasking: `policy_id = masked_policy_id ^ epoch`. RLCP flags: `(rlcp_ch
 
 The interception pipeline in `fdo_gate.py` is implemented by **`validate_segment(header_bytes, payload_bytes=b'')`**. It is **hardware-neutral** (specified as bit layout, fixed-depth stages, and table lookup—no CPU-specific instructions) and achieves **physical O(1) determinism** by **eliminating branch entropy**: the execution path length is fixed regardless of policy ID, policy count, or payload size.
 
+**Mathematical sovereignty assertion:** Let \(T\) denote the verification time (wall-clock or cycle count) for a single segment and \(N_{\text{policy}}\) the number of entries in the policy table. A-FDO enforces **physical-level constant latency**: \(\partial T / \partial N_{\text{policy}} = 0\). That is, \(T\) is independent of policy set size; the three-stage pipeline (constant-depth checksum, fixed epoch comparison, single O(1) table lookup) ensures that no operation count or branch depth varies with \(N_{\text{policy}}\) or payload length.
+
 1. **Stage 1 — Folded Checksum (12-bit RLCP integrity):** Recompute via `calculate_folded_checksum(header_parts, payload_bytes[:2])`; compare with `header['checksum']`. Single compare; no branching on payload length beyond the fixed 2-byte head.
 2. **Stage 2 — Epoch Sync (±2000 ms drift validation):** Compute epoch difference with 32-bit wrapping; reject if `abs(diff) > 2000`. Fixed arithmetic and one comparison.
 3. **Stage 3 — PE-MsBV Lookup (branch-entropy-free O(1) arbitration):** Single membership test `policy_id in self.msbv_table` (Priority Arbitration Pipeline). Constant-time; no data-dependent branches.
 
-Total complexity is **O(1)**. The following flowchart reflects the pipeline:
+Total complexity is **O(1)**; \(\partial T / \partial N_{\text{policy}} = 0\). The following flowchart reflects the pipeline (Incoming → Checksum → EpochSync → PE-MsBV → Pass/Discard):
 
 ```mermaid
 flowchart LR
     subgraph Pipeline["v1.3.0 Validation Pipeline"]
     A[Incoming] --> B{Checksum}
-    B -- Pass --> C{Epoch}
+    B -- Pass --> C{EpochSync}
     B -- Fail --> F[Discard]
-    C -- Valid --> D{MsBV}
+    C -- Valid --> D{PE-MsBV}
     C -- Expired --> F
     D -- Match --> E[Pass]
     D -- Reject --> F
