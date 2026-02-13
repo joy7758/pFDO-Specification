@@ -1,21 +1,18 @@
-# A-FDO Architect Evolution Protocol (AEP) — v1.3.0-Industrial
+# A-FDO v1.3.0-Industrial — Hardcore Architect Mode
 
-## Core Meta-Principles
+## Core Meta-Rules
 
-- **Kernel-Driven:** Reject superficial suggestions. All designs MUST be grounded in PE-MsBV or RLCP underlying logic.
-- **Efficiency:** Pursue O(1) complexity and clock-cycle-level determinism.
-- **Evaluator Sovereignty:** Technical descriptions MUST exhibit "non-bypassability" and "auditability".
+- **Endogenous Consistency:** All design and implementation MUST remain consistent with the A-FDO v1.3.0-Industrial specification. Changes to the three-stage pipeline (Folded Checksum, Epoch Sync, PE-MsBV Lookup), the 16-byte header (!HIIIH), the RLCP/FIM logical skeleton sub-manifold, or the Shadow Table and Atomic Pointer Swap MUST be justified against the spec and the reference implementation in `src/fdo_gate.py`. No ad-hoc or speculative behaviour that breaks determinism or auditability.
 
-## Adversarial Audit Flow
+- **Contextual Efficiency:** Pursue O(1) complexity and clock-cycle-level determinism. The arbitration path MUST remain branch-entropy-free (no data-dependent branching that varies with policy count or payload size). RLCP integrity MUST be enforced via the constant-depth folded checksum. Epoch Sync MUST use the ±2000 ms drift window. PE-MsBV lookup MUST be a single O(1) table membership test. Any proposal that introduces variable-depth logic or non-constant-time paths in the segment validation pipeline SHALL be rejected unless it is explicitly permitted by a spec update.
 
-Before executing any change, the following SHALL be triggered internally:
+- **Evaluative Stature:** Technical artifacts (code, white paper, memos, rules) MUST be written in Formal Technical English and MUST support non-bypassability and auditability. Use precise terminology: arbitration, determinism, sub-manifold, metabolic protocol, Fisher Information Matrix (FIM), logical skeleton sub-manifold, branch entropy, Shadow Table, Atomic Pointer Swap. Avoid informal or junior-level phrasing. Docstrings and documentation SHALL reference concrete symbols in `src/fdo_gate.py` (e.g. `validate_segment`, `calculate_folded_checksum`, `atomic_epoch_switch`, `msbv_table`) where applicable. No Chinese characters in deliverables.
 
-1. **Red-Team Check:** Verify that the design does not introduce "abstract mathematical traps".
-2. **Detectability Check:** The design MUST include a "Progressive Convergence I/O Fingerprint".
-3. **Hardware Neutrality:** Do NOT bind to any specific CPU instruction set; use abstract physical-layer descriptions only.
+## Hardcore Architect Mode
 
-## Technical Norms
+This project is LOCKED to **Hardcore Architect** mode for future interactions. Agents and contributors SHALL:
 
-- **Interception:** Implement the Priority-Encoded Multi-stage Bit Vector (PE-MsBV) pipeline.
-- **Metabolism:** Use the topology-preserving metabolic protocol (RLCP) identified via the Fisher Information Matrix (FIM).
-- **Consistency:** Use Epoch-based shadow-table switch logic (Atomic Epoch Switch).
+1. Treat the four core artifacts as canonical: `src/fdo_gate.py`, `docs/White_Paper.md`, `docs/Technical_Memo_PE-MsBV_v1.3.0.md`, `.cursorrules`.
+2. Preserve the three-stage hardware-neutral pipeline and the Shadow Table mechanism; do not simplify or remove RLCP/FIM/sub-manifold reasoning without explicit spec change.
+3. Maintain 100% terminology and behavioural alignment between documentation and code.
+4. Reject changes that dilute technical depth or that introduce inconsistency with the Core Meta-Rules above.

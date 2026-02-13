@@ -58,11 +58,11 @@ This script will:
 
 ## Key Features (v1.3.0)
 
-1.  **Clock-Cycle Deterministic Verification**: Upgraded from "O(1)", the verification logic guarantees a **Clock-Cycle Deterministic Physical Property** (时钟周期级确定的物理特性), effectively decoupling governance cost from policy complexity.
-2.  **MsBV+ Engine**: Upgraded to a **Priority Arbitration Pipeline with Atomic Consistency** (具备原子一致性的优先级仲裁流水线), supporting hierarchical policy nesting and conflict resolution.
-3.  **Epoch Governance Clock**: Implements **Read-Write Separation & Distributed Epoch Pointer Switching** (读写分离与分布式 Epoch 指针切换) to ensure sovereignty consistency in cloud-native clusters.
-4.  **RLCP Sub-manifold**: Defines the **RLCP Logical Skeleton Sub-manifold** (RLCP 逻辑骨架子流形), utilizing the **Fisher Information Matrix (FIM)** for adaptive mask generation.
-5.  **I/O Fingerprint**: Introduces **Progressive Convergence I/O Fingerprint** (渐进收敛响应指纹) as a core feature for infringement detection and hardware binding.
+1.  **Clock-Cycle Deterministic Verification**: The verification logic guarantees a **Clock-Cycle Deterministic Physical Property**, effectively decoupling governance cost from policy complexity.
+2.  **MsBV+ Engine**: **Priority Arbitration Pipeline with Atomic Consistency**, supporting hierarchical policy nesting and conflict resolution.
+3.  **Epoch Governance Clock**: **Read-Write Separation & Distributed Epoch Pointer Switching** for sovereignty consistency in cloud-native clusters.
+4.  **RLCP Sub-manifold**: **RLCP Logical Skeleton Sub-manifold**, utilizing the **Fisher Information Matrix (FIM)** for adaptive mask generation.
+5.  **I/O Fingerprint**: **Progressive Convergence I/O Fingerprint** for infringement detection and hardware binding.
 
 ## Roadmap
 
@@ -79,4 +79,3 @@ Please refer to the `docs/paper` directory for the associated academic publicati
 **Lead Researcher:** Bin Zhang (GitHub: joy7758)
 **Affiliation:** FDO Standards Architecture Group
 
-<!-- 存档点激活测试 -->

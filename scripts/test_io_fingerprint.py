@@ -57,13 +57,12 @@ def test_io_fingerprint_convergence():
             print(">> Latency Convergence Achieved within tolerance.")
             break
             
-    # 渐进收敛特性 (Progressive Convergence) 断言验证
+    # Progressive Convergence assertions
     final_variance = max(history[-3:]) - min(history[-3:]) if len(history) >= 3 else 0
     print(f"\nFinal Variance (last 3): {final_variance:.4f}")
-    
-    assert noise_level < 1.0, "渐进收敛特性失败: 噪声未收敛至容差内"
-    assert final_variance < 5.0, f"渐进收敛特性失败: 最终方差 {final_variance:.4f} >= 5.0"
-    assert len(history) >= 3, "渐进收敛特性失败: 采样不足"
+    assert noise_level < 1.0, "Progressive Convergence failed: noise did not converge within tolerance"
+    assert final_variance < 5.0, f"Progressive Convergence failed: final variance {final_variance:.4f} >= 5.0"
+    assert len(history) >= 3, "Progressive Convergence failed: insufficient samples"
     
     print("TEST PASSED: Progressive Convergence verified.")
 

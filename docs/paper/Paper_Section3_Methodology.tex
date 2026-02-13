@@ -30,7 +30,7 @@ A critical advantage of the AGH approach is its computational efficiency. Tradit
 \begin{itemize}
     \item \textbf{DPI Complexity ($O(N)$)}: Let $N$ be the size of the packet payload. DPI algorithms, such as regex matching or signature scanning, scale linearly with $N$. As data volumes increase, the latency introduced by DPI becomes a significant bottleneck for high-speed networks.
     
-    \item \textbf{AGH Complexity (Clock-cycle Deterministic)}: The Active Governance Header mechanism evaluates policies based solely on fixed-length header fields. The lookup and decision logic are independent of the payload size. Therefore, the computational complexity is a \textbf{Clock-cycle Deterministic} Physical Property (时钟周期级确定的物理特性), offering predictability superior to theoretical $O(1)$ and ensuring atomic consistency via the Priority Arbitration Pipeline.
+    \item \textbf{AGH Complexity (Clock-cycle Deterministic)}: The Active Governance Header mechanism evaluates policies based solely on fixed-length header fields. The lookup and decision logic are independent of the payload size. Therefore, the computational complexity is a \textbf{Clock-cycle Deterministic} Physical Property, offering predictability superior to theoretical $O(1)$ and ensuring atomic consistency via the Priority Arbitration Pipeline.
 \end{itemize}
 
 This shift from $O(N)$ to a deterministic physical bound enables line-rate governance enforcement even in multi-gigabit FDO (Fair Digital Object) ecosystems, removing the performance penalty associated with granular compliance checks.
@@ -69,8 +69,8 @@ Where:
 \begin{itemize}
     \item $L_{task}$ represents the primary objective loss (formerly $L_{survival}$), encouraging the model to maintain high accuracy and low latency in its core reasoning tasks.
     \item $L_{reg}$ represents the regularization term (e.g., $L_{unlearning}$), which imposes a penalty on the retention of static factual knowledge.
-    \item $\gamma L_{KL}(P_{\theta} || P_{anchor})$ constitutes the \textbf{Manifold Constraint} (流形约束), ensuring the policy $\theta$ evolves strictly within the ``Topology-Invariant Sub-manifold''. This term minimizes the Kullback-Leibler divergence between the current policy distribution $P_{\theta}$ and the anchor policy $P_{anchor}$, preserving the causal structure of governance logic.
-    \item We formally define the \textbf{Axiomatic Core (公理化锚点区)} as the region $\Theta_{axiom} \subset \Theta$ in parameter space where the Fisher Information Matrix (FIM) remains positive definite ($\mathcal{I}(\theta) \succ 0$), ensuring that the curvature of the loss landscape supports stable, logical consistency during updates.
+    \item $\gamma L_{KL}(P_{\theta} || P_{anchor})$ constitutes the \textbf{Manifold Constraint}, ensuring the policy $\theta$ evolves strictly within the ``Topology-Invariant Sub-manifold''. This term minimizes the Kullback-Leibler divergence between the current policy distribution $P_{\theta}$ and the anchor policy $P_{anchor}$, preserving the causal structure of governance logic.
+    \item We formally define the \textbf{Axiomatic Core} as the region $\Theta_{axiom} \subset \Theta$ in parameter space where the Fisher Information Matrix (FIM) remains positive definite ($\mathcal{I}(\theta) \succ 0$), ensuring that the curvature of the loss landscape supports stable, logical consistency during updates.
 \end{itemize}
 
 As the regularization coefficient $\lambda$ increases, the optimization process drives the model to minimize $L_{reg}$, effectively purging static facts from its weights while the Manifold Constraint ensures the logic structure remains intact. This forces the model to rely on external retrieval mechanisms (Layer 5) for factual queries, thereby reducing the parameter count required for high-performance reasoning and mitigating the memory bandwidth constraints imposed by the Memory Wall.

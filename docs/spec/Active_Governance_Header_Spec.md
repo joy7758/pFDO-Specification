@@ -28,21 +28,21 @@ To prevent static analysis of policy patterns, the `Policy ID` is never transmit
 *   **Benefit:** Every packet for the same policy looks different due to the constantly advancing Epoch Clock.
 
 #### 2.2.2 Epoch Governance Clock
-*   **Mechanism:** Replaces traditional timestamps with a global, synchronized Epoch Counter, featuring **Read-Write Separation & Distributed Epoch Pointer Switching** (读写分离与分布式 Epoch 指针切换).
+*   **Mechanism:** Replaces traditional timestamps with a global, synchronized Epoch Counter, featuring **Read-Write Separation & Distributed Epoch Pointer Switching**.
 *   **Defense:** Enforces strict temporal ordering and sovereignty consistency in cloud-native clusters.
 *   **Resolution:** Configurable, typically 1ms per tick.
 
 #### 2.2.3 I/O Fingerprint
-*   **Purpose:** Introduces **Progressive Convergence I/O Fingerprint** (渐进收敛响应指纹) to bind the packet to the originating hardware interface and detect infringement.
+*   **Purpose:** Introduces **Progressive Convergence I/O Fingerprint** to bind the packet to the originating hardware interface and detect infringement.
 *   **Validation:** Checked against the registered device profile in the MsBV+ table.
 
 #### 2.2.4 RLCP Sub-manifold & Folded Checksum
-*   **RLCP Bits:** 4 bits reserved for **RLCP Logical Skeleton Sub-manifold** (RLCP 逻辑骨架子流形), utilizing the **Fisher Information Matrix (FIM)** for adaptive mask generation.
+*   **RLCP Bits:** 4 bits reserved for **RLCP Logical Skeleton Sub-manifold**, utilizing the **Fisher Information Matrix (FIM)** for adaptive mask generation.
 *   **Checksum:** 12-bit lightweight integrity check optimized for hardware XOR engines.
 
 ## 3. Active FDO Verification Mechanism
 
-The core innovation is the **MsBV+** mechanism, upgraded to a **Priority Arbitration Pipeline with Atomic Consistency** (具备原子一致性的优先级仲裁流水线), enabling **Clock-Cycle Deterministic** policy validation.
+The core innovation is the **MsBV+** mechanism, upgraded to a **Priority Arbitration Pipeline with Atomic Consistency**, enabling **Clock-Cycle Deterministic** policy validation.
 
 ### 3.1 Algorithm
 
@@ -60,7 +60,7 @@ wire is_allowed = msbv_plus_table[real_pid].active &&
 
 ### 3.2 Performance Characteristics
 
-*   **Complexity:** **Clock-Cycle Deterministic** (时钟周期级确定的物理特性). The verification time is fixed by the circuit path length, completely independent of policy count or network load.
+*   **Complexity:** **Clock-Cycle Deterministic**. The verification time is fixed by the circuit path length, completely independent of policy count or network load.
 *   **Latency:** Measured at **$0.4\mu s$** (Hardware/Optimized Environment).
 *   **Synchronization:** Fully synchronous; no external database calls or I/O blocking.
 

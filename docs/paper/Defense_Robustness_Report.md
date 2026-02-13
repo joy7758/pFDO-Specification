@@ -8,7 +8,7 @@ The stress tests confirm that the **Active Governance Header (AGH)** and **MsBV+
 
 ## 2. Stress Test Results (MsBV+)
 
-We subjected the MsBV+ interceptor to a flood of **1,000,000 packets**, consisting primarily of forged Policy IDs, to test the **Clock-Cycle Deterministic Physical Property** (时钟周期级确定的物理特性).
+We subjected the MsBV+ interceptor to a flood of **1,000,000 packets**, consisting primarily of forged Policy IDs, to test the **Clock-Cycle Deterministic Physical Property**.
 
 ### 2.1 Performance Metrics
 *   **Total Packets Processed:** 1,000,000
@@ -21,7 +21,7 @@ We subjected the MsBV+ interceptor to a flood of **1,000,000 packets**, consisti
 *   **Passed (Valid Policy IDs):** 15,509 (1.55%)
 
 **Analysis:**
-The **Clock-Cycle Deterministic** (时钟周期级确定的物理特性) nature of the MsBV+ lookup was validated. Despite the high volume of invalid requests, the processing time per packet remained constant and extremely low ($\approx 1.2 \mu s$). This proves the system is immune to Denial of Service (DoS) attacks targeting the policy validation logic.
+The **Clock-Cycle Deterministic** nature of the MsBV+ lookup was validated. Despite the high volume of invalid requests, the processing time per packet remained constant and extremely low ($\approx 1.2 \mu s$). This proves the system is immune to Denial of Service (DoS) attacks targeting the policy validation logic.
 
 ### 2.3 Comparative Scalability Analysis
 To further validate the robustness of the MsBV+ mechanism, we compared its latency against a traditional linear Access Control List (ACL) matching approach ($O(n)$) across policy scales ranging from 10 to 1,000,000 rules.

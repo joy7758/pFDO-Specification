@@ -8,22 +8,15 @@
 
 ## Executive Summary
 
-Active FDO extends the Digital Object Interface Protocol (DOIP) with machine-actionable governance at the transport segment level under **evaluator sovereignty**: technical descriptions exhibit non-bypassability and auditability. The v1.3.0-Industrial release delivers:
-
-- **Physical O(1) determinism** at the data plane via the PE-MsBV (Priority-Encoded Multi-stage Bit Vector) **hardware-neutral pipeline**, which achieves clock-cycle determinism by **eliminating branch entropy**—a fixed-depth execution path with no data-dependent branching.
-- **RLCP (Reinforcement Learning Compliance Protocol)** as a **topology-preserving metabolic protocol** grounded in the **Fisher Information Matrix (FIM)** to identify and protect the **logical skeleton sub-manifold** of digital objects; the header’s RLCP/checksum field carries both integrity and this metabolic signalling.
-- **Progressive Convergence I/O Fingerprint** for infringement detection and hardware binding.
-- **Atomic Epoch Switch** for zero-downtime policy **arbitration** and consistency.
-
-This white paper is aligned with the reference implementation in `src/fdo_gate.py`.
+Active FDO extends the Digital Object Interface Protocol (DOIP) with machine-actionable governance at the transport segment level. The v1.3.0-Industrial architecture delivers **physical-layer O(1) determinism** via a hardware-neutral, three-stage pipeline that **eliminates data-dependent branching** (branch-entropy-free arbitration), and grounds integrity and metabolic signalling in the **Fisher Information Matrix (FIM)** through the **RLCP** (Reinforcement Learning Compliance Protocol) and the **Logical Skeleton Sub-manifold**. Terminology and behaviour are aligned with the reference implementation in `src/fdo_gate.py`.
 
 ---
 
 ## 1. Technical Specification (v1.3.0)
 
-### 1.1 Active Governance Header (16 Bytes)
+### 1.1 Active Governance Header (16 Bytes, !HIIIH)
 
-Strictly 16 bytes (128 bits), big-endian, RFC 8200–aligned. Parsed by `parse_header()` in `fdo_gate.py` with unpack format `!HIIIH`:
+Strictly 16 bytes (128 bits), big-endian, RFC 8200–aligned. Parsed by `parse_header(header_bytes)` with `struct.unpack('!HIIIH', header_bytes)`:
 
 | Offset | Field | Size | Type | Description |
 |--------|-------|------|------|-------------|
@@ -35,39 +28,35 @@ Strictly 16 bytes (128 bits), big-endian, RFC 8200–aligned. Parsed by `parse_h
 
 Dynamic unmasking: `policy_id = masked_policy_id ^ epoch`. RLCP flags: `(rlcp_checksum >> 12) & 0xF`. Checksum: `rlcp_checksum & 0xFFF`.
 
-### 1.2 RLCP and the Logical Skeleton Sub-manifold
+### 1.2 RLCP, FIM, and the Logical Skeleton Sub-manifold
 
-The **RLCP** (Reinforcement Learning Compliance Protocol) is not merely a checksum layer. It is a **topology-preserving metabolic protocol** whose theoretical foundation is the **Fisher Information Matrix (FIM)**. The FIM is used to characterize the curvature of the governance logic in parameter space; RLCP ensures that policy evolution remains within a **logical skeleton sub-manifold**—the region where the causal structure of digital object governance is preserved and where the identity and integrity of the object’s “skeleton” (minimal sufficient structure for compliance) are identifiable and protected. In the 16-byte header, the **4-bit RLCP field** reserves space for this metabolic signalling (e.g. sub-manifold state or adaptive mask hints); the **12-bit folded checksum** provides integrity over the header and payload head in a **constant-depth XOR tree**, so that verification is both physically O(1) and aligned with the RLCP requirement for fixed-complexity, non-bypassable auditability. Thus the last 16-bit word is not “just a checksum” but the encoding of **RLCP logical skeleton sub-manifold** information plus a deterministic integrity bound.
+**RLCP** (Reinforcement Learning Compliance Protocol) is a **topology-preserving metabolic protocol** whose theoretical basis is the **Fisher Information Matrix (FIM)**. The FIM characterizes the curvature of the governance logic in parameter space; RLCP constrains policy evolution to a **Logical Skeleton Sub-manifold**—the region where the causal structure of digital object governance is preserved and where the minimal sufficient structure for compliance (the “skeleton”) is identifiable and protected. In the 16-byte header, the **4-bit RLCP field** carries metabolic/sub-manifold signalling; the **12-bit folded checksum** is a **constant-depth XOR** integrity bound over the header and payload head, implemented by `calculate_folded_checksum(header_parts, payload_bytes[:2])` with result `& 0xFFF`. This design supports **branch-entropy-free** Stage 1 verification and aligns with the logical skeleton sub-manifold integrity requirement.
 
-### 1.3 Other Security Mechanisms
+### 1.3 Security Mechanisms
 
-- **Dynamic masking:** Encode `Masked_PID = Policy_ID ^ Epoch`; decode in `parse_header`. Ensures temporal unlinkability of policy identifiers.
-- **Epoch window:** ±2000 ms; reject if `abs(diff) > 2000` in `validate_segment` (replay/expiry arbitration).
-- **Folded checksum:** 12-bit XOR over header fields and first 2 bytes of payload via `calculate_folded_checksum(header_parts, payload_bytes[:2])`, result `& 0xFFF`; implementation matches the constant-depth property required for branch-entropy elimination.
+- **Dynamic masking:** `Masked_PID = Policy_ID ^ Epoch`; decode in `parse_header`.
+- **Epoch Sync:** ±2000 ms drift; reject when `abs(diff) > 2000` in `validate_segment`.
+- **Folded Checksum:** 12-bit RLCP integrity via `calculate_folded_checksum`; constant-depth, no data-dependent branches.
 
 ---
 
-## 2. PE-MsBV Pipeline: Hardware-Neutral and Branch-Entropy Elimination
+## 2. PE-MsBV: Three-Stage Hardware-Neutral Pipeline
 
-**PE-MsBV** (Priority-Encoded Multi-stage Bit Vector) is the **hardware-neutral interception pipeline** implemented as MsBV+ (Priority **Arbitration** Pipeline) using `self.msbv_table` in `fdo_gate.py`. Its specification is given in terms of bit vectors, fixed-depth lookup, and pipeline stages—**not** any specific CPU instruction set; thus it is portable across hardware and preserves **evaluator sovereignty** (auditability without vendor lock-in).
+The interception pipeline in `fdo_gate.py` is implemented by **`validate_segment(header_bytes, payload_bytes=b'')`**. It is **hardware-neutral** (specified as bit layout, fixed-depth stages, and table lookup—no CPU-specific instructions) and achieves **physical O(1) determinism** by **eliminating branch entropy**: the execution path length is fixed regardless of policy ID, policy count, or payload size.
 
-**Physical O(1) determinism** is achieved by **eliminating branch entropy**: the execution path length and the set of operations are fixed regardless of policy ID, policy count, or payload size. There are no data-dependent branches that would leak decision outcomes via timing or that would vary the cycle count. Stage 1 always performs one checksum recompute and one compare; Stage 2 always performs one epoch difference and one window compare; Stage 3 always performs one table membership test. The **arbitration** (allow/reject) is thus **deterministic** in the physical sense: same number of operations every time, so that timing side channels are suppressed and the system meets the AEP requirement for clock-cycle-level determinism.
+1. **Stage 1 — Folded Checksum (12-bit RLCP integrity):** Recompute via `calculate_folded_checksum(header_parts, payload_bytes[:2])`; compare with `header['checksum']`. Single compare; no branching on payload length beyond the fixed 2-byte head.
+2. **Stage 2 — Epoch Sync (±2000 ms drift validation):** Compute epoch difference with 32-bit wrapping; reject if `abs(diff) > 2000`. Fixed arithmetic and one comparison.
+3. **Stage 3 — PE-MsBV Lookup (branch-entropy-free O(1) arbitration):** Single membership test `policy_id in self.msbv_table` (Priority Arbitration Pipeline). Constant-time; no data-dependent branches.
 
-Three fixed stages, each O(1):
-
-1. **Stage 1 — Folded Checksum (RLCP integrity):** Recompute via `calculate_folded_checksum(header_parts, payload_bytes[:2])`; compare with `header['checksum']`. Failure → discard.
-2. **Stage 2 — Epoch Window:** Reject if `abs(diff) > 2000`; otherwise segment is within ±2000 ms validity window.
-3. **Stage 3 — PE-MsBV Policy Lookup:** Single lookup `policy_id in self.msbv_table` (Priority Arbitration Pipeline); reject if not present.
-
-Total complexity is **O(1)** with respect to policy count and payload size.
+Total complexity is **O(1)**. The following flowchart reflects the pipeline:
 
 ```mermaid
 flowchart LR
     subgraph Pipeline["v1.3.0 Validation Pipeline"]
     A[Incoming] --> B{Checksum}
-    B -- Pass --> C{EpochSync}
+    B -- Pass --> C{Epoch}
     B -- Fail --> F[Discard]
-    C -- Valid --> D{PE-MsBV}
+    C -- Valid --> D{MsBV}
     C -- Expired --> F
     D -- Match --> E[Pass]
     D -- Reject --> F
@@ -76,19 +65,19 @@ flowchart LR
 
 ### 2.1 MsBV+ Table
 
-In `fdo_gate.py`, `self.msbv_table` is the in-memory realization of the PE-MsBV table (Policy ID → security level; e.g. 0x01–0x04 → Public through Top Secret). Unregistered IDs are rejected by `validate_segment` with a deterministic message. The table supports **constant-time arbitration** and is the software analogue of a fixed-depth bit-vector or CAM lookup in hardware.
+In `fdo_gate.py`, `self.msbv_table` is the active PE-MsBV table (Policy ID → security level; e.g. 0x01–0x04). Unregistered IDs are rejected by `validate_segment` with a deterministic message. The table supports **constant-time arbitration**; updates are applied via **`atomic_epoch_switch(new_epoch_config)`** (Shadow Table and Atomic Pointer Swap).
 
 ---
 
-## 3. Progressive Convergence I/O Fingerprint
+## 3. Atomic Epoch Switch (Shadow Table and Atomic Pointer Swap)
 
-The 4-byte I/O Fingerprint field in the header binds packets to the originating hardware interface. Under AEP **Detectability**, the system SHALL provide a **Progressive Convergence I/O Fingerprint**—a detectable, non-bypassable response fingerprint derived from physical-layer or timing behaviour, converging to a stable characterization as the connection stabilizes. Validation is exercised by `scripts/test_io_fingerprint.py` (convergence assertions on noise and variance).
+The method **`atomic_epoch_switch(self, new_epoch_config=None)`** implements the Shadow Table and Atomic Pointer Swap: new policies are supplied as `new_epoch_config`; the active arbitration table is replaced atomically (in simulation, `self.msbv_table` is reassigned to the new table). Read (validation) and write (policy load) are disjoint; **zero downtime** and no branch entropy or read-write conflict during the swap.
 
 ---
 
-## 4. Atomic Epoch Switch and Consistency
+## 4. Progressive Convergence I/O Fingerprint
 
-The placeholder `atomic_epoch_switch(self, new_epoch_config=None)` in `fdo_gate.py` models the **Shadow Table** and **Atomic Pointer Swap**: (1) pre-load shadow MsBV table with the new epoch’s policies; (2) on Epoch Trigger, atomically swap the global state pointer to the shadow table; (3) zero downtime. Read (validation) and write (policy load) are disjoint; **arbitration** continues against the active table while the shadow is updated, preserving consistency and evaluator sovereignty over the transition.
+The 4-byte I/O Fingerprint field in the header binds segments to the originating hardware interface. AEP requires a **Progressive Convergence I/O Fingerprint** (detectable, non-bypassable). Validation is exercised by `scripts/test_io_fingerprint.py`.
 
 ---
 
@@ -96,14 +85,13 @@ The placeholder `atomic_epoch_switch(self, new_epoch_config=None)` in `fdo_gate.
 
 | Spec Item | fdo_gate.py | Status |
 |-----------|-------------|--------|
-| 16-byte header | `parse_header()` | OK |
-| Unpack !HIIIH | `struct.unpack('!HIIIH', header_bytes)` | OK |
+| 16-byte header !HIIIH | `parse_header()` | OK |
 | Dynamic unmasking | `policy_id = masked_policy_id ^ epoch` | OK |
 | 12-bit folded checksum (RLCP integrity) | `calculate_folded_checksum()` | OK |
-| Epoch window ±2000 ms | `abs(diff) > 2000` in `validate_segment` | OK |
+| Epoch Sync ±2000 ms | `abs(diff) > 2000` in `validate_segment` | OK |
 | PE-MsBV O(1) lookup (branch-entropy-free) | `policy_id in self.msbv_table` | OK |
 | Three-stage validation | `validate_segment()` | OK |
-| Atomic Epoch Switch | `atomic_epoch_switch(new_epoch_config=None)` | OK |
+| Shadow Table & Atomic Pointer Swap | `atomic_epoch_switch(new_epoch_config=None)` | OK |
 | I/O Fingerprint | Header field; `test_io_fingerprint.py` | OK |
 
 ---

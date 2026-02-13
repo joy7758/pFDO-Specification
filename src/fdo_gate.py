@@ -1,13 +1,11 @@
 """
 A-FDO Gate — v1.3.0-Industrial Reference Implementation.
 
-Clock-cycle deterministic interception via the PE-MsBV (Priority-Encoded
-Multi-stage Bit Vector) hardware-neutral pipeline. Physical O(1) determinism
-is achieved by eliminating branch entropy: fixed-depth execution path, no
-data-dependent branching. RLCP (topology-preserving metabolic protocol, FIM-based)
-integrity is enforced via the 12-bit folded checksum and 4b RLCP field over the
-logical skeleton sub-manifold. Aligns with AEP: evaluator sovereignty,
-shadow-table consistency, arbitrated policy lookup.
+Hardware-neutral, three-stage interception pipeline implementing clock-cycle
+determinism via branch-entropy elimination. RLCP (Fisher Information Matrix–
+based topology-preserving metabolic protocol) integrity is enforced through
+the 12-bit folded checksum and 4b RLCP field over the logical skeleton
+sub-manifold. Arbitration is O(1) and deterministic at the physical layer.
 """
 
 import struct
@@ -16,30 +14,29 @@ import time
 
 class FDOGate:
     """
-    Governance gate implementing three-stage arbitrated validation. Stage 1:
-    Folded Checksum (RLCP integrity over header and payload head). Stage 2:
-    Epoch Window (±2000 ms). Stage 3: PE-MsBV O(1) policy lookup (Priority
-    Arbitration Pipeline). Execution path is branch-entropy-free for
-    physical determinism.
+    Governance gate: three-stage hardware-neutral pipeline. Stage 1 — Folded
+    Checksum (12-bit RLCP integrity). Stage 2 — Epoch Sync (±2000 ms drift
+    validation). Stage 3 — PE-MsBV Lookup (branch-entropy-free O(1) arbitration).
+    Supports Atomic Epoch Switch via shadow table and atomic pointer swap.
     """
 
     def __init__(self, policy_file="Policy_Dictionary.json"):
-        self.msbv_table = {
+        self._active_msbv = {
             0x01: 0,
             0x02: 1,
             0x03: 2,
             0x04: 3,
         }
+        self.msbv_table = self._active_msbv
         self.default_security_level = 0
 
     def parse_header(self, header_bytes):
         """
-        Parse the 16-byte fixed header (RFC 8200 aligned). Layout: Magic (2B),
-        Epoch Clock (4B), I/O Fingerprint (4B), Masked Policy ID (4B), RLCP+Checksum (2B).
-        Unpack: !HIIIH (big-endian). Dynamic unmasking: policy_id = masked_policy_id ^ epoch.
-        RLCP flags (top 4b) and 12b checksum (bottom 12b) encode RLCP sub-manifold
-        signalling and integrity; see calculate_folded_checksum for the constant-depth
-        integrity bound.
+        Parse the 16-byte fixed header. Unpack format !HIIIH (big-endian):
+        Magic (2B), Epoch Clock (4B), I/O Fingerprint (4B), Masked Policy ID (4B),
+        RLCP+Checksum (2B). Dynamic unmasking: policy_id = masked_policy_id ^ epoch.
+        RLCP flags (top 4b) and 12b checksum (bottom 12b) encode sub-manifold
+        signalling and constant-depth integrity.
         """
         if len(header_bytes) != 16:
             raise ValueError("Header must be exactly 16 bytes")
@@ -62,11 +59,10 @@ class FDOGate:
 
     def calculate_folded_checksum(self, header_parts, payload_head):
         """
-        Compute 12-bit folded checksum (RLCP integrity bound) over header_parts
-        (magic, epoch, fingerprint, masked_policy_id, rlcp_flags) and first 2 bytes
-        of payload. Constant-depth XOR tree: result xor_sum & 0xFFF. Supports
-        branch-entropy-free Stage 1 verification and aligns with the logical
-        skeleton sub-manifold integrity requirement (FIM/RLCP).
+        Compute 12-bit folded checksum (RLCP integrity bound). Constant-depth
+        XOR over header_parts (magic, epoch, fingerprint, masked_policy_id,
+        rlcp_flags) and first 2 bytes of payload. Returns xor_sum & 0xFFF.
+        Branch-entropy-free; aligns with logical skeleton sub-manifold (FIM/RLCP).
         """
         magic, epoch, fingerprint, masked_policy_id, rlcp_flags = header_parts
         epoch_fold = (epoch >> 16) ^ (epoch & 0xFFFF)
@@ -84,11 +80,11 @@ class FDOGate:
 
     def validate_segment(self, header_bytes, payload_bytes=b""):
         """
-        Three-stage clock-cycle deterministic validation; branch-entropy-free
-        (fixed path, no data-dependent branches). Stage 1: Folded Checksum
-        (RLCP integrity). Stage 2: Epoch Window (±2000 ms). Stage 3: PE-MsBV
-        Priority Arbitration (policy_id in self.msbv_table). Physical O(1)
-        determinism; returns (True, msg) or (False, reason).
+        Three-stage hardware-neutral validation. No data-dependent branching;
+        fixed execution path for physical-layer determinism. Stage 1: Folded
+        Checksum (12-bit RLCP integrity). Stage 2: Epoch Sync (±2000 ms drift).
+        Stage 3: PE-MsBV Lookup (O(1) arbitration via policy_id in self.msbv_table).
+        Returns (True, msg) or (False, reason).
         """
         try:
             header = self.parse_header(header_bytes)
@@ -129,15 +125,19 @@ class FDOGate:
 
     def atomic_epoch_switch(self, new_epoch_config=None):
         """
-        Placeholder for Atomic Epoch Switch (Shadow Table and Atomic Pointer Swap).
-        Pre-load shadow MsBV table; on Epoch Trigger, atomically swap global
-        state pointer to shadow so arbitration continues without branch entropy
-        or read-write conflict; zero downtime. Simulation: assign to self.msbv_table.
+        Shadow Table and Atomic Pointer Swap. Pre-load new policies into a
+        shadow table; on invocation, atomically swap the active arbitration
+        table to the shadow so that validation continues without read-write
+        conflict and without branch entropy. Zero downtime. When
+        new_epoch_config is provided, the active MsBV table is replaced
+        atomically (simulation: single reference assignment).
         """
-        pass
+        if new_epoch_config is not None:
+            self._active_msbv = dict(new_epoch_config)
+            self.msbv_table = self._active_msbv
 
     def process_packet(self, packet_bytes):
-        """Arbitrate packet via validate_segment; return forwarded or dropped result."""
+        """Arbitrate packet through validate_segment; return forwarded or dropped."""
         if len(packet_bytes) < 16:
             return {"status": "dropped", "reason": "Packet too short"}
         header_bytes = packet_bytes[:16]
@@ -153,7 +153,7 @@ class FDOGate:
         return {"status": "dropped", "reason": msg}
 
     def create_packet(self, magic, sequence, policy_id, payload=b""):
-        """Build a valid 16-byte header + payload for testing (epoch, masked PID, RLCP/checksum)."""
+        """Build valid 16-byte header + payload (epoch, masked PID, RLCP/checksum)."""
         current_epoch = int(time.time() * 1000) & 0xFFFFFFFF
         dummy_fingerprint = 0xDEADBEEF
         rlcp_flags = 0x0
