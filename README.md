@@ -1,3 +1,5 @@
+# Sovereign-pFDO: Defining 1.6T Sovereignty Standardsn
+[![FDO-2026-Vienna](https://img.shields.io/badge/FDO_2026-Vienna_Presenter-green)](https://fairdo.org)n
 # Active FDO: Governance-Aware Segment Specification (v1.3.0-Industrial)
 
 **Reference Implementation for "Bridging Global Interoperability and Regional Sovereignty"**
