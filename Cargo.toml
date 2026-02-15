@@ -1,0 +1,13 @@
+[package]
+name = "pfdo_sovereign_engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+blake3 = "1.5"
+sha2 = "0.10"
+criterion = "0.5"
+
+[[bench]]
+name = "sovereign_performance"
+harness = false

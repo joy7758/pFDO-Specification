@@ -1,0 +1,39 @@
+import time
+import struct
+class FAIRValidator:
+    def __init__(self, msbv_table: dict):
+        self.msbv_table = msbv_table
+    def check_findable(self, pid: str) -> bool:
+        return pid is not None and len(pid) > 10
+    def check_accessible(self, protocol_header: dict, epoch: int) -> bool:
+        current_time = int(time.time() * 1000) & 0xFFFFFFFF
+        drift = (current_time - epoch) & 0xFFFFFFFF
+        if drift > 0x7FFFFFFF: drift -= 0x100000000
+        return abs(drift) <= 2000
+    def check_interoperable(self, attributes: dict) -> bool:
+        return "@context" in attributes or "type" in attributes
+    def check_reusable(self, policy_id: int) -> bool:
+        return policy_id in self.msbv_table
+    def validate_asset(self, pid: str, header: dict, attributes: dict) -> bool:
+        f = self.check_findable(pid)
+        a = self.check_accessible(header, header.get("epoch", 0))
+        i = self.check_interoperable(attributes)
+        r = self.check_reusable(header.get("policy_id", 0))
+        return f and a and i and r
+class ProtocolEngine:
+    def __init__(self, msbv_config: dict):
+        self.msbv_table = msbv_config
+    def arbitrate(self, header_bytes: bytes, payload_bytes: bytes = b"") -> (bool, str):
+        if len(header_bytes) != 16: return False, "Header Length Mismatch"
+        magic, epoch, fingerprint, masked_pid, rlcp_cksum = struct.unpack("!HIIIH", header_bytes)
+        policy_id = masked_pid ^ epoch
+        if policy_id not in self.msbv_table: return False, "Policy Rejection"
+        expected_cksum = self._calc_cksum(magic, epoch, fingerprint, masked_pid, rlcp_cksum >> 12, payload_bytes[:2])
+        if expected_cksum != (rlcp_cksum & 0xFFF): return False, "Integrity Failure"
+        return True, "Authorized"
+    def _calc_cksum(self, m, e, f, p, r, pay) -> int:
+        fold = m ^ (e >> 16) ^ (e & 0xFFFF) ^ (f >> 16) ^ (f & 0xFFFF) ^ (p >> 16) ^ (p & 0xFFFF) ^ (r << 12)
+        if pay:
+            val = struct.unpack("!H", pay[:2])[0] if len(pay) >= 2 else pay[0] << 8
+            fold ^= val
+        return fold & 0xFFF

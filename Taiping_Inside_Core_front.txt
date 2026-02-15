@@ -1,0 +1,23 @@
+import hashlib
+import time
+from typing import Any, Dict, Optional, Union
+from pydantic import BaseModel, Field
+def generate_protocol_pid(content: bytes, namespace: str = "21.T11966") -> str:
+    content_digest = hashlib.sha256(content).digest()
+    temporal_anchor = str(time.time_ns()).encode('utf-8')
+    raw_identity = content_digest + temporal_anchor
+    global_unique_id = hashlib.sha256(raw_identity).hexdigest()
+    return f"{namespace}/{global_unique_id}"
+class ProtocolHeader(BaseModel):
+    requestId: str = Field(..., description='Global unique request identifier')
+    clientId: str = Field(..., description='Authorized client identifier')
+    targetId: str = Field(..., description='Target digital object identifier')
+    operationId: str = Field(..., description='DOIP operation primitive')
+class DataAttributes(BaseModel):
+    record: Dict[str, Any] = Field(..., description='FDO semantic record')
+    metadata: Optional[Dict[str, Any]] = None
+    elements: Optional[list] = None
+class SemanticDescriptor(BaseModel):
+    header: ProtocolHeader
+    attributes: DataAttributes
+    authentication: Optional[Dict[str, str]] = None
