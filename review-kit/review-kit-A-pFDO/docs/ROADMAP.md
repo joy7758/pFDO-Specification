@@ -1,25 +1,13 @@
-# A-FDO Strategic Roadmap: From Research to Sovereignty
+# Project OMAP & pFDO Roadmap
 
-## Phase 1: Academic Validation (Q1 2026 - Q2 2026)
-- [x] **v1.3.0-Industrial Specification** (GitHub Deployed): Full architectural definition with O(1) arbitration.
-- [x] **Peer Review Submission**: IEEE Transactions on Network and Service Management.
-- [ ] **Peter Wittenburg Endorsement**: Direct outreach with "review-kit-A-pFDO" as physical proof of FAIR DO implementation.
+### 阶段 1: 协议建模 (2025 Q4 - 2026 Q1)
+- 完成 A-pFDO 物理层逻辑脱敏建模。
+- **[当前进度]** 发布推测性并行仲裁架构白皮书。
 
-## Phase 2: National Strategic Alignment (Q3 2026 - Q4 2026)
-### 2.1 Xiong'an 1.6T Experimental Zone
-- **Deployment Node**: Xiong'an New Area Digital Economy Cluster.
-- **Objective**: Verify A-FDO over 1.6T optical links for low-latency governance.
-- **Support**: Aligned with "Xiong'an Talent Cup" (雄才杯) innovation directives.
+### 阶段 2: 标准对齐 (2026 Q2)
+- 参加维也纳 FDO 国际会议，推动 pFDO 纳入 FDO 路线图。
+- 针对 IEEE 802.3dj 定案提交“医疗级确定性转发”技术提案。
 
-### 2.2 Medical Data Sovereignty Pilot (OMAP)
-- **Partner**: Top-tier Class 3A Hospital (Hebei/Beijing).
-- **Use Case**: Cross-institutional sharing of protected genomic data with pFDO-Inside governance.
-
-## Phase 3: Global Standardization (2027+)
-- **Standard Body**: IETF / IEEE 802.3dj Task Force.
-- **Goal**: Establish pFDO as the de-facto standard for "Governance-Aware Networking" (GAN).
-
----
-
-**Driven by: Architect Sovereignty**
-**Status: EXECUTING**
+### 阶段 3: 硬件实证 (2026 Q3)
+- 联合雄安 1.6T 实验区完成首个“全知医疗”实验室原型验证。
+- 启动 MsBV+ 硬件加速 IP 核的全球授权计划。
