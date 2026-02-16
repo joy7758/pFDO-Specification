@@ -1,0 +1,11 @@
+from __future__ import annotations
+from typing import Literal, Optional
+from pydantic import BaseModel, ConfigDict, Field
+class Output(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    message: Optional[str] = Field(None, description='A message to explain the error in more detail')
+class ERRORResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    requestId: Optional[str] = Field(None, description='requestId: the identifier of the request to which this is a response. The DOIP service must include in its response the requestId provided by the client.')
+    status: Literal['0.DOIP/Status.101', '0.DOIP/Status.102', '0.DOIP/Status.103', '0.DOIP/Status.104', '0.DOIP/Status.105', '0.DOIP/Status.200', '0.DOIP/Status.500'] = Field(..., description='status: an identifier that indicates the status of the request. Status codes shall have associated unique identifiers resolvable as specified in the IRP.')
+    output: Output

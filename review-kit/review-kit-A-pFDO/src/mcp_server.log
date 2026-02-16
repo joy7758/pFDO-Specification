@@ -1,0 +1,10 @@
+DEBUG:root:Received method: initialize
+DEBUG:root:Received method: tools/list
+DEBUG:root:Received method: tools/call
+DEBUG:root:Received method: tools/call
+INFO:root:Layer 5 Allowed: Packet accepted. Msg: Header Valid
+DEBUG:root:Received method: tools/call
+WARNING:root:Layer 5 BLOCK: Packet rejected. Reason: Checksum Mismatch: expected 0x0427, got 0x0527
+DEBUG:root:Received method: tools/call
+DEBUG:root:Received method: tools/call
+WARNING:root:Layer 5 BLOCK: Packet rejected. Reason: Policy ID 0x5 rejected by MsBV+ (Priority Arbitration Pipeline)

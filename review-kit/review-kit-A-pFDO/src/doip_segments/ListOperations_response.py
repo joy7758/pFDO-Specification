@@ -1,0 +1,8 @@
+from __future__ import annotations
+from typing import List, Literal, Optional
+from pydantic import BaseModel, ConfigDict, Field
+class ListOperationsResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    requestId: Optional[str] = Field(None, description='requestId: the identifier of the request to which this is a response. The DOIP service must include in its response the requestId provided by the client.')
+    status: Literal['0.DOIP/Status.001'] = Field(..., description='status: an identifier that indicates the status of the request. Status codes shall have associated unique identifiers resolvable as specified in the IRP.')
+    output: List[str] = Field(..., description='a serialized list of strings based on the default serialization, each of which is an operation id that the target DO supports.')
