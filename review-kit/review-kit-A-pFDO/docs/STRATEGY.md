@@ -1,4 +1,4 @@
-# Strategic Vision: The Xiongan-Europe Digital Sovereignty Bridge
+# Strategic Vision: The Xiongan-Europe Digital Autonomousty Bridge
 
 ## 1. Xiongan as the Global 1.6T Sandbox
 As Xiongan matures into a **National-level Digital Economy Experimental Zone**, it offers the world's most advanced **1.6T infrastructure**. Our vision is to transform this infrastructure into a global "Sandbox" where FAIR Digital Object (FDO) specifications can be stress-tested against extreme-scale industrial requirements.
@@ -6,7 +6,7 @@ As Xiongan matures into a **National-level Digital Economy Experimental Zone**, 
 ## 2. Bridging FAIR Standards with Industrial Scale
 While the European FDO community has built a robust theoretical framework for data FAIRness, the **Autonomous-pFDO** project provides the "Physical Hardening" required for:
 * **High-Throughput Twin Cities**: Implementing sovereignty at line-rate.
-* **Autonomous Policy Enforcement**: Moving from static metadata to active, hardware-offloaded governance.
+* **Autonomous Policy Assurance**: Moving from static metadata to active, hardware-offloaded governance.
 
 ## 3. The "Digital Safe Harbor" Initiative
 We propose the creation of a **Sino-European Digital Safe Harbor** in Xiongan. This initiative aims to:

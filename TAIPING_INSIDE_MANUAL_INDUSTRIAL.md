@@ -2,7 +2,7 @@
 
 ---
 
-## 扉页：架构主权声明 (Architect Sovereignty Declaration)
+## 扉页：架构主权声明 (Architect Autonomousty Declaration)
 
 本手册定义的 **太平 pFDO-Inside**（以下简称“本引擎”）是基于 A-FDO v1.3.0-Industrial 规范构建的工业级数据对象引擎。本引擎专为智能终端、边缘计算节点及分布式高可靠集群设计，旨在提供具备“执行主权”的底层协议栈。
 
