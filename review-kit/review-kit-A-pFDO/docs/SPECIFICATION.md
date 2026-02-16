@@ -1,27 +1,14 @@
-# A-FDO Physical Layer Specification (v1.3.0-Industrial)
+# pFDO Technical Specification v1.0 (Draft)
 
-## 1. IEEE 802.3dj Alignment: 1.6T Ethernet Governance
+## 1. 物理层封装协议 (Layer 1 Encapsulation)
+本规范定义了如何利用 224G SerDes 的原生位流进行自治对象的快速确权。
+- **特征提取**: 采用 512-bit 高海明距离容错指纹。
+- **仲裁时延**: 逻辑处理时延锁定在 **1.18μs (O(1))**。
 
-### 1.1 Latency Budget: 1.18μs Hard Limit
-A-FDO enforces a strict **1.18μs end-to-end governance latency budget** within the 1.6 Terabit Ethernet (1.6TbE) PHY layer. This figure is derived from the maximum tolerable jitter for remote robotic surgery feedback loops (haptic feedback) over metropolitan area networks.
+## 2. 临床纪元时钟 (CEC) 同步逻辑
+- **隐写位定义**: 利用标准帧间隙（IPG）中第 3-6 个空闲字符位。
+- **精度担保**: 在 1.6T 链路上实现 <5ns 的端到端同步抖动。
 
-- **Ingress Parsing**: < 200ns (Fixed-width header extraction)
-- **Arbitration (PE-MsBV)**: < 400ns (O(1) lookup via TCAM/SRAM)
-- **Egress Modification**: < 580ns (On-the-fly header rewrite)
-
-### 1.2 Inter-Packet Gap (IPG) Steganography
-To achieve **Zero-Overhead Governance**, A-FDO utilizes the standard Ethernet Inter-Packet Gap (IPG) for transmitting governance metadata.
-
-- **Mechanism**: Modulates the idle characters (/I/) in the IPG.
-- **Capacity**: Embeds 12-bit Governance Checksum + 4-bit RLCP State per packet.
-- **Compliance**: Fully compliant with IEEE 802.3 Clause 82 (64B/66B coding), ensuring compatibility with standard commodity switches while providing hidden governance channels.
-
-## 2. Temporal Anchor Precision
-- **Resolution**: 1 nanosecond (ns)
-- **Drift Tolerance**: ±2000 ms (Clinical Epoch Window)
-- **Synchronization**: PTP (IEEE 1588v2) hardware timestamping support.
-
----
-
-**Authorized by: Architect Sovereignty (Hardcore Mode)**
-**Status: LOCKED for Peer Review**
+## 3. 逻辑审计状态机
+- **状态 A (Active)**: 全线速数据转发。
+- **状态 B (Inertial)**: 逻辑越限触发，截断 Payload，锁定 10Mbps 确定性保活通道。
