@@ -1,0 +1,41 @@
+name: Verify Metadata
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Verify Critical Artifacts Existence
+        run: |
+          missing=0
+          # List of critical artifacts to verify
+          artifacts=("src/fdo_gate.py" "docs/White_Paper.md" "docs/Technical_Memo_PE-MsBV_v1.3.0.md" ".cursorrules")
+          
+          for file in "${artifacts[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Error: Critical artifact $file is missing!"
+              missing=1
+            else
+              echo "Verified: $file exists."
+            fi
+          done
+          
+          if [ $missing -eq 1 ]; then
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Verify Python Syntax
+        run: |
+          python -m compileall src/fdo_gate.py
