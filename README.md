@@ -39,7 +39,33 @@
 | **企业检测** | `http://127.0.0.1:8000/demo` | 隐私数据扫描交互式演示 |
 | **接口文档** | `http://127.0.0.1:8000/docs-cn` | 自定义中文 API 文档 |
 
-### 手动启动
+### 🛠️ 常见问题 (Troubleshooting)
+
+**Q: 遇到 Connection Refused 或端口冲突怎么办？**
+
+如果你发现服务无法启动，或提示 `Address already in use`，请按以下步骤操作：
+
+1. **检查端口占用**：查看是否有残留进程占用 8000 端口。
+   ```bash
+   lsof -i :8000
+   ```
+
+2. **强制清理**：杀掉占用进程。
+   ```bash
+   kill -9 <PID>
+   # 或者直接运行我们的清理脚本，它会自动处理
+   ./scripts/run_park.sh
+   ```
+
+3. **重新启动**：再次运行启动脚本。
+   ```bash
+   ./scripts/run_park.sh
+   ```
+
+**Q: 为什么必须用 run_park.sh？**
+我们建议所有运行操作统一通过 `./scripts/run_park.sh` 入口。该脚本集成了环境激活、端口自动释放、日志监控等逻辑，能保证服务“永不掉线”且易于调试。
+
+### 手动启动 (不推荐)
 ```bash
 python -m uvicorn product_api.app:app --reload --host 127.0.0.1 --port 8000
 ```
