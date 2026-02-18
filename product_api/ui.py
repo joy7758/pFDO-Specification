@@ -153,6 +153,7 @@ def _base_css() -> str:
             font-size: 14px;
             overflow: hidden;
             position: relative;
+            z-index: 2000;
         }
         .ticker-item {
             display: none;
@@ -174,9 +175,54 @@ def _base_css() -> str:
         .ticker-text { color: var(--text-dark); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ticker-arrow { color: var(--text-grey); margin-left: 12px; font-size: 12px; }
 
+        /* Ticker Modal */
+        .ticker-modal {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            padding: 24px;
+            z-index: 2001;
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ticker-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .ticker-modal-title { font-size: 18px; font-weight: 600; }
+        .ticker-modal-close { cursor: pointer; color: var(--text-grey); font-size: 24px; line-height: 1; }
+        .ticker-modal-content { font-size: 15px; line-height: 1.6; color: var(--text-dark); }
+        .ticker-modal-meta { margin-top: 16px; font-size: 12px; color: var(--text-grey); }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translate(-50%, -10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        
+        /* 遮罩 */
+        .ticker-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.2);
+            z-index: 2000;
+            backdrop-filter: blur(2px);
         }
     </style>
     """
@@ -207,6 +253,18 @@ def _page_layout(title: str, content: str, active_tab: str = "") -> str:
         <div id="top-ticker" class="ticker-container" style="display:none;">
             <!-- Ticker items injected here -->
         </div>
+        
+        <!-- Ticker Modal & Overlay -->
+        <div id="ticker-overlay" class="ticker-overlay" onclick="closeTickerModal()"></div>
+        <div id="ticker-modal" class="ticker-modal">
+            <div class="ticker-modal-header">
+                <div class="ticker-modal-title" id="ticker-modal-title">标题</div>
+                <div class="ticker-modal-close" onclick="closeTickerModal()">×</div>
+            </div>
+            <div class="ticker-modal-content" id="ticker-modal-body">内容</div>
+            <div class="ticker-modal-meta" id="ticker-modal-meta">来源：系统</div>
+        </div>
+
         <header>
             <a href="/" class="logo">红岩 · 园区数字合规共建平台</a>
             <nav class="nav-links">
@@ -427,26 +485,29 @@ def render_park_dashboard() -> str:
     script = """
     <script>
         // Ticker Logic
+        let tickerItems = [];
+        
         async function initTicker() {
             try {
                 const res = await fetch('/api/v1/ticker');
                 const data = await res.json();
-                const items = data.items;
-                if (!items || items.length === 0) return;
+                tickerItems = data.items;
+                if (!tickerItems || tickerItems.length === 0) return;
 
                 const container = document.getElementById('top-ticker');
                 container.style.display = 'flex';
                 
                 let html = '';
-                items.forEach((item, index) => {
+                tickerItems.forEach((item, index) => {
                     let badgeClass = 'tag-grey';
                     if (item.type === 'alert') badgeClass = 'tag-red';
                     if (item.type === 'weather') badgeClass = 'tag-blue';
                     if (item.type === 'briefing') badgeClass = 'tag-orange';
                     if (item.type === 'almanac') badgeClass = 'tag-green';
                     
+                    // On click: open modal
                     html += `
-                        <div class="ticker-item ${index === 0 ? 'active' : ''}" onclick="if('${item.link}') window.location.href='${item.link}'">
+                        <div class="ticker-item ${index === 0 ? 'active' : ''}" onclick="openTickerModal(${index})">
                             <span class="ticker-badge ${badgeClass}">${item.title}</span>
                             <span class="ticker-text">${item.summary}</span>
                             <span class="ticker-arrow">查看详情 ›</span>
@@ -455,14 +516,14 @@ def render_park_dashboard() -> str:
                 });
                 container.innerHTML = html;
 
-                // Auto rotate
+                // Auto rotate (8s)
                 let currentIndex = 0;
                 const els = container.querySelectorAll('.ticker-item');
                 let interval = setInterval(() => {
                     els[currentIndex].classList.remove('active');
                     currentIndex = (currentIndex + 1) % els.length;
                     els[currentIndex].classList.add('active');
-                }, 10000);
+                }, 8000);
 
                 // Pause on hover
                 container.addEventListener('mouseenter', () => clearInterval(interval));
@@ -471,12 +532,29 @@ def render_park_dashboard() -> str:
                         els[currentIndex].classList.remove('active');
                         currentIndex = (currentIndex + 1) % els.length;
                         els[currentIndex].classList.add('active');
-                    }, 10000);
+                    }, 8000);
                 });
 
             } catch (e) {
                 console.error("Ticker init failed", e);
             }
+        }
+        
+        function openTickerModal(index) {
+            const item = tickerItems[index];
+            if(!item) return;
+            
+            document.getElementById('ticker-modal-title').innerText = item.title;
+            document.getElementById('ticker-modal-body').innerText = item.summary; // Or item.content if available
+            document.getElementById('ticker-modal-meta').innerText = `来源：${item.source || '系统'} · ID: ${item.id}`;
+            
+            document.getElementById('ticker-overlay').style.display = 'block';
+            document.getElementById('ticker-modal').style.display = 'block';
+        }
+        
+        function closeTickerModal() {
+            document.getElementById('ticker-overlay').style.display = 'none';
+            document.getElementById('ticker-modal').style.display = 'none';
         }
         
         // Init both

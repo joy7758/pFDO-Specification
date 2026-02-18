@@ -68,13 +68,20 @@
           "priority": 95,
           "title": "园区日报",
           "summary": "今日战报：合规评分 92｜扫描 1,284｜敏感命中 23｜实时告警 2｜AQI 良｜体感 -1℃",
-          "link": "/park"
+          "link": "/park",
+          "source": "运营指挥部"
         },
         {
           "type": "alert",
           "level": "RED",
           "title": "紧急告警",
           "summary": "财务系统 发现 未脱敏手机号，请立即处置！"
+        },
+        {
+          "type": "system",
+          "level": "INFO",
+          "title": "系统状态",
+          "summary": "OA办公系统 当前状态：ONLINE (更新于 1分钟前)"
         }
       ]
     }

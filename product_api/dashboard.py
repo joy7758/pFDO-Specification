@@ -304,6 +304,22 @@ def get_ticker_items() -> List[Dict[str, Any]]:
         "source": "运营指挥部"
     })
     
+    # 5. 系统状态 (模拟变化)
+    systems = get_integrations_status()['systems']
+    if systems:
+        # 找一个最近更新的
+        sys = systems[0]
+        items.append({
+            "id": f"ticker-sys-{sys['name']}",
+            "type": "system",
+            "level": "INFO" if sys['status'] == 'ONLINE' else 'WARNING',
+            "priority": 10,
+            "title": "系统状态",
+            "summary": f"{sys['name']} 当前状态：{sys['status']} (更新于 {sys['last_sync']})",
+            "link": "/park",
+            "source": "系统监控"
+        })
+
     # 按优先级降序排序
     items.sort(key=lambda x: x['priority'], reverse=True)
     return items
