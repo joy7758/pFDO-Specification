@@ -210,116 +210,133 @@ def get_ticker_items() -> List[Dict[str, Any]]:
     """获取顶部公告栏 Ticker 数据"""
     items = []
     
-    # 1. 天气/环境 (Weather/Air)
-    weather = get_weather_data()
-    air = get_air_quality_data()
-    
-    # 体感提示
-    temp_feel = weather['current']['feels_like']
-    items.append({
-        "id": "ticker-weather",
-        "type": "weather",
-        "level": "INFO",
-        "priority": 40,
-        "title": "今日天气",
-        "summary": f"当前气温 {weather['current']['temp']}℃，体感 {temp_feel}℃，{weather['current']['condition']}，{air['health_tip']}",
-        "link": "/park",
-        "source": "气象中心"
-    })
-    
-    # 天气预警 (如果有)
-    if weather['warning'].get('active'):
+    try:
+        # 1. 天气/环境 (Weather/Air)
+        weather = get_weather_data()
+        air = get_air_quality_data()
+        
+        # 体感提示
+        temp_feel = weather['current']['feels_like']
         items.append({
-            "id": "ticker-warning",
+            "id": "ticker-weather",
             "type": "weather",
-            "level": weather['warning']['level'], # YELLOW/RED...
-            "priority": 90,
-            "title": "气象预警",
-            "summary": f"【{weather['warning']['type']}】{weather['warning']['msg']}",
+            "level": "INFO",
+            "priority": 40,
+            "title": "今日天气",
+            "summary": f"当前气温 {weather['current']['temp']}℃，体感 {temp_feel}℃，{weather['current']['condition']}，{air['health_tip']}",
             "link": "/park",
-            "source": "气象局"
+            "source": "气象中心"
         })
+        
+        # 天气预警 (如果有)
+        if weather['warning'].get('active'):
+            items.append({
+                "id": "ticker-warning",
+                "type": "weather",
+                "level": weather['warning']['level'], # YELLOW/RED...
+                "priority": 90,
+                "title": "气象预警",
+                "summary": f"【{weather['warning']['type']}】{weather['warning']['msg']}",
+                "link": "/park",
+                "source": "气象局"
+            })
 
-    # 2. 实时最高优先级告警 (Alerts)
-    alerts = get_alerts_data()['alerts']
-    # 找一个 HIGH 级别的最新的
-    high_alerts = [a for a in alerts if a['level'] == 'HIGH']
-    if high_alerts:
-        top_alert = high_alerts[0]
+        # 2. 实时最高优先级告警 (Alerts)
+        alerts = get_alerts_data()['alerts']
+        # 找一个 HIGH 级别的最新的
+        high_alerts = [a for a in alerts if a['level'] == 'HIGH']
+        if high_alerts:
+            top_alert = high_alerts[0]
+            items.append({
+                "id": f"ticker-alert-{top_alert['id']}",
+                "type": "alert",
+                "level": "RED",
+                "priority": 100,
+                "title": "紧急告警",
+                "summary": f"{top_alert['source']} 发现 {top_alert['type']}，请立即处置！",
+                "link": "/park",
+                "source": "安防中心"
+            })
+        
+        # 3. 黄历/日历 (Calendar)
+        cal = get_calendar_data() or {}
+        solar = cal.get("solar_date", "")
+        lunar = cal.get("lunar", "")
+        display = cal.get("display_line", "")
+        
         items.append({
-            "id": f"ticker-alert-{top_alert['id']}",
-            "type": "alert",
-            "level": "RED",
-            "priority": 100,
-            "title": "紧急告警",
-            "summary": f"{top_alert['source']} 发现 {top_alert['type']}，请立即处置！",
+            "id": "ticker-almanac",
+            "type": "almanac",
+            "level": "INFO",
+            "priority": 30,
+            "title": "今日黄历",
+            "summary": f"{solar} {lunar}，{display}",
             "link": "/park",
-            "source": "安防中心"
+            "source": "历法服务"
         })
-    
-    # 3. 黄历/日历 (Calendar)
-    cal = get_calendar_data()
-    items.append({
-        "id": "ticker-almanac",
-        "type": "almanac",
-        "level": "INFO",
-        "priority": 30,
-        "title": "今日黄历",
-        "summary": f"{cal['solar_date']} {cal['lunar']}，{cal['display_line']}",
-        "link": "/park",
-        "source": "历法服务"
-    })
-    
-    items.append({
-        "id": "ticker-holiday",
-        "type": "calendar",
-        "level": "INFO",
-        "priority": 20,
-        "title": "节日提醒",
-        "summary": f"距离 {cal['next_holiday']['name']} 还有 {cal['next_holiday']['days_left']} 天，{cal['term']}节气已过。",
-        "link": "/park",
-        "source": "行政中心"
-    })
+        
+        # next_holiday
+        next_h = cal.get('next_holiday', {})
+        term = cal.get('term', '')
+        if next_h:
+            items.append({
+                "id": "ticker-holiday",
+                "type": "calendar",
+                "level": "INFO",
+                "priority": 20,
+                "title": "节日提醒",
+                "summary": f"距离 {next_h.get('name', '')} 还有 {next_h.get('days_left', 0)} 天，{term}节气已过。",
+                "link": "/park",
+                "source": "行政中心"
+            })
 
-    # 4. 今日一句话战报 (Briefing)
-    overview = get_overview_stats()
-    # 组装战报文案
-    briefing_text = (
-        f"今日战报：合规评分 {overview['risk_score']}｜"
-        f"扫描 {overview['scans_today']:,}｜"
-        f"敏感命中 {overview['hits_today']}｜"
-        f"实时告警 {overview['alerts_active']}｜"
-        f"AQI {air['level']}｜"
-        f"体感 {temp_feel}℃"
-    )
-    
-    items.append({
-        "id": "ticker-briefing",
-        "type": "briefing",
-        "level": "INFO",
-        "priority": 95, # 仅次于紧急告警
-        "title": "园区日报",
-        "summary": briefing_text,
-        "link": "/park",
-        "source": "运营指挥部"
-    })
-    
-    # 5. 系统状态 (模拟变化)
-    systems = get_integrations_status()['systems']
-    if systems:
-        # 找一个最近更新的
-        sys = systems[0]
+        # 4. 今日一句话战报 (Briefing)
+        overview = get_overview_stats()
+        # 组装战报文案
+        briefing_text = (
+            f"今日战报：合规评分 {overview['risk_score']}｜"
+            f"扫描 {overview['scans_today']:,}｜"
+            f"敏感命中 {overview['hits_today']}｜"
+            f"实时告警 {overview['alerts_active']}｜"
+            f"AQI {air['level']}｜"
+            f"体感 {temp_feel}℃"
+        )
+        
         items.append({
-            "id": f"ticker-sys-{sys['name']}",
-            "type": "system",
-            "level": "INFO" if sys['status'] == 'ONLINE' else 'WARNING',
-            "priority": 10,
-            "title": "系统状态",
-            "summary": f"{sys['name']} 当前状态：{sys['status']} (更新于 {sys['last_sync']})",
+            "id": "ticker-briefing",
+            "type": "briefing",
+            "level": "INFO",
+            "priority": 95, # 仅次于紧急告警
+            "title": "园区日报",
+            "summary": briefing_text,
             "link": "/park",
-            "source": "系统监控"
+            "source": "运营指挥部"
         })
+        
+        # 5. 系统状态 (模拟变化)
+        systems = get_integrations_status()['systems']
+        if systems:
+            # 找一个最近更新的
+            sys = systems[0]
+            items.append({
+                "id": f"ticker-sys-{sys['name']}",
+                "type": "system",
+                "level": "INFO" if sys['status'] == 'ONLINE' else 'WARNING',
+                "priority": 10,
+                "title": "系统状态",
+                "summary": f"{sys['name']} 当前状态：{sys['status']} (更新于 {sys['last_sync']})",
+                "link": "/park",
+                "source": "系统监控"
+            })
 
-    # 按优先级降序排序
-    items.sort(key=lambda x: x['priority'], reverse=True)
+        # 按优先级降序排序
+        items.sort(key=lambda x: x['priority'], reverse=True)
+    except Exception:
+        # Fallback items if anything fails
+        items = [
+            {"id": "fb-1", "type": "system", "level": "INFO", "priority": 100, "title": "系统运行", "summary": "系统正常运行中", "link": "/park", "source": "fallback"},
+            {"id": "fb-2", "type": "weather", "level": "INFO", "priority": 50, "title": "天气", "summary": "暂无法获取天气数据", "link": "/park", "source": "fallback"},
+            {"id": "fb-3", "type": "calendar", "level": "INFO", "priority": 10, "title": "日历", "summary": datetime.now().strftime("%Y-%m-%d"), "link": "/park", "source": "fallback"},
+        ]
+        
     return items

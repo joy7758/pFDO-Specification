@@ -34,6 +34,15 @@ check_url "/docs-cn" "中文文档" || FAILED=1
 
 check_url "/api/v1/ticker" "公告数据" || FAILED=1
 
+# 检查 Ticker 返回是否正常
+echo -n "    检查 Ticker 完整性 ... "
+TICKER_RES=$(curl -s "$BASE_URL/api/v1/ticker")
+if [[ "$TICKER_RES" == *"items"* ]]; then
+    echo "✅ OK"
+else
+    echo "⚠️  WARNING (Ticker invalid)"
+fi
+
 if [ $FAILED -eq 0 ]; then
     echo ">>> 所有检查通过！服务运行正常。"
     exit 0

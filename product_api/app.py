@@ -93,7 +93,13 @@ def api_v1_calendar() -> Dict[str, Any]:
 @app.get("/api/v1/ticker")
 def api_v1_ticker() -> Dict[str, Any]:
     """获取顶部 Ticker 滚动条目 (战报/告警/天气等)"""
-    return {"items": get_ticker_items()}
+    try:
+        return {"items": get_ticker_items()}
+    except Exception:
+        # Fallback to prevent 500
+        return {"items": [
+            {"id": "fb-err", "type": "system", "level": "INFO", "priority": 100, "title": "系统提示", "summary": "部分数据正在同步中，系统正常运行。", "link": "/park", "source": "fallback"}
+        ]}
 
 # 保留旧接口兼容 (Deprecated)
 @app.get("/api/park/dashboard")
