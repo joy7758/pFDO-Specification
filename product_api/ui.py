@@ -80,6 +80,11 @@ def _base_css() -> str:
             flex-direction: column;
         }
         
+        /* High Level Alert Border */
+        .card.border-red {
+            border: 2px solid var(--primary-red);
+        }
+        
         /* 布局编辑模式下的卡片样式 */
         body.edit-mode .card {
             border: 2px dashed var(--primary-red);
@@ -186,6 +191,14 @@ def _base_css() -> str:
         .tag-blue { background: #E3F2FD; color: #1565C0; }
         .tag-grey { background: #EEEEEE; color: #616161; }
         .tag-purple { background: #F3E5F5; color: #7B1FA2; }
+
+        /* Gradient Text */
+        .text-gradient-green {
+            background: linear-gradient(90deg, #2E7D32, #66BB6A);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
 
         /* 代码块 */
         pre {
@@ -644,14 +657,18 @@ def render_park_dashboard() -> str:
             { id: 'card-actions', x: 0, y: 4, w: 8, h: 3 },
             { id: 'card-score', x: 8, y: 4, w: 4, h: 3 },
             
-            { id: 'card-risk-map', x: 0, y: 7, w: 6, h: 5 },
-            { id: 'card-weather', x: 6, y: 7, w: 6, h: 5 },
-            
-            { id: 'card-charts', x: 0, y: 12, w: 8, h: 5 },
-            { id: 'card-alerts', x: 8, y: 12, w: 4, h: 5 },
+            { id: 'card-must-focus', x: 0, y: 7, w: 4, h: 5 },
+            { id: 'card-behavior', x: 4, y: 7, w: 4, h: 5 },
+            { id: 'card-time-pressure', x: 8, y: 7, w: 4, h: 5 },
 
-            { id: 'card-systems', x: 0, y: 17, w: 6, h: 4 },
-            { id: 'card-plugins', x: 6, y: 17, w: 6, h: 4 }
+            { id: 'card-risk-map', x: 0, y: 12, w: 6, h: 5 },
+            { id: 'card-weather', x: 6, y: 12, w: 6, h: 5 },
+            
+            { id: 'card-charts', x: 0, y: 17, w: 8, h: 5 },
+            { id: 'card-alerts', x: 8, y: 17, w: 4, h: 5 },
+
+            { id: 'card-systems', x: 0, y: 22, w: 6, h: 4 },
+            { id: 'card-plugins', x: 6, y: 22, w: 6, h: 4 }
         ];
 
         let currentLayout = [];
@@ -664,7 +681,7 @@ def render_park_dashboard() -> str:
         });
 
         function loadLayout() {
-            const saved = localStorage.getItem('redrock_park_layout_v1');
+            const saved = localStorage.getItem('redrock_park_layout_v1_beta');
             if (saved) {
                 try {
                     currentLayout = JSON.parse(saved);
@@ -689,13 +706,13 @@ def render_park_dashboard() -> str:
         }
         
         function saveLayout() {
-            localStorage.setItem('redrock_park_layout_v1', JSON.stringify(currentLayout));
+            localStorage.setItem('redrock_park_layout_v1_beta', JSON.stringify(currentLayout));
             showToast('布局已保存');
         }
         
         function resetLayout() {
             if(confirm('确定恢复默认布局吗？')) {
-                localStorage.removeItem('redrock_park_layout_v1');
+                localStorage.removeItem('redrock_park_layout_v1_beta');
                 currentLayout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
                 applyLayout();
                 showToast('已恢复默认布局');
@@ -828,6 +845,9 @@ def render_park_dashboard() -> str:
              loadBriefing();
              loadStats();
              loadWeather();
+             loadMustFocus();
+             loadBehavior();
+             loadTimePressure();
         }
         
         async function loadActions() {
@@ -940,6 +960,84 @@ def render_park_dashboard() -> str:
              });
         }
 
+        async function loadMustFocus() {
+            try {
+                const res = await fetch('/api/v1/must-focus');
+                const data = await res.json();
+                
+                // Border Red logic
+                const card = document.getElementById('card-must-focus');
+                if (data.level === 'high') {
+                    card.classList.add('border-red');
+                } else {
+                    card.classList.remove('border-red');
+                }
+                
+                const list = document.getElementById('mf-list');
+                list.innerHTML = '';
+                
+                if (data.items.length === 0) {
+                    list.innerHTML = `<div style="color:#999; text-align:center; padding:20px;">暂无必须关注事项</div>`;
+                } else {
+                    data.items.forEach(item => {
+                       const div = document.createElement('div');
+                       div.style.marginBottom = '8px';
+                       div.style.paddingBottom = '8px';
+                       div.style.borderBottom = '1px solid #f0f0f0';
+                       
+                       let icon = item.type === 'risk' ? '⚠️' : '🔔';
+                       
+                       div.innerHTML = `
+                           <div style="font-weight:500; font-size:14px; margin-bottom:2px;">${icon} ${item.desc}</div>
+                           <div style="font-size:12px; color:#666;">${item.reason}</div>
+                       `;
+                       list.appendChild(div);
+                    });
+                }
+                document.getElementById('mf-suggestion').innerText = data.suggestion;
+                
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadBehavior() {
+            try {
+                const res = await fetch('/api/v1/behavior-stats');
+                const data = await res.json();
+                
+                document.getElementById('bh-users').innerText = data.active_users;
+                document.getElementById('bh-actions').innerText = data.actions_today;
+                document.getElementById('bh-resp').innerText = data.avg_response_time;
+                document.getElementById('bh-module').innerText = data.most_active_module;
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadTimePressure() {
+            try {
+                const res = await fetch('/api/v1/time-pressure');
+                const data = await res.json();
+                
+                const card = document.getElementById('card-time-pressure');
+                if (data.level === 'high') {
+                    card.classList.add('border-red');
+                } else {
+                    card.classList.remove('border-red');
+                }
+                
+                document.getElementById('tp-pending').innerText = data.pending_tasks;
+                document.getElementById('tp-urgent').innerText = data.urgent_tasks;
+                document.getElementById('tp-deadline').innerText = data.next_deadline;
+                
+                const badge = document.getElementById('tp-badge');
+                if (data.level === 'high' || data.level === 'medium') {
+                    badge.style.display = 'inline-block';
+                    badge.innerText = data.level === 'high' ? 'High Pressure' : 'Medium Pressure';
+                } else {
+                    badge.style.display = 'none';
+                }
+                
+            } catch(e) { console.error(e); }
+        }
+
         function showToast(msg) {
             const div = document.createElement('div');
             div.className = 'toast';
@@ -1014,6 +1112,46 @@ def render_park_dashboard() -> str:
                 <div class="resize-handle"></div>
                 <div id="risk-score" style="font-size:72px; font-weight:800; color:var(--primary-red);">--</div>
                 <div style="font-size:14px; color:var(--text-grey);">合规指数</div>
+            </div>
+
+            <!-- New: Must Focus -->
+            <div id="card-must-focus" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3 style="color:var(--primary-red);">必须关注</h3>
+                <div id="mf-list" style="flex:1; overflow-y:auto; margin-bottom:12px;">
+                    <!-- Items -->
+                </div>
+                <div id="mf-suggestion" style="font-size:12px; color:#666; background:#f9f9f9; padding:8px; border-radius:8px;"></div>
+            </div>
+
+            <!-- New: Behavior Stats -->
+            <div id="card-behavior" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3><span class="text-gradient-green">行为反馈</span></h3>
+                <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around;">
+                    <div class="list-item"><span>活跃用户</span><span id="bh-users" style="font-weight:600;">--</span></div>
+                    <div class="list-item"><span>今日操作</span><span id="bh-actions" style="font-weight:600;">--</span></div>
+                    <div class="list-item"><span>平均响应</span><span id="bh-resp" style="font-weight:600;">--</span></div>
+                    <div class="list-item"><span>热点模块</span><span id="bh-module" style="font-weight:600;">--</span></div>
+                </div>
+            </div>
+
+            <!-- New: Time Pressure -->
+            <div id="card-time-pressure" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                    <h3>时间压力</h3>
+                    <span id="tp-badge" class="tag tag-orange" style="display:none;">High</span>
+                </div>
+                <div style="text-align:center; margin-bottom:16px;">
+                    <div style="font-size:12px; color:#999;">待处理任务</div>
+                    <div id="tp-pending" style="font-size:36px; font-weight:700;">--</div>
+                </div>
+                <div class="list-item"><span>紧急任务</span><span id="tp-urgent" style="color:var(--primary-red); font-weight:600;">--</span></div>
+                <div class="list-item"><span>下个截止</span><span id="tp-deadline" style="font-size:13px;">--</span></div>
             </div>
 
             <!-- Risk Map -->

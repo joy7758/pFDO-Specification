@@ -25,7 +25,10 @@ from .dashboard import (
     get_briefing_data,
     get_actions_list,
     simulate_action_run,
-    get_risk_map
+    get_risk_map,
+    get_must_focus,
+    get_behavior_stats,
+    get_time_pressure
 )
 from .ui import (
     render_home,
@@ -135,6 +138,22 @@ def api_v1_get_layout():
 def api_v1_save_layout(layout: Dict[str, Any] = Body(...)):
     """保存用户布局 (TODO: 暂未启用后端存储)"""
     return {"success": True, "msg": "Layout saved (mock)."}
+
+@app.get("/api/v1/must-focus")
+def api_v1_must_focus() -> Dict[str, Any]:
+    """获取必须关注事项"""
+    return get_must_focus()
+
+@app.get("/api/v1/behavior-stats")
+def api_v1_behavior_stats() -> Dict[str, Any]:
+    """获取行为数据统计"""
+    return get_behavior_stats()
+
+@app.get("/api/v1/time-pressure")
+def api_v1_time_pressure() -> Dict[str, Any]:
+    """获取时间压力数据"""
+    return get_time_pressure()
+
 
 # 保留旧接口兼容 (Deprecated)
 @app.get("/api/park/dashboard")

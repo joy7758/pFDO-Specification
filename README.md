@@ -48,6 +48,7 @@
 3.  **合规总览**: 实时 PII 扫描量、敏感信息命中数、实时告警流 (Alerts Stream)。
 4.  **趋势分析**: 7 日数据合规指数与风险事件趋势图 (SVG 渲染)。
 5.  **生态集成**: 展示已接入的子系统（OA/CRM/IoT）与可扩展插件（门禁/能耗/视频）。
+6.  **行为驱动引擎**: 包含必须关注事项、用户行为统计、时间压力指数，辅助即时决策。
 
 ### 🆕 v1.1.0 新特性 (2026-02-18)
 
@@ -112,6 +113,9 @@
 - `GET /api/v1/trends`: 7日风险趋势数据
 - `GET /api/v1/alerts`: 实时风险告警流
 - `GET /api/v1/integrations`: 系统接入状态与插件列表
+- `GET /api/v1/must-focus`: 必须关注事项
+- `GET /api/v1/behavior-stats`: 行为数据统计
+- `GET /api/v1/time-pressure`: 时间压力数据
 - `GET /api/v1/actions`: 可执行操作列表 (Quick Decision)
 - `POST /api/v1/actions/{id}/run`: 模拟执行操作 (返回 JSON: success/message)
 - `GET /api/v1/risk-map`: 企业风险地图 (Risk Map, 含原因分析)

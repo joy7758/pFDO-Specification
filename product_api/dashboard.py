@@ -494,3 +494,55 @@ def get_ticker_items() -> List[Dict[str, Any]]:
         items.append(make_item(4, "灰", "系统提示", "系统运行正常", "暂无更多通知", "/park"))
 
     return items
+
+def get_must_focus() -> Dict[str, Any]:
+    """获取必须关注事项 (Must Focus)"""
+    # 聚合 High Risks 和 Alerts
+    risk_map = get_risk_map()
+    high_risks = [r for r in risk_map if r['level'] == 'high']
+    
+    alerts_data = get_alerts_data()
+    high_alerts = [a for a in alerts_data.get('alerts', []) if a['level'] == 'HIGH']
+    
+    total = len(high_risks) + len(high_alerts)
+    level = "high" if total > 0 else "low"
+    
+    items = []
+    for r in high_risks:
+        items.append({"type": "risk", "desc": r['name'], "reason": r['reason']})
+    for a in high_alerts:
+        items.append({"type": "alert", "desc": a['type'], "reason": a['msg']})
+        
+    return {
+        "count": total,
+        "level": level,
+        "items": items[:5], # Limit
+        "suggestion": "请立即处理以上高风险项，避免合规事故扩散。" if total > 0 else "当前无必须关注的高风险项。"
+    }
+
+def get_behavior_stats() -> Dict[str, Any]:
+    """获取行为数据统计 (Behavior Stats)"""
+    # 模拟用户行为数据
+    return {
+        "active_users": random.randint(50, 200),
+        "actions_today": random.randint(500, 2000),
+        "avg_response_time": f"{random.randint(100, 500)}ms",
+        "most_active_module": random.choice(["数据扫描", "报表下载", "告警处置", "日志查询"]),
+        "compliance_trend": "rising" # rising, falling, flat
+    }
+
+def get_time_pressure() -> Dict[str, Any]:
+    """获取时间压力数据 (Time Pressure)"""
+    # 模拟任务截止压力
+    pending_tasks = random.randint(3, 15)
+    urgent_tasks = random.randint(0, 5)
+    
+    level = "high" if urgent_tasks > 3 else ("medium" if urgent_tasks > 0 else "low")
+    
+    return {
+        "pending_tasks": pending_tasks,
+        "urgent_tasks": urgent_tasks,
+        "next_deadline": (datetime.now() + timedelta(hours=random.randint(1, 48))).strftime("%m-%d %H:%M"),
+        "level": level,
+        "pressure_score": random.randint(40, 90) # 0-100
+    }

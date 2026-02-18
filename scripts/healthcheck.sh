@@ -44,6 +44,11 @@ check_url "/api/v1/weather" "天气数据" || FAILED=1
 check_url "/api/v1/air" "空气质量" || FAILED=1
 check_url "/api/v1/calendar" "日历黄历" || FAILED=1
 
+# 行为驱动引擎检查
+check_url "/api/v1/must-focus" "必须关注" || FAILED=1
+check_url "/api/v1/behavior-stats" "行为统计" || FAILED=1
+check_url "/api/v1/time-pressure" "时间压力" || FAILED=1
+
 # 检查 Actions 返回
 echo -n "    检查 Actions 列表 ... "
 ACT_RES=$(curl -s "$BASE_URL/api/v1/actions")
