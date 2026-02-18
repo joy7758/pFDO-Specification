@@ -63,6 +63,8 @@ check_url "/api/v1/risk-model" "风险模型定义" || FAILED=1
 check_url "/api/v1/narrative/status" "叙事引擎状态" || FAILED=1
 check_url "/api/v1/narrative/series" "叙事趋势序列" || FAILED=1
 check_url "/api/v1/narrative/summary" "叙事摘要" || FAILED=1
+check_url "/api/v1/ingest/status" "抄送接入状态" || FAILED=1
+check_url "/api/v1/ingest/recent" "抄送最近文件" || FAILED=1
 
 # 检查操作列表返回
 echo -n "    检查操作列表结构 ... "
@@ -120,6 +122,22 @@ if [ "$VALID_NAR_SUMMARY" == "OK" ]; then
 else
     echo "❌ 失败（叙事摘要结构或协议不合法）"
     echo "    返回内容: $NAR_SUMMARY_RES"
+    FAILED=1
+fi
+
+echo -n "    校验抄送状态字段 (watch_dir) ... "
+if curl -sf "$BASE_URL/api/v1/ingest/status" | grep -q "watch_dir"; then
+    echo "✅ 通过"
+else
+    echo "❌ 失败（抄送状态缺少 watch_dir）"
+    FAILED=1
+fi
+
+echo -n "    校验抄送列表字段 (recent) ... "
+if curl -sf "$BASE_URL/api/v1/ingest/recent" | grep -q "recent"; then
+    echo "✅ 通过"
+else
+    echo "❌ 失败（抄送列表缺少 recent）"
     FAILED=1
 fi
 

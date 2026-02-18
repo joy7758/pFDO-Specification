@@ -26,6 +26,7 @@ from .narrative import (
     narrative_summary,
     get_narrative_status_data
 )
+from .ingest import get_status as get_ingest_status
 
 # 获取上传目录路径（与 app.py 保持一致）
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
@@ -154,6 +155,9 @@ def get_overview_stats() -> Dict[str, Any]:
     
     ver = NARRATIVE_VERSION if is_simulation_mode() else ENGINE_VERSION
 
+    ingest_summary = get_ingest_status()
+    ingest_counters = ingest_summary.get("counters", {})
+
     return {
         "park_name": "红岩 · 数字化示范园区",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -166,7 +170,15 @@ def get_overview_stats() -> Dict[str, Any]:
         "handled_rate": "98.5%",
         "scans_today": risk_data.get('scans_today', 128 + random.randint(0, 50)),
         "hits_today": risk_data['hits_today'],
-        "alerts_active": risk_data['alerts_active']
+        "alerts_active": risk_data['alerts_active'],
+        "ingest": {
+            "watch_dir": ingest_summary.get("watch_dir", ""),
+            "running": ingest_summary.get("runtime", {}).get("running", False),
+            "today_seen": ingest_counters.get("today_seen", 0),
+            "today_processed": ingest_counters.get("today_processed", 0),
+            "today_failed": ingest_counters.get("today_failed", 0),
+            "today_pii_hits": ingest_counters.get("today_pii_hits", 0),
+        }
     }
 
 

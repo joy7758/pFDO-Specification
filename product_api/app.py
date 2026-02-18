@@ -48,6 +48,13 @@ from .ui import (
     render_docs_cn
 )
 from .risk_api import router as risk_router
+from .ingest import (
+    start_background_poller,
+    get_status as get_ingest_status,
+    get_recent as get_ingest_recent,
+    scan_now as ingest_scan_now,
+    demo_dropfile as ingest_demo_dropfile,
+)
 
 # 禁用默认文档
 app = FastAPI(
@@ -87,6 +94,15 @@ async def set_sim_context(request: Request):
 # Global dependency is easiest for this use case.
 # Note: This will run for all requests.
 app.router.dependencies.append(Depends(set_sim_context))
+
+
+@app.on_event("startup")
+async def startup_ingest_worker():
+    # 启动后台抄送轮询线程，不影响主服务启动
+    try:
+        start_background_poller()
+    except Exception:
+        traceback.print_exc()
 
 
 @app.get("/health")
@@ -208,6 +224,48 @@ def api_v1_streak() -> Dict[str, Any]:
 def api_v1_risk_model() -> Dict[str, Any]:
     """获取当前生效的风险评分模型元数据"""
     return get_risk_model()
+
+
+# --- Ingest APIs ---
+
+@app.get("/api/v1/ingest/status")
+def api_v1_ingest_status() -> Dict[str, Any]:
+    """获取抄送接入状态"""
+    try:
+        return get_ingest_status()
+    except Exception as e:
+        traceback.print_exc()
+        return {"error": str(e), "watch_dir": "", "recent_count": 0, "runtime": {}, "counters": {}}
+
+
+@app.get("/api/v1/ingest/recent")
+def api_v1_ingest_recent() -> Dict[str, Any]:
+    """获取最近接入文件列表"""
+    try:
+        return get_ingest_recent()
+    except Exception as e:
+        traceback.print_exc()
+        return {"error": str(e), "recent": []}
+
+
+@app.post("/api/v1/ingest/scan-now")
+def api_v1_ingest_scan_now() -> Dict[str, Any]:
+    """立即执行一次抄送扫描"""
+    try:
+        return ingest_scan_now()
+    except Exception as e:
+        traceback.print_exc()
+        return {"ok": False, "message": f"扫描执行异常：{e}"}
+
+
+@app.post("/api/v1/ingest/demo-dropfile")
+def api_v1_ingest_demo_dropfile() -> Dict[str, Any]:
+    """写入示例文件并立即扫描"""
+    try:
+        return ingest_demo_dropfile()
+    except Exception as e:
+        traceback.print_exc()
+        return {"ok": False, "message": f"示例写入异常：{e}"}
 
 
 # --- Narrative Engine APIs (New) ---

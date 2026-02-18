@@ -793,7 +793,12 @@ def render_park_dashboard() -> str:
             { id: 'card-alerts', x: 8, y: 20, w: 4, h: 5 },
 
             { id: 'card-systems', x: 0, y: 25, w: 6, h: 4 },
-            { id: 'card-plugins', x: 6, y: 25, w: 6, h: 4 }
+            { id: 'card-plugins', x: 6, y: 25, w: 6, h: 4 },
+
+            { id: 'card-ingest-status', x: 0, y: 29, w: 3, h: 4 },
+            { id: 'card-ingest-stats', x: 3, y: 29, w: 3, h: 4 },
+            { id: 'card-ingest-recent', x: 6, y: 29, w: 6, h: 4 },
+            { id: 'card-ingest-actions', x: 0, y: 33, w: 12, h: 3 }
         ];
 
         let currentLayout = [];
@@ -980,6 +985,8 @@ def render_park_dashboard() -> str:
              loadStreakStats();
              loadNarrativeSummary(); // New
              loadTrends(); // Updated for charts
+             loadIngestStatus();
+             loadIngestRecent();
         }
         
         async function loadNarrativeStatus() {
@@ -1379,6 +1386,88 @@ def render_park_dashboard() -> str:
             } catch(e) { console.error(e); }
         }
 
+        function fmtTimeOrDash(val) {
+            if (!val) return '--';
+            const t = String(val).replace('T', ' ');
+            return t.length > 19 ? t.slice(0, 19) : t;
+        }
+
+        async function loadIngestStatus() {
+            try {
+                const res = await fetch('/api/v1/ingest/status');
+                const data = await res.json();
+                const cfg = data.config || {};
+                const rt = data.runtime || {};
+                const ct = data.counters || {};
+
+                document.getElementById('ing-watch-dir').innerText = cfg.watch_dir || '--';
+                document.getElementById('ing-poll').innerText = (cfg.poll_seconds || '--') + ' 秒';
+                document.getElementById('ing-last-scan').innerText = fmtTimeOrDash(rt.last_scan_at);
+                document.getElementById('ing-running').innerText = rt.running ? '运行中' : '空闲';
+                document.getElementById('ing-running').style.color = rt.running ? '#2E7D32' : '#666';
+
+                document.getElementById('ing-today-seen').innerText = ct.today_seen ?? 0;
+                document.getElementById('ing-processed').innerText = ct.processed ?? 0;
+                document.getElementById('ing-failed').innerText = ct.failed ?? 0;
+                document.getElementById('ing-pii').innerText = ct.pii_hits ?? 0;
+            } catch(e) { console.error(e); }
+        }
+
+        function renderIngestRecent(rows) {
+            const tbody = document.getElementById('ing-recent-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if(!rows || rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:12px;">暂无接入文件</td></tr>';
+                return;
+            }
+            rows.slice(0, 8).forEach(r => {
+                const tr = document.createElement('tr');
+                const okText = r.ok ? '成功' : '失败';
+                const okColor = r.ok ? '#2E7D32' : '#C62828';
+                const hits = (r.pii_summary?.phones_found || 0) + (r.pii_summary?.emails_found || 0) + (r.pii_summary?.id18_found || 0);
+                tr.innerHTML = `
+                    <td style="padding:6px 8px; border-bottom:1px solid #f2f2f2; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.filename || '--'}</td>
+                    <td style="padding:6px 8px; border-bottom:1px solid #f2f2f2;">${fmtTimeOrDash(r.processed_at)}</td>
+                    <td style="padding:6px 8px; border-bottom:1px solid #f2f2f2; color:${okColor}; font-weight:600;">${okText}</td>
+                    <td style="padding:6px 8px; border-bottom:1px solid #f2f2f2;">${hits}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadIngestRecent() {
+            try {
+                const res = await fetch('/api/v1/ingest/recent');
+                const data = await res.json();
+                renderIngestRecent(data.recent || []);
+            } catch(e) { console.error(e); }
+        }
+
+        async function ingestScanNow() {
+            try {
+                const res = await fetch('/api/v1/ingest/scan-now', { method: 'POST' });
+                const data = await res.json();
+                showToast(data.message || '立即扫描已执行');
+                await loadIngestStatus();
+                await loadIngestRecent();
+            } catch(e) {
+                showToast('立即扫描请求失败');
+            }
+        }
+
+        async function ingestDemoDropfile() {
+            try {
+                const res = await fetch('/api/v1/ingest/demo-dropfile', { method: 'POST' });
+                const data = await res.json();
+                showToast(data.message || '示例文件已写入');
+                await loadIngestStatus();
+                await loadIngestRecent();
+            } catch(e) {
+                showToast('示例写入失败');
+            }
+        }
+
         function showToast(msg) {
             const div = document.createElement('div');
             div.className = 'toast';
@@ -1656,6 +1745,70 @@ def render_park_dashboard() -> str:
                 <div>
                     <span class="tag tag-grey">+ 门禁</span>
                     <span class="tag tag-grey">+ 财务</span>
+                </div>
+            </div>
+
+            <!-- Ingest Status -->
+            <div id="card-ingest-status" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3>数据接入状态</h3>
+                <div style="font-size:12px; color:#999; margin-bottom:8px;">旁路抄送运行信息</div>
+                <div class="list-item"><span>接入目录</span><span id="ing-watch-dir" style="font-size:12px; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span></div>
+                <div class="list-item"><span>轮询周期</span><span id="ing-poll">--</span></div>
+                <div class="list-item"><span>上次扫描</span><span id="ing-last-scan">--</span></div>
+                <div class="list-item"><span>运行状态</span><span id="ing-running">--</span></div>
+            </div>
+
+            <!-- Ingest Stats -->
+            <div id="card-ingest-stats" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3>接入统计</h3>
+                <div style="font-size:12px; color:#999; margin-bottom:8px;">当日与累计处理概览</div>
+                <div class="list-item"><span>今日新增</span><span id="ing-today-seen" style="font-weight:600;">0</span></div>
+                <div class="list-item"><span>已处理总数</span><span id="ing-processed" style="font-weight:600;">0</span></div>
+                <div class="list-item"><span>失败总数</span><span id="ing-failed" style="font-weight:600; color:#C62828;">0</span></div>
+                <div class="list-item"><span>敏感命中总数</span><span id="ing-pii" style="font-weight:600; color:#1565C0;">0</span></div>
+            </div>
+
+            <!-- Ingest Recent Files -->
+            <div id="card-ingest-recent" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3>最近接入文件</h3>
+                <div style="font-size:12px; color:#999; margin-bottom:8px;">最近文件处理记录（最新优先）</div>
+                <div style="overflow:auto; flex:1;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead>
+                            <tr style="text-align:left; color:#666;">
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">文件名</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">处理时间</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">结果</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">命中数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ing-recent-body">
+                            <tr><td colspan="4" style="padding:12px; color:#999; text-align:center;">正在加载...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Ingest Actions -->
+            <div id="card-ingest-actions" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="margin:0;">一键演示</h3>
+                    <span class="tag tag-purple">旁路抄送</span>
+                </div>
+                <div style="font-size:13px; color:#666; margin-bottom:12px;">
+                    可离线演示：先写入示例文件，再立即扫描并刷新列表。
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="ingestScanNow()">立即扫描</button>
+                    <button class="btn btn-primary" onclick="ingestDemoDropfile()">写入示例文件并扫描</button>
                 </div>
             </div>
 
