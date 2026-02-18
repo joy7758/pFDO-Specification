@@ -225,6 +225,70 @@ def get_calendar_data() -> Dict[str, Any]:
         "display_line": display_line
     }
 
+def get_briefing_data() -> Dict[str, Any]:
+    """获取每日运营简报 (Briefing)"""
+    try:
+        # 1. 获取基础数据
+        overview = get_overview_stats()
+        trends = get_trends_data()
+        alerts_data = get_alerts_data()
+        
+        # 2. 计算 KPIs
+        kpis = [
+            {"label": "今日扫描", "value": f"{overview.get('scans_today', 0):,}", "unit": "次", "color": "blue"},
+            {"label": "敏感命中", "value": f"{overview.get('hits_today', 0):,}", "unit": "条", "color": "orange"},
+            {"label": "实时告警", "value": overview.get('alerts_active', 0), "unit": "个", "color": "red"},
+            {"label": "合规评分", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
+            {"label": "自动处理", "value": overview.get('handled_rate', '0%'), "unit": "", "color": "grey"}
+        ]
+        
+        # 3. 生成 Summary
+        score = overview.get('risk_score', 0)
+        scan_vol = overview.get('scans_today', 0)
+        hits = overview.get('hits_today', 0)
+        active_alerts = overview.get('alerts_active', 0)
+        
+        summary = f"今日合规评分 {score}，累计扫描 {scan_vol} 次。发现 {hits} 条敏感数据，当前 {active_alerts} 个待处理告警，系统整体运行平稳。"
+        
+        # 4. 生成 Suggestion
+        if score >= 90:
+            suggestion = "✅ 园区数据安全状况良好，请继续保持常态化监控，建议定期复查自动处置策略的有效性。"
+            status_level = "low"
+        elif score >= 80:
+            suggestion = "⚠️ 存在少量合规风险，建议重点关注财务与客户管理系统的敏感数据传输，及时清理未脱敏文档。"
+            status_level = "medium"
+        else:
+            suggestion = "🚨 风险指数较高！请立即检查高频告警源，建议启动应急响应流程并对关键系统进行全面审计。"
+            status_level = "high"
+            
+        # 5. Links
+        links = [
+            {"text": "查看告警", "url": "/park#alert-list", "type": "danger" if active_alerts > 0 else "default"},
+            {"text": "查看趋势", "url": "/park#chart-scan", "type": "primary"},
+            {"text": "系统接入", "url": "/park#sys-list", "type": "default"}
+        ]
+
+        return {
+            "title": "每日运营简报",
+            "date": datetime.now().strftime("%Y年%m月%d日"),
+            "summary": summary,
+            "suggestion": suggestion,
+            "status_level": status_level,
+            "kpis": kpis,
+            "links": links
+        }
+    except Exception as e:
+        # Fallback
+        return {
+            "title": "每日运营简报",
+            "date": datetime.now().strftime("%Y年%m月%d日"),
+            "summary": "数据同步中，请稍后查看...",
+            "suggestion": "系统正在初始化，请保持网络连接畅通。",
+            "status_level": "low",
+            "kpis": [],
+            "links": []
+        }
+
 def get_ticker_items() -> List[Dict[str, Any]]:
     """获取顶部公告栏 Ticker 数据"""
     items = []

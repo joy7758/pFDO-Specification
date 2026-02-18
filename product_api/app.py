@@ -21,7 +21,8 @@ from .dashboard import (
     get_air_quality_data,
     get_integrations_status,
     get_calendar_data,
-    get_ticker_items
+    get_ticker_items,
+    get_briefing_data
 )
 from .ui import (
     render_home,
@@ -100,6 +101,11 @@ def api_v1_ticker() -> Dict[str, Any]:
         return {"items": [
             {"id": "fb-err", "type": "system", "level": "INFO", "priority": 100, "title": "系统提示", "summary": "部分数据正在同步中，系统正常运行。", "link": "/park", "source": "fallback"}
         ]}
+
+@app.get("/api/v1/briefing")
+def api_v1_briefing() -> Dict[str, Any]:
+    """获取每日运营简报"""
+    return get_briefing_data()
 
 # 保留旧接口兼容 (Deprecated)
 @app.get("/api/park/dashboard")

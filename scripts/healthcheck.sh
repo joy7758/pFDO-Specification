@@ -33,6 +33,7 @@ check_url "/park" "园区大屏" || FAILED=1
 check_url "/docs-cn" "中文文档" || FAILED=1
 
 check_url "/api/v1/ticker" "公告数据" || FAILED=1
+check_url "/api/v1/briefing" "运营简报" || FAILED=1
 check_url "/api/v1/overview" "概览数据" || FAILED=1
 check_url "/api/v1/trends" "趋势数据" || FAILED=1
 check_url "/api/v1/alerts" "告警数据" || FAILED=1

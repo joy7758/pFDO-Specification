@@ -605,8 +605,75 @@ def render_park_dashboard() -> str:
              return map[code] || '🌥️';
         }
 
+        async function initBriefing() {
+            try {
+                const res = await fetch('/api/v1/briefing');
+                const data = await res.json();
+                
+                document.getElementById('br-title').innerText = data.title;
+                document.getElementById('br-date').innerText = data.date;
+                document.getElementById('br-summary').innerText = data.summary;
+                document.getElementById('br-suggestion').innerText = data.suggestion;
+                
+                // Color code the card border based on status
+                const card = document.getElementById('briefing-card');
+                if(data.status_level === 'high') card.style.borderLeftColor = '#D32F2F'; // Red
+                else if(data.status_level === 'medium') card.style.borderLeftColor = '#EF6C00'; // Orange
+                else card.style.borderLeftColor = '#2E7D32'; // Green
+
+                // KPIs
+                const kpiContainer = document.getElementById('br-kpis');
+                kpiContainer.innerHTML = '';
+                data.kpis.forEach(k => {
+                    let color = '#555';
+                    if(k.color === 'red') color = '#D32F2F';
+                    if(k.color === 'green') color = '#2E7D32';
+                    if(k.color === 'blue') color = '#1976D2';
+                    if(k.color === 'orange') color = '#EF6C00';
+                    
+                    const div = document.createElement('div');
+                    div.style.textAlign = 'center';
+                    div.innerHTML = `
+                        <div style="font-size:12px; color:#888;">${k.label}</div>
+                        <div style="font-size:18px; font-weight:600; color:${color};">${k.value}<span style="font-size:12px; margin-left:2px;">${k.unit}</span></div>
+                    `;
+                    kpiContainer.appendChild(div);
+                });
+                
+                // Actions
+                const actContainer = document.getElementById('br-actions');
+                actContainer.innerHTML = '';
+                data.links.forEach(link => {
+                     const a = document.createElement('a');
+                     a.href = link.url;
+                     a.innerText = link.text;
+                     a.className = 'btn';
+                     a.style.padding = '6px 16px';
+                     a.style.fontSize = '13px';
+                     
+                     if(link.type === 'danger') {
+                         a.style.backgroundColor = '#FFEBEE';
+                         a.style.color = '#C62828';
+                     } else if(link.type === 'primary') {
+                         a.style.backgroundColor = '#E3F2FD';
+                         a.style.color = '#1565C0';
+                     } else {
+                         a.style.backgroundColor = '#F5F5F7';
+                         a.style.color = '#333';
+                     }
+                     actContainer.appendChild(a);
+                });
+                
+            } catch(e) {
+                console.error("Briefing init error:", e);
+            }
+        }
+
         async function initDashboard() {
             try {
+                // 0. Briefing
+                initBriefing();
+
                 // 1. 获取 Overview
                 const overviewRes = await fetch('/api/v1/overview');
                 const overview = await overviewRes.json();
@@ -861,6 +928,30 @@ def render_park_dashboard() -> str:
             <div style="text-align: right;">
                 <div id="clock-time" style="font-size: 36px; font-weight: 700; font-family: monospace; line-height: 1;">--:--:--</div>
                 <div id="cal-lunar" style="color:var(--text-grey); font-size:14px; margin-top:4px;">--</div>
+            </div>
+        </div>
+
+        <!-- Row Briefing -->
+        <div id="briefing-card" class="card" style="margin-bottom: 20px; border-left: 4px solid var(--primary-red); padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1; padding-right: 40px;">
+                     <h2 style="font-size: 20px; margin-bottom: 12px; display:flex; align-items:center;">
+                        <span style="margin-right:8px;">📋</span> <span id="br-title">每日运营简报</span>
+                        <span class="tag tag-grey" style="margin-left:12px; font-weight:normal; font-size:12px;" id="br-date">--</span>
+                     </h2>
+                     <p style="font-size: 15px; color: var(--text-dark); margin-bottom: 16px; line-height: 1.6;" id="br-summary">数据加载中...</p>
+                     <div style="background: #F9F9F9; padding: 12px 16px; border-radius: 8px; font-size: 14px; color: #555; display:inline-block; width: 100%;">
+                         <span style="font-weight:600; color: var(--text-dark);">💡 指挥建议：</span> <span id="br-suggestion">--</span>
+                     </div>
+                </div>
+                <div style="text-align: right; min-width: 300px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px;">
+                     <div style="display: flex; gap: 12px; justify-content: flex-end;" id="br-actions">
+                         <!-- Actions -->
+                     </div>
+                     <div style="display: flex; gap: 24px; justify-content: flex-end;" id="br-kpis">
+                         <!-- KPIs -->
+                     </div>
+                </div>
             </div>
         </div>
 
