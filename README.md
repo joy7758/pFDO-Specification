@@ -49,6 +49,15 @@
 4.  **趋势分析**: 7 日数据合规指数与风险事件趋势图 (SVG 渲染)。
 5.  **生态集成**: 展示已接入的子系统（OA/CRM/IoT）与可扩展插件（门禁/能耗/视频）。
 
+### 🆕 v1.1.0 新特性 (2026-02-18)
+
+1.  **快速决策中心 (Quick Decision)**: 在大屏直接执行高频运维操作（全园扫描、一键阻断、报表生成等），支持模拟执行反馈。
+2.  **企业风险地图 (Risk Map)**: 可视化展示企业级风险分布，支持按风险等级（高/中/低）过滤与详情展开。
+3.  **可编辑大屏 (Editable Layout)**: 
+    - 支持拖拽 (Drag) 与缩放 (Resize) 布局。
+    - 本地持久化存储 (LocalStorage)，支持一键恢复默认布局。
+4.  **每日必须关注 (Must Focus)**: 每日简报智能聚合高风险项，点击一键跳转处理。
+
 ### 🔌 API 接口列表
 
 系统提供标准的 RESTful API 供前端与第三方系统调用：
@@ -102,6 +111,9 @@
 - `GET /api/v1/trends`: 7日风险趋势数据
 - `GET /api/v1/alerts`: 实时风险告警流
 - `GET /api/v1/integrations`: 系统接入状态与插件列表
+- `GET /api/v1/actions`: 可执行操作列表 (Quick Decision)
+- `POST /api/v1/actions/{id}/run`: 模拟执行操作 (返回 JSON: success/message)
+- `GET /api/v1/risk-map`: 企业风险地图 (Risk Map, 含原因分析)
 - `POST /scan/pii`: 敏感数据检测接口
 
 ### 🛠️ 常见问题 (Troubleshooting)

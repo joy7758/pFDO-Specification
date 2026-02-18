@@ -38,9 +38,21 @@ check_url "/api/v1/overview" "概览数据" || FAILED=1
 check_url "/api/v1/trends" "趋势数据" || FAILED=1
 check_url "/api/v1/alerts" "告警数据" || FAILED=1
 check_url "/api/v1/integrations" "集成状态" || FAILED=1
+check_url "/api/v1/actions" "操作列表" || FAILED=1
+check_url "/api/v1/risk-map" "风险地图" || FAILED=1
 check_url "/api/v1/weather" "天气数据" || FAILED=1
 check_url "/api/v1/air" "空气质量" || FAILED=1
 check_url "/api/v1/calendar" "日历黄历" || FAILED=1
+
+# 检查 Actions 返回
+echo -n "    检查 Actions 列表 ... "
+ACT_RES=$(curl -s "$BASE_URL/api/v1/actions")
+if [[ "$ACT_RES" == *"actions"* ]]; then
+    echo "✅ OK"
+else
+    echo "⚠️  WARNING (Actions list missing)"
+    FAILED=1
+fi
 
 # 检查 Ticker 返回是否正常
 echo -n "    检查 Ticker 完整性 ... "

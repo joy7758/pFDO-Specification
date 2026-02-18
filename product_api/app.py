@@ -6,7 +6,7 @@ import shutil
 import json
 from typing import Dict, List, Any
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
@@ -22,7 +22,10 @@ from .dashboard import (
     get_integrations_status,
     get_calendar_data,
     get_ticker_items,
-    get_briefing_data
+    get_briefing_data,
+    get_actions_list,
+    simulate_action_run,
+    get_risk_map
 )
 from .ui import (
     render_home,
@@ -106,6 +109,31 @@ def api_v1_ticker() -> Dict[str, Any]:
 def api_v1_briefing() -> Dict[str, Any]:
     """获取每日运营简报"""
     return get_briefing_data()
+
+@app.get("/api/v1/actions")
+def api_v1_actions() -> Dict[str, Any]:
+    """获取可执行操作列表"""
+    return {"actions": get_actions_list()}
+
+@app.post("/api/v1/actions/{action_id}/run")
+def api_v1_run_action(action_id: str) -> Dict[str, Any]:
+    """执行操作"""
+    return simulate_action_run(action_id)
+
+@app.get("/api/v1/risk-map")
+def api_v1_risk_map() -> Dict[str, Any]:
+    """获取企业风险地图"""
+    return {"risks": get_risk_map()}
+
+@app.get("/api/v1/layout")
+def api_v1_get_layout():
+    """获取用户布局 (TODO: 暂未启用后端存储，返回默认标识)"""
+    return {"layout": "default", "msg": "Layout persistence is client-side only for now."}
+
+@app.post("/api/v1/layout")
+def api_v1_save_layout(layout: Dict[str, Any] = Body(...)):
+    """保存用户布局 (TODO: 暂未启用后端存储)"""
+    return {"success": True, "msg": "Layout saved (mock)."}
 
 # 保留旧接口兼容 (Deprecated)
 @app.get("/api/park/dashboard")

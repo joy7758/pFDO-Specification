@@ -225,6 +225,48 @@ def get_calendar_data() -> Dict[str, Any]:
         "display_line": display_line
     }
 
+def get_risk_map() -> List[Dict[str, Any]]:
+    """获取企业风险地图"""
+    risks = [
+        {"name": "供应链数据泄露风险", "level": "high", "reason": "监测到上游供应商接口存在明文传输"},
+        {"name": "员工账号异常登录", "level": "high", "reason": "短时间内跨省登录 IP 异常"},
+        {"name": "财务报表敏感词命中", "level": "mid", "reason": "年度财报草稿中包含未脱敏薪资数据"},
+        {"name": "访客系统权限过大", "level": "low", "reason": "临时访客账号具备部分内网访问权限"},
+        {"name": "过期文档未清理", "level": "low", "reason": "共享盘存在超过 3 年的废弃合同扫描件"}
+    ]
+    return risks
+
+def get_actions_list() -> List[Dict[str, Any]]:
+    """获取可执行操作列表"""
+    return [
+        {"id": "act_001", "name": "全园扫描", "description": "立即启动全量数据合规扫描", "status": "ready"},
+        {"id": "act_002", "name": "一键阻断", "description": "阻断所有高风险外部连接", "status": "ready"},
+        {"id": "act_003", "name": "生成报表", "description": "生成并发送今日合规日报", "status": "processing"},
+        {"id": "act_004", "name": "清除缓存", "description": "清理系统临时文件与缓存", "status": "ready"}
+    ]
+
+def simulate_action_run(action_id: str) -> Dict[str, Any]:
+    """模拟执行操作"""
+    # 模拟耗时
+    time.sleep(0.5) 
+    actions = get_actions_list()
+    action = next((a for a in actions if a["id"] == action_id), None)
+    
+    if not action:
+         return {
+            "success": False,
+            "id": action_id,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "message": "操作不存在"
+        }
+        
+    return {
+        "success": True,
+        "id": action_id,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "message": f"操作「{action['name']}」已成功加入执行队列"
+    }
+
 def get_briefing_data() -> Dict[str, Any]:
     """获取每日运营简报 (Briefing)"""
     try:
@@ -232,6 +274,10 @@ def get_briefing_data() -> Dict[str, Any]:
         overview = get_overview_stats()
         trends = get_trends_data()
         alerts_data = get_alerts_data()
+        risk_map = get_risk_map()
+        
+        # 计算 high risks
+        high_risks = len([r for r in risk_map if r['level'] == 'high'])
         
         # 2. 计算 KPIs
         kpis = [
@@ -275,7 +321,8 @@ def get_briefing_data() -> Dict[str, Any]:
             "suggestion": suggestion,
             "status_level": status_level,
             "kpis": kpis,
-            "links": links
+            "links": links,
+            "must_focus_count": high_risks
         }
     except Exception as e:
         # Fallback
@@ -286,7 +333,8 @@ def get_briefing_data() -> Dict[str, Any]:
             "suggestion": "系统正在初始化，请保持网络连接畅通。",
             "status_level": "low",
             "kpis": [],
-            "links": []
+            "links": [],
+            "must_focus_count": 0
         }
 
 def get_ticker_items() -> List[Dict[str, Any]]:
