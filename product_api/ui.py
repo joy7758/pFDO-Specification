@@ -311,6 +311,65 @@ def _base_css() -> str:
         
         .t-modal-item { display: flex; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
         .t-modal-item:last-child { border-bottom: none; }
+        
+        /* Leader Summary Panel (Top Right) */
+        .leader-summary {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            width: 280px;
+            z-index: 900;
+        }
+        .ls-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #333; display: flex; justify-content: space-between; }
+        .ls-item { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 6px; }
+        .ls-item span:last-child { font-weight: 500; color: #333; }
+        
+        /* Risk Thermometer (Left Side) */
+        .risk-thermometer-container {
+            position: fixed;
+            left: 20px;
+            top: 200px;
+            width: 60px;
+            height: 300px;
+            background: #fff;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 10px;
+            z-index: 900;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .rt-bar-bg { width: 12px; height: 240px; background: #eee; border-radius: 6px; position: relative; overflow: hidden; }
+        .rt-bar-fill { 
+            position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, #4CAF50, #FFC107, #F44336); 
+            border-radius: 6px; transition: height 1s ease-in-out;
+        }
+        .rt-label { font-size: 12px; font-weight: 600; margin-top: 10px; color: #333; }
+        
+        /* Streak Stats (Bottom) */
+        .streak-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            padding: 8px 16px;
+            border-radius: 99px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            margin-right: 20px;
+        }
+        .streak-num { font-size: 18px; font-weight: 700; color: #4CAF50; }
+        .streak-text { font-size: 12px; color: #666; }
+
     </style>
     """
 
@@ -848,6 +907,11 @@ def render_park_dashboard() -> str:
              loadMustFocus();
              loadBehavior();
              loadTimePressure();
+             
+             // New Features
+             loadLeaderSummary();
+             loadRiskThermometer();
+             loadStreakStats();
         }
         
         async function loadActions() {
@@ -976,6 +1040,10 @@ def render_park_dashboard() -> str:
                 const list = document.getElementById('mf-list');
                 list.innerHTML = '';
                 
+                // Sort Logic: High Risk > Alert
+                // The API might return mixed, but let's ensure visuals
+                // Assuming API returns already somewhat sorted, but we can enforce High priority first
+                
                 if (data.items.length === 0) {
                     list.innerHTML = `<div style="color:#999; text-align:center; padding:20px;">暂无必须关注事项</div>`;
                 } else {
@@ -1038,6 +1106,39 @@ def render_park_dashboard() -> str:
             } catch(e) { console.error(e); }
         }
 
+        async function loadLeaderSummary() {
+            try {
+                const res = await fetch('/api/v1/leader-summary');
+                const data = await res.json();
+                
+                document.getElementById('ls-efficiency').innerText = data.efficiency;
+                document.getElementById('ls-team').innerText = data.team_status;
+                document.getElementById('ls-budget').innerText = data.budget_usage;
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadRiskThermometer() {
+            try {
+                const res = await fetch('/api/v1/risk-thermometer');
+                const data = await res.json();
+                
+                const fill = document.getElementById('rt-fill');
+                const heightPercent = (data.temperature / data.max) * 100;
+                fill.style.height = `${heightPercent}%`;
+                
+                document.getElementById('rt-val').innerText = `${data.temperature}°`;
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadStreakStats() {
+            try {
+                const res = await fetch('/api/v1/streak');
+                const data = await res.json();
+                
+                document.getElementById('streak-num').innerText = data.safe_days;
+            } catch(e) { console.error(e); }
+        }
+
         function showToast(msg) {
             const div = document.createElement('div');
             div.className = 'toast';
@@ -1051,6 +1152,26 @@ def render_park_dashboard() -> str:
     content = f"""
     {css_extra}
     
+    <!-- Leader Summary Panel -->
+    <div class="leader-summary">
+        <div class="ls-title">
+            <span>Leader Summary</span>
+            <span style="font-weight:normal; color:#999; font-size:12px;">Live</span>
+        </div>
+        <div class="ls-item"><span>Efficiency</span><span id="ls-efficiency">--</span></div>
+        <div class="ls-item"><span>Team Status</span><span id="ls-team">--</span></div>
+        <div class="ls-item"><span>Budget Usage</span><span id="ls-budget">--</span></div>
+    </div>
+    
+    <!-- Risk Thermometer -->
+    <div class="risk-thermometer-container">
+        <div class="rt-bar-bg">
+            <div id="rt-fill" class="rt-bar-fill" style="height:0%;"></div>
+        </div>
+        <div class="rt-label" id="rt-val">--</div>
+        <div style="font-size:10px; color:#999;">Risk</div>
+    </div>
+
     <!-- Static Header Row -->
     <div class="container" style="padding-bottom: 0;">
          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
@@ -1058,9 +1179,17 @@ def render_park_dashboard() -> str:
                 <h2 style="margin:0;">园区智能运营中心</h2>
                 <div style="font-size:14px; color:var(--text-grey);">{json.loads(json.dumps("2026年2月18日"))}</div> 
             </div>
-            <div style="text-align: right;">
-                 <div style="font-size: 32px; font-weight: 700; font-family: monospace;">14:30:00</div>
-                 <div style="font-size:12px; color:var(--text-grey);">系统运行正常</div>
+            <div style="display:flex; align-items:center;">
+                 <!-- Streak Stats -->
+                 <div class="streak-container">
+                    <span class="streak-num" id="streak-num">--</span>
+                    <span class="streak-text">Consecutive Safe Days</span>
+                 </div>
+                 
+                 <div style="text-align: right;">
+                     <div style="font-size: 32px; font-weight: 700; font-family: monospace;">14:30:00</div>
+                     <div style="font-size:12px; color:var(--text-grey);">系统运行正常</div>
+                 </div>
             </div>
         </div>
     </div>

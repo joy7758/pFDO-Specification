@@ -546,3 +546,36 @@ def get_time_pressure() -> Dict[str, Any]:
         "level": level,
         "pressure_score": random.randint(40, 90) # 0-100
     }
+
+def get_leader_summary() -> Dict[str, Any]:
+    """获取领导视角的摘要信息"""
+    return {
+        "efficiency": f"{random.randint(85, 98)}%",
+        "team_status": "Highly Active",
+        "budget_usage": f"{random.randint(40, 70)}%",
+        "core_metric": "Stable"
+    }
+
+def get_risk_thermometer() -> Dict[str, Any]:
+    """获取风险温度计数据"""
+    temp = random.randint(20, 90)
+    level = "low"
+    if temp > 80:
+        level = "high"
+    elif temp > 50:
+        level = "medium"
+        
+    return {
+        "temperature": temp,
+        "level": level,
+        "max": 100
+    }
+
+def get_streak_stats() -> Dict[str, Any]:
+    """获取连续安全天数统计"""
+    streak = random.randint(5, 120)
+    return {
+        "safe_days": streak,
+        "record_days": 365,
+        "last_incident": (datetime.now() - timedelta(days=streak)).strftime("%Y-%m-%d")
+    }

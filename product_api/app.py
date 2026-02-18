@@ -28,7 +28,10 @@ from .dashboard import (
     get_risk_map,
     get_must_focus,
     get_behavior_stats,
-    get_time_pressure
+    get_time_pressure,
+    get_leader_summary,
+    get_risk_thermometer,
+    get_streak_stats
 )
 from .ui import (
     render_home,
@@ -153,6 +156,21 @@ def api_v1_behavior_stats() -> Dict[str, Any]:
 def api_v1_time_pressure() -> Dict[str, Any]:
     """获取时间压力数据"""
     return get_time_pressure()
+
+@app.get("/api/v1/leader-summary")
+def api_v1_leader_summary() -> Dict[str, Any]:
+    """获取领导视角的摘要信息"""
+    return get_leader_summary()
+
+@app.get("/api/v1/risk-thermometer")
+def api_v1_risk_thermometer() -> Dict[str, Any]:
+    """获取风险温度计数据"""
+    return get_risk_thermometer()
+
+@app.get("/api/v1/streak")
+def api_v1_streak() -> Dict[str, Any]:
+    """获取连续安全天数统计"""
+    return get_streak_stats()
 
 
 # 保留旧接口兼容 (Deprecated)
