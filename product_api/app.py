@@ -31,7 +31,8 @@ from .dashboard import (
     get_time_pressure,
     get_leader_summary,
     get_risk_thermometer,
-    get_streak_stats
+    get_streak_stats,
+    get_risk_model
 )
 from .ui import (
     render_home,
@@ -171,6 +172,11 @@ def api_v1_risk_thermometer() -> Dict[str, Any]:
 def api_v1_streak() -> Dict[str, Any]:
     """获取连续安全天数统计"""
     return get_streak_stats()
+
+@app.get("/api/v1/risk-model")
+def api_v1_risk_model() -> Dict[str, Any]:
+    """获取当前生效的风险评分模型元数据"""
+    return get_risk_model()
 
 
 # 保留旧接口兼容 (Deprecated)

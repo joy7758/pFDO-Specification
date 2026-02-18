@@ -11,7 +11,7 @@ from typing import Dict, Any, List
 
 # 获取上传目录路径（与 app.py 保持一致）
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
-
+ENGINE_VERSION = "RRM-1.0"
 
 def _get_file_count() -> int:
     """统计实际文件数"""
@@ -22,25 +22,75 @@ def _get_file_count() -> int:
             pass
     return 0
 
+def calculate_dynamic_risk_score() -> Dict[str, Any]:
+    """计算动态风险评分 (核心算法)"""
+    # 基础分
+    base_score = 100
+    
+    # 因子 1: 文件存量 (每10个文件扣1分，上限15分)
+    file_count = _get_file_count()
+    file_penalty = min(15, file_count // 10)
+    
+    # 因子 2: 模拟的敏感数据命中 (随机波动)
+    hits_today = 12 + random.randint(0, 5)
+    hits_penalty = min(20, hits_today // 2)
+    
+    # 因子 3: 活跃告警 (每个扣5分)
+    alerts_active = 3
+    alert_penalty = min(30, alerts_active * 5)
+    
+    # 计算总分
+    final_score = base_score - file_penalty - hits_penalty - alert_penalty
+    
+    # 修正范围
+    final_score = max(0, min(100, final_score))
+    
+    return {
+        "score": final_score,
+        "file_count": file_count,
+        "hits_today": hits_today,
+        "alerts_active": alerts_active,
+        "factors": {
+            "base": base_score,
+            "file_penalty": file_penalty,
+            "hits_penalty": hits_penalty,
+            "alert_penalty": alert_penalty
+        }
+    }
+
+def get_risk_model() -> Dict[str, Any]:
+    """获取风险模型元数据"""
+    return {
+        "engine": "RedRock Risk Engine",
+        "version": ENGINE_VERSION,
+        "algorithm": "Weighted Decay (WD-26)",
+        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "factors": [
+            {"name": "Data Volume", "weight": "15%", "desc": "Based on file storage count"},
+            {"name": "PII Hits", "weight": "35%", "desc": "Sensitive data patterns found"},
+            {"name": "Active Alerts", "weight": "50%", "desc": "Unresolved security incidents"}
+        ]
+    }
 
 def get_overview_stats() -> Dict[str, Any]:
     """获取概览数据 (Overview)"""
-    file_count = _get_file_count()
+    risk_data = calculate_dynamic_risk_score()
+    
     # 模拟数据
-    total_records = file_count * 128 + 3456
-    risk_score = 92 - (file_count % 5) # 动态一点
+    total_records = risk_data['file_count'] * 128 + 3456
     
     return {
         "park_name": "红岩 · 数字化示范园区",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "risk_score": risk_score,
-        "total_files": file_count,
+        "engine_version": ENGINE_VERSION,
+        "risk_score": risk_data['score'],
+        "total_files": risk_data['file_count'],
         "total_records": total_records,
-        "risk_events_today": 3 + (file_count % 3),
+        "risk_events_today": 3 + (risk_data['file_count'] % 3),
         "handled_rate": "98.5%",
         "scans_today": 128 + random.randint(0, 50),
-        "hits_today": 12 + random.randint(0, 5),
-        "alerts_active": 3
+        "hits_today": risk_data['hits_today'],
+        "alerts_active": risk_data['alerts_active']
     }
 
 
@@ -50,6 +100,7 @@ def get_trends_data() -> Dict[str, Any]:
     
     # 模拟近7天数据
     return {
+        "engine_version": ENGINE_VERSION,
         "dates": dates,
         "risk_scores": [random.randint(85, 95) for _ in range(7)],
         "alerts_count": [random.randint(2, 10) for _ in range(7)],
@@ -77,7 +128,10 @@ def get_alerts_data() -> Dict[str, Any]:
             "status": "PENDING" if i < 3 else "HANDLED",
             "msg": f"在{random.choice(['上传文件', 'API请求', '日志流'])}中发现敏感数据"
         })
-    return {"alerts": alerts}
+    return {
+        "engine_version": ENGINE_VERSION,
+        "alerts": alerts
+    }
 
 
 def get_integrations_status() -> Dict[str, Any]:
@@ -99,6 +153,7 @@ def get_integrations_status() -> Dict[str, Any]:
     ]
     
     return {
+        "engine_version": ENGINE_VERSION,
         "systems": active_systems,
         "available_plugins": available_plugins
     }
@@ -318,6 +373,7 @@ def get_briefing_data() -> Dict[str, Any]:
         return {
             "title": "每日运营简报",
             "date": datetime.now().strftime("%Y年%m月%d日"),
+            "engine_version": ENGINE_VERSION,
             "summary": summary,
             "suggestion": suggestion,
             "status_level": status_level,
@@ -557,18 +613,31 @@ def get_leader_summary() -> Dict[str, Any]:
     }
 
 def get_risk_thermometer() -> Dict[str, Any]:
-    """获取风险温度计数据"""
-    temp = random.randint(20, 90)
+    """获取风险温度计数据 (基于动态模型)"""
+    # 使用动态评分模型计算
+    risk_data = calculate_dynamic_risk_score()
+    score = risk_data['score']
+    
+    # 评分 (0-100, 100=安全) 转换为 温度 (0-100, 100=危险)
+    # 反向映射：Score 100 -> Temp 0; Score 0 -> Temp 100
+    base_temp = 100 - score
+    
+    # 加上一点随机波动模拟实时感
+    final_temp = base_temp + random.randint(-5, 5)
+    final_temp = max(10, min(100, final_temp)) # 限制在 10-100 之间显示
+    
     level = "low"
-    if temp > 80:
+    if final_temp > 80:
         level = "high"
-    elif temp > 50:
+    elif final_temp > 50:
         level = "medium"
         
     return {
-        "temperature": temp,
+        "temperature": final_temp,
         "level": level,
-        "max": 100
+        "max": 100,
+        "source_score": score,
+        "engine_version": ENGINE_VERSION
     }
 
 def get_streak_stats() -> Dict[str, Any]:

@@ -49,77 +49,28 @@
 4.  **趋势分析**: 7 日数据合规指数与风险事件趋势图 (SVG 渲染)。
 5.  **生态集成**: 展示已接入的子系统（OA/CRM/IoT）与可扩展插件（门禁/能耗/视频）。
 6.  **行为驱动引擎**: 包含必须关注事项、用户行为统计、时间压力指数，辅助即时决策。
+7.  **领导者视角**: 右上角 Leader Summary 面板，展示效率、团队状态与预算概况。
+8.  **风险温度计**: 左侧动态 Risk Thermometer，直观展示实时风险热度。
+9.  **安全连胜**: 底部展示连续安全天数 (Streak Stats)。
 
-### 🆕 v1.1.0 新特性 (2026-02-18)
+### 🆕 v1.2.0 新特性 (2026-02-18)
 
-1.  **快速决策中心 (Quick Decision)**: 在大屏直接执行高频运维操作（全园扫描、一键阻断、报表生成等），支持模拟执行反馈。
-2.  **企业风险地图 (Risk Map)**: 可视化展示企业级风险分布，支持按风险等级（高/中/低）过滤与详情展开。
-3.  **可编辑大屏 (Editable Layout)**: 
-    - 支持拖拽 (Drag) 与缩放 (Resize) 布局。
-    - 本地持久化存储 (LocalStorage)，支持一键恢复默认布局。
-4.  **园区信息总线 (Ticker)**: 智能聚合天气、告警、黄历与系统简报，按优先级实时轮播。
+1.  **Leader Summary Panel**: 右上角固定显示关键管理指标。
+2.  **Risk Thermometer**: 左侧纵向温度计，可视化风险等级。
+3.  **Streak Stats**: 底部展示“连续安全天数”，激励安全运营。
+4.  **Must Focus 优化**: 自动排序逻辑，确保高优先级事项置顶。
 
 ### 🔌 API 接口列表
 
 系统提供标准的 RESTful API 供前端与第三方系统调用：
 
+- `GET /api/v1/leader-summary`: 领导视角摘要
+- `GET /api/v1/risk-thermometer`: 风险温度计数据
+- `GET /api/v1/streak`: 连续安全天数
 - `GET /api/v1/ticker`: 园区信息总线 (Ticker items)
 - `GET /api/v1/overview`: 核心合规指标与统计
-- `GET /api/v1/weather`: 天气实况与预报 (模拟)
-- `GET /api/v1/air`: 空气质量数据 (模拟)
-- `GET /api/v1/calendar`: 农历、节气与假期、黄历宜忌与冲煞
-  - 返回示例：`{"almanac": {"yi": ["理发",...], "chong": "冲马"}, "display_line": "宜 理发..."}`
 - `GET /api/v1/briefing`: 每日运营简报
-  - 返回示例：
-    ```json
-    {
-      "title": "每日运营简报",
-      "date": "2026年02月18日",
-      "summary": "今日合规评分 92，累计扫描 1,284 次...",
-      "suggestion": "✅ 园区数据安全状况良好...",
-      "status_level": "low",
-      "kpis": [{"label": "合规评分", "value": 92, "unit": "分", "color": "green"}],
-      "links": [{"text": "查看趋势", "url": "/park#trends"}]
-    }
-    ```
-- `GET /api/v1/ticker`: 顶部公告栏 (Ticker) 数据
-  - 返回示例：
-    ```json
-    {
-      "items": [
-        {
-          "type": "briefing",
-          "priority": 95,
-          "title": "园区日报",
-          "summary": "今日战报：合规评分 92｜扫描 1,284｜敏感命中 23｜实时告警 2｜AQI 良｜体感 -1℃",
-          "link": "/park",
-          "source": "运营指挥部"
-        },
-        {
-          "type": "alert",
-          "level": "RED",
-          "title": "紧急告警",
-          "summary": "财务系统 发现 未脱敏手机号，请立即处置！"
-        },
-        {
-          "type": "system",
-          "level": "INFO",
-          "title": "系统状态",
-          "summary": "OA办公系统 当前状态：ONLINE (更新于 1分钟前)"
-        }
-      ]
-    }
-    ```
-- `GET /api/v1/trends`: 7日风险趋势数据
-- `GET /api/v1/alerts`: 实时风险告警流
-- `GET /api/v1/integrations`: 系统接入状态与插件列表
-- `GET /api/v1/must-focus`: 必须关注事项
-- `GET /api/v1/behavior-stats`: 行为数据统计
-- `GET /api/v1/time-pressure`: 时间压力数据
-- `GET /api/v1/actions`: 可执行操作列表 (Quick Decision)
-- `POST /api/v1/actions/{id}/run`: 模拟执行操作 (返回 JSON: success/message)
-- `GET /api/v1/risk-map`: 企业风险地图 (Risk Map, 含原因分析)
-- `POST /scan/pii`: 敏感数据检测接口
+- ... (其他原有接口)
 
 ### 🛠️ 常见问题 (Troubleshooting)
 
@@ -143,11 +94,3 @@
    ```bash
    ./scripts/run_park.sh
    ```
-
-**Q: 为什么必须用 run_park.sh？**
-我们建议所有运行操作统一通过 `./scripts/run_park.sh` 入口。该脚本集成了环境激活、端口自动释放、日志监控等逻辑，能保证服务“永不掉线”且易于调试。
-
-### 手动启动 (不推荐)
-```bash
-python -m uvicorn product_api.app:app --reload --host 127.0.0.1 --port 8000
-```
