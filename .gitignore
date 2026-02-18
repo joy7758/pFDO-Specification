@@ -1,4 +1,32 @@
-research-omap/
-research-omap/
-research-omap/
-research-omap/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtualenv
+.venv/
+venv/
+.env
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# LaTeX / paper
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+paper_globecom/
+paper_globecom.zip
+
+# Images
+*.png
