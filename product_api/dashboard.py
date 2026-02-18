@@ -176,16 +176,48 @@ def get_calendar_data() -> Dict[str, Any]:
     next_holiday = holidays[0]
     days_left = (datetime.strptime(next_holiday["date"], "%Y-%m-%d") - now).days
     
+    # 模拟黄历数据 (基于日期hash确保当天固定，隔天变化)
+    seed = int(now.strftime("%Y%m%d"))
+    random.seed(seed)
+    
+    yi_pool = ["理发", "出行", "沐浴", "祭祀", "祈福", "求嗣", "解除", "伐木", "装修", "动土", "搬家", "结婚", "开业"]
+    ji_pool = ["安床", "栽种", "作灶", "入宅", "安葬", "诉讼", "掘井", "破土", "纳畜"]
+    
+    yi = random.sample(yi_pool, k=random.randint(3, 5))
+    ji = random.sample(ji_pool, k=random.randint(2, 4))
+    
+    chong_animals = ["马", "羊", "猴", "鸡", "狗", "猪", "鼠", "牛", "虎", "兔", "龙", "蛇"]
+    sha_directions = ["东", "南", "西", "北"]
+    
+    almanac = {
+        "yi": yi,
+        "ji": ji,
+        "chong": f"冲{random.choice(chong_animals)}",
+        "sha": f"煞{random.choice(sha_directions)}",
+        "jishen": random.sample(["天德", "月德", "天恩", "母仓", "时德", "民日"], k=3),
+        "xiongsha": random.sample(["五虚", "九空", "天吏", "致死"], k=2),
+        "taishen": random.choice(["房床厕 外东北", "厨灶厕 外西南", "仓库栖 外正北", "占门碓 外东南"]),
+        "zhishen": random.choice(["青龙", "明堂", "天刑", "朱雀", "金匮", "天德", "白虎", "玉堂", "天牢", "玄武", "司命", "勾陈"])
+    }
+    
+    # 恢复随机种子以免影响其他随机逻辑
+    random.seed()
+    
+    # 构造展示行
+    display_line = f"宜 {'·'.join(yi[:3])}  忌 {'·'.join(ji[:3])}"
+
     return {
         "solar_date": now.strftime("%Y年%m月%d日"),
         "weekday": weekdays[now.weekday()],
         "lunar": "农历丙午年正月十二", # 假定 2026年
         "term": "雨水", # 假定
-        "auspicious": "祭祀, 祈福, 求嗣, 解除, 伐木", # 宜
-        "inauspicious": "安床, 栽种, 作灶", # 忌
+        "auspicious": "祭祀, 祈福, 求嗣, 解除, 伐木", # 保留旧字段兼容
+        "inauspicious": "安床, 栽种, 作灶", # 保留旧字段兼容
         "next_holiday": {
             "name": next_holiday["name"],
             "days_left": days_left,
             "date": next_holiday["date"]
-        }
+        },
+        "almanac": almanac,
+        "display_line": display_line
     }

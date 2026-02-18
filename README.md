@@ -56,7 +56,8 @@
 - `GET /api/v1/overview`: 核心合规指标与统计
 - `GET /api/v1/weather`: 天气实况与预报 (模拟)
 - `GET /api/v1/air`: 空气质量数据 (模拟)
-- `GET /api/v1/calendar`: 农历、节气与假期
+- `GET /api/v1/calendar`: 农历、节气与假期、黄历宜忌与冲煞
+  - 返回示例：`{"almanac": {"yi": ["理发",...], "chong": "冲马"}, "display_line": "宜 理发..."}`
 - `GET /api/v1/trends`: 7日风险趋势数据
 - `GET /api/v1/alerts`: 实时风险告警流
 - `GET /api/v1/integrations`: 系统接入状态与插件列表

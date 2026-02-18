@@ -86,7 +86,7 @@ def api_v1_air() -> Dict[str, Any]:
 
 @app.get("/api/v1/calendar")
 def api_v1_calendar() -> Dict[str, Any]:
-    """获取日历与节气数据 (模拟)"""
+    """获取日历与节气数据 (包含黄历宜忌/冲煞等)"""
     return get_calendar_data()
 
 # 保留旧接口兼容 (Deprecated)

@@ -437,6 +437,24 @@ def render_park_dashboard() -> str:
                 document.getElementById('cal-lunar').innerText = calendar.lunar + ' · ' + calendar.term;
                 document.getElementById('cal-holiday').innerText = `距${calendar.next_holiday.name} ${calendar.next_holiday.days_left} 天`;
                 
+                // Almanac
+                const alm = calendar.almanac;
+                document.getElementById('alm-summary').innerText = calendar.display_line;
+                
+                // Fill details
+                const detailHTML = `
+                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; font-size:13px; color:#555;">
+                        <div><span class="tag tag-red">宜</span> ${alm.yi.join('·')}</div>
+                        <div><span class="tag tag-grey">忌</span> ${alm.ji.join('·')}</div>
+                        <div><span class="tag tag-blue">吉神</span> ${alm.jishen.join('·')}</div>
+                        <div><span class="tag tag-orange">凶煞</span> ${alm.xiongsha.join('·')}</div>
+                        <div><span class="tag tag-grey">冲煞</span> ${alm.chong} ${alm.sha}</div>
+                        <div><span class="tag tag-grey">值神</span> ${alm.zhishen}</div>
+                        <div style="grid-column:span 3;"><span class="tag tag-grey">胎神</span> ${alm.taishen}</div>
+                    </div>
+                `;
+                document.getElementById('alm-detail-content').innerHTML = detailHTML;
+                
                 // 3. 获取 Weather
                 const weatherRes = await fetch('/api/v1/weather');
                 const weather = await weatherRes.json();
@@ -528,6 +546,23 @@ def render_park_dashboard() -> str:
                 <h2 style="margin:0;">园区智能运营中心</h2>
                 <div id="cal-solar" style="color:var(--text-grey); font-size:16px; margin-top:4px;">正在加载日期...</div>
             </div>
+            
+            <div style="flex: 1; margin: 0 40px;">
+                <!-- Almanac Bar -->
+                <div class="card" style="padding: 12px 20px; min-height: 48px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="document.getElementById('alm-detail').style.display = document.getElementById('alm-detail').style.display === 'none' ? 'block' : 'none'">
+                        <div style="font-size: 14px; color: var(--text-dark);">
+                            <span class="tag tag-red" style="margin-right: 8px;">今日黄历</span>
+                            <span id="alm-summary">加载中...</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-grey);">▼</div>
+                    </div>
+                    <div id="alm-detail" style="display: none;">
+                        <div id="alm-detail-content"></div>
+                    </div>
+                </div>
+            </div>
+
             <div style="text-align: right;">
                 <div id="clock-time" style="font-size: 36px; font-weight: 700; font-family: monospace; line-height: 1;">--:--:--</div>
                 <div id="cal-lunar" style="color:var(--text-grey); font-size:14px; margin-top:4px;">--</div>
