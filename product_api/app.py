@@ -19,7 +19,8 @@ from .dashboard import (
     get_alerts_data,
     get_weather_data,
     get_air_quality_data,
-    get_integrations_status
+    get_integrations_status,
+    get_calendar_data
 )
 from .ui import (
     render_home,
@@ -82,6 +83,11 @@ def api_v1_weather() -> Dict[str, Any]:
 def api_v1_air() -> Dict[str, Any]:
     """获取空气质量数据 (模拟)"""
     return get_air_quality_data()
+
+@app.get("/api/v1/calendar")
+def api_v1_calendar() -> Dict[str, Any]:
+    """获取日历与节气数据 (模拟)"""
+    return get_calendar_data()
 
 # 保留旧接口兼容 (Deprecated)
 @app.get("/api/park/dashboard")

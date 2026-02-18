@@ -100,13 +100,15 @@ def _base_css() -> str:
         .grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
         .col-3 { grid-column: span 3; }
         .col-4 { grid-column: span 4; }
+        .col-5 { grid-column: span 5; }
         .col-6 { grid-column: span 6; }
+        .col-7 { grid-column: span 7; }
         .col-8 { grid-column: span 8; }
         .col-9 { grid-column: span 9; }
         .col-12 { grid-column: span 12; }
 
         @media (max-width: 1024px) {
-            .col-3, .col-4, .col-6, .col-8, .col-9 { grid-column: span 12; }
+            .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9 { grid-column: span 12; }
         }
 
         /* 标签 */
@@ -115,6 +117,7 @@ def _base_css() -> str:
         .tag-orange { background: #FFF3E0; color: #EF6C00; }
         .tag-green { background: #E8F5E9; color: #2E7D32; }
         .tag-blue { background: #E3F2FD; color: #1565C0; }
+        .tag-grey { background: #EEEEEE; color: #616161; }
 
         /* 代码块 */
         pre {
@@ -240,7 +243,7 @@ def render_demo_page() -> str:
         
         <div class="card">
             <form action="/demo/scan" method="post">
-                <textarea id="text-input" name="text" placeholder="在此粘贴包含敏感信息（手机号/邮箱/身份证）的文本内容..." style="min-height: 240px;"></textarea>
+                <textarea id="text-input" name="text" placeholder="在此粘贴包含敏感信息（手机号/邮箱/身份证）的文本内容..." style="min-height: 240px; width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 8px; font-family: inherit;"></textarea>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
                     <button type="button" class="btn btn-secondary" onclick="fillExample()">加载测试样本</button>
                     <button type="submit" class="btn btn-primary">启动合规检测</button>
@@ -258,11 +261,11 @@ def render_demo_result(text: str, result: Dict[str, Any]) -> str:
     
     highlighted = text
     for p in hits.get("phone", []):
-        highlighted = highlighted.replace(p, f"<mark class='phone'>{p}</mark>")
+        highlighted = highlighted.replace(p, f"<mark class='phone' style='background:#E3F2FD; color:#1565C0; padding:0 2px; border-radius:2px;'>{p}</mark>")
     for e in hits.get("email", []):
-        highlighted = highlighted.replace(e, f"<mark class='email'>{e}</mark>")
+        highlighted = highlighted.replace(e, f"<mark class='email' style='background:#E8F5E9; color:#2E7D32; padding:0 2px; border-radius:2px;'>{e}</mark>")
     for i in hits.get("id18", []):
-        highlighted = highlighted.replace(i, f"<mark class='idcard'>{i}</mark>")
+        highlighted = highlighted.replace(i, f"<mark class='idcard' style='background:#FFF3E0; color:#EF6C00; padding:0 2px; border-radius:2px;'>{i}</mark>")
         
     json_str = json.dumps(result, ensure_ascii=False, indent=2)
     
@@ -315,14 +318,23 @@ def render_docs_cn() -> str:
                 <h3 style="margin: 0;">园区大屏数据</h3>
                 <span class="tag tag-blue">GET</span>
             </div>
-            <code style="background: #F5F5F7; padding: 4px 8px; border-radius: 4px; font-family: monospace;">/api/park/dashboard</code>
+            <code style="background: #F5F5F7; padding: 4px 8px; border-radius: 4px; font-family: monospace;">/api/v1/overview</code>
             <p style="margin-top: 16px;">获取园区大屏的实时统计、告警、趋势等聚合数据。</p>
             <pre>{
   "park_name": "红岩 · 数字化示范园区",
   "risk_score": 92,
-  "statistics": { ... },
-  "recent_alerts": [ ... ]
+  "scans_today": 145,
+  ...
 }</pre>
+        </div>
+        
+        <div class="card" style="margin-bottom: 30px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <h3 style="margin: 0;">天气数据</h3>
+                <span class="tag tag-blue">GET</span>
+            </div>
+            <code style="background: #F5F5F7; padding: 4px 8px; border-radius: 4px; font-family: monospace;">/api/v1/weather</code>
+            <p style="margin-top: 16px;">获取当前天气及未来预报。</p>
         </div>
 
         <div class="card" style="margin-bottom: 30px;">
@@ -370,17 +382,16 @@ def render_docs_cn() -> str:
 
 def render_park_dashboard() -> str:
     # 园区大屏 - 纯前端渲染模版，数据通过 API 拉取
-    # 纯内联 JS/CSS 实现图表
     
     script = """
     <script>
         // 简易 SVG 图表绘制函数
         function drawLineChart(id, data, color) {
             const svg = document.getElementById(id);
-            const width = svg.clientWidth;
-            const height = svg.clientHeight;
+            if(!svg) return;
+            const width = svg.clientWidth || 300;
+            const height = svg.clientHeight || 100;
             const max = Math.max(...data) * 1.2;
-            const min = 0;
             const stepX = width / (data.length - 1);
             
             let points = "";
@@ -395,6 +406,8 @@ def render_park_dashboard() -> str:
             polyline.setAttribute("fill", "none");
             polyline.setAttribute("stroke", color);
             polyline.setAttribute("stroke-width", "3");
+            polyline.setAttribute("stroke-linecap", "round");
+            polyline.setAttribute("stroke-linejoin", "round");
             svg.innerHTML = ''; 
             svg.appendChild(polyline);
             
@@ -408,72 +421,95 @@ def render_park_dashboard() -> str:
         }
 
         async function initDashboard() {
-            // 1. 获取 Overview
-            const overviewRes = await fetch('/api/v1/overview');
-            const overview = await overviewRes.json();
-            document.getElementById('risk-score').innerText = overview.risk_score;
-            document.getElementById('total-files').innerText = overview.total_files;
-            document.getElementById('total-records').innerText = overview.total_records.toLocaleString();
-            document.getElementById('risk-today').innerText = overview.risk_events_today;
-            
-            // 2. 获取 Trends
-            const trendRes = await fetch('/api/v1/trends');
-            const trends = await trendRes.json();
-            drawLineChart('trend-chart', trends.risk_scores, '#C62828');
-            
-            // 3. 获取 Alerts
-            const alertRes = await fetch('/api/v1/alerts');
-            const alertsData = await alertRes.json();
-            const alertList = document.getElementById('alert-list');
-            alertList.innerHTML = '';
-            alertsData.alerts.forEach(alert => {
-                const row = document.createElement('div');
-                row.className = 'list-item';
-                let tagClass = 'tag-blue';
-                if(alert.level === 'HIGH') tagClass = 'tag-red';
-                if(alert.level === 'MEDIUM') tagClass = 'tag-orange';
+            try {
+                // 1. 获取 Overview
+                const overviewRes = await fetch('/api/v1/overview');
+                const overview = await overviewRes.json();
+                document.getElementById('risk-score').innerText = overview.risk_score;
+                document.getElementById('scans-today').innerText = overview.scans_today;
+                document.getElementById('hits-today').innerText = overview.hits_today;
+                document.getElementById('alerts-active').innerText = overview.alerts_active;
                 
-                row.innerHTML = `
-                    <div style="flex:1;"><span class="tag ${tagClass}">${alert.level}</span></div>
-                    <div style="flex:2; font-weight:500;">${alert.type}</div>
-                    <div style="flex:3; color:var(--text-grey); font-size:13px;">${alert.source} · ${alert.msg}</div>
-                    <div style="flex:1; text-align:right; font-size:12px; color:var(--text-grey);">${alert.time}</div>
-                `;
-                alertList.appendChild(row);
-            });
+                // 2. 获取 Calendar
+                const calRes = await fetch('/api/v1/calendar');
+                const calendar = await calRes.json();
+                document.getElementById('cal-solar').innerText = calendar.solar_date + ' ' + calendar.weekday;
+                document.getElementById('cal-lunar').innerText = calendar.lunar + ' · ' + calendar.term;
+                document.getElementById('cal-holiday').innerText = `距${calendar.next_holiday.name} ${calendar.next_holiday.days_left} 天`;
+                
+                // 3. 获取 Weather
+                const weatherRes = await fetch('/api/v1/weather');
+                const weather = await weatherRes.json();
+                const cur = weather.current;
+                document.getElementById('w-temp').innerText = cur.temp + '°';
+                document.getElementById('w-cond').innerText = cur.condition;
+                document.getElementById('w-detail').innerText = `体感 ${cur.feels_like}° · 湿度 ${cur.humidity} · ${cur.wind}`;
+                
+                // 4. 获取 Air
+                const airRes = await fetch('/api/v1/air');
+                const air = await airRes.json();
+                document.getElementById('air-aqi').innerText = air.aqi;
+                document.getElementById('air-level').innerText = air.level;
+                document.getElementById('air-tip').innerText = air.health_tip;
+                
+                // 5. 获取 Trends
+                const trendRes = await fetch('/api/v1/trends');
+                const trends = await trendRes.json();
+                drawLineChart('chart-scan', trends.scan_volume, '#2196F3');
+                drawLineChart('chart-hits', trends.pii_hits, '#EF6C00');
+                drawLineChart('chart-risk', trends.risk_scores, '#C62828');
+                
+                // 6. 获取 Alerts
+                const alertRes = await fetch('/api/v1/alerts');
+                const alertsData = await alertRes.json();
+                const alertList = document.getElementById('alert-list');
+                alertList.innerHTML = '';
+                alertsData.alerts.slice(0, 5).forEach(alert => {
+                    const row = document.createElement('div');
+                    row.className = 'list-item';
+                    let tagClass = 'tag-blue';
+                    if(alert.level === 'HIGH') tagClass = 'tag-red';
+                    if(alert.level === 'MEDIUM') tagClass = 'tag-orange';
+                    
+                    row.innerHTML = `
+                        <div style="flex:1;"><span class="tag ${tagClass}">${alert.level}</span></div>
+                        <div style="flex:3; font-weight:500;">${alert.type}</div>
+                        <div style="flex:2; text-align:right; font-size:12px; color:var(--text-grey);">${alert.time}</div>
+                    `;
+                    alertList.appendChild(row);
+                });
+
+                // 7. Integrations
+                const intRes = await fetch('/api/v1/integrations');
+                const intData = await intRes.json();
+                const sysList = document.getElementById('sys-list');
+                sysList.innerHTML = '';
+                intData.systems.forEach(sys => {
+                     const row = document.createElement('div');
+                     row.style.marginBottom = '8px';
+                     row.style.display = 'flex';
+                     row.style.justifyContent = 'space-between';
+                     row.style.fontSize = '13px';
+                     row.innerHTML = `<span>${sys.name}</span><span style="color:#2E7D32;">● ${sys.status}</span>`;
+                     sysList.appendChild(row);
+                });
+                 
+                const pluginList = document.getElementById('plugin-list');
+                pluginList.innerHTML = '';
+                intData.available_plugins.forEach(p => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag tag-grey';
+                    tag.style.marginRight = '6px';
+                    tag.style.marginBottom = '6px';
+                    tag.innerText = `+ ${p.name}`;
+                    pluginList.appendChild(tag);
+                });
+
+            } catch(e) {
+                console.error("Dashboard init error:", e);
+            }
             
-            // 4. 获取 Weather/Air
-            const weatherRes = await fetch('/api/v1/weather');
-            const weather = await weatherRes.json();
-            document.getElementById('weather-temp').innerText = weather.current.temp + '°';
-            document.getElementById('weather-cond').innerText = weather.current.condition;
-            
-            const airRes = await fetch('/api/v1/air');
-            const air = await airRes.json();
-            document.getElementById('air-aqi').innerText = air.aqi;
-            document.getElementById('air-level').innerText = air.level;
-            
-            // 5. Integrations
-            const intRes = await fetch('/api/v1/integrations');
-            const intData = await intRes.json();
-            const intList = document.getElementById('sys-list');
-            intList.innerHTML = '';
-            intData.systems.forEach(sys => {
-                const item = document.createElement('div');
-                item.className = 'card';
-                item.style.padding = '16px';
-                item.style.marginBottom = '12px';
-                item.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="font-weight:600;">${sys.name}</div>
-                        <span class="tag ${sys.status==='ONLINE'?'tag-green':'tag-grey'}">${sys.status}</span>
-                    </div>
-                    <div style="font-size:12px; color:var(--text-grey); margin-top:4px;">最后同步: ${sys.last_sync}</div>
-                `;
-                intList.appendChild(item);
-            });
-            
-            // 时钟
+            // Clock
             setInterval(() => {
                 const now = new Date();
                 document.getElementById('clock-time').innerText = now.toLocaleTimeString('en-GB');
@@ -486,111 +522,126 @@ def render_park_dashboard() -> str:
     
     content = f"""
     <div class="container" style="max-width: 1400px; padding-top: 20px;">
-        <!-- Header Info -->
-        <div class="grid-12" style="margin-bottom: 24px; align-items: center;">
-            <div class="col-4">
-                <h2 style="margin:0;">实时合规态势感知</h2>
-                <div style="color:var(--text-grey); font-size:14px;">数据更新于: 实时流式计算中</div>
+        <!-- Row 0: Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+            <div>
+                <h2 style="margin:0;">园区智能运营中心</h2>
+                <div id="cal-solar" style="color:var(--text-grey); font-size:16px; margin-top:4px;">正在加载日期...</div>
             </div>
-            <div class="col-4" style="text-align: center;">
-                <div id="clock-time" style="font-size: 32px; font-weight: 700; font-family: monospace;">--:--:--</div>
-                <div style="font-size: 14px; color: var(--text-grey);">农历正月十二 · 雨水 · 距清明还有 45 天</div>
+            <div style="text-align: right;">
+                <div id="clock-time" style="font-size: 36px; font-weight: 700; font-family: monospace; line-height: 1;">--:--:--</div>
+                <div id="cal-lunar" style="color:var(--text-grey); font-size:14px; margin-top:4px;">--</div>
             </div>
-            <div class="col-4" style="text-align: right; display: flex; justify-content: flex-end; gap: 20px;">
-                <div class="card" style="padding: 10px 20px; display: inline-block; min-width: 120px;">
-                    <div style="font-size: 12px; color: var(--text-grey);">北京</div>
-                    <div><span id="weather-temp" style="font-weight:700; font-size:18px;">--</span> <span id="weather-cond" style="font-size:14px;">--</span></div>
+        </div>
+
+        <!-- Row 1: Weather & Environment -->
+        <div class="grid-12" style="margin-bottom: 20px;">
+            <!-- Weather Card -->
+            <div class="col-5 card" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 4px;">当前天气</div>
+                    <div style="display: flex; align-items: baseline; gap: 12px;">
+                        <span id="w-temp" style="font-size: 48px; font-weight: 600;">--</span>
+                        <span id="w-cond" style="font-size: 20px;">--</span>
+                    </div>
+                    <div id="w-detail" style="font-size: 14px; color: var(--text-grey);">--</div>
                 </div>
-                <div class="card" style="padding: 10px 20px; display: inline-block; min-width: 120px;">
-                    <div style="font-size: 12px; color: var(--text-grey);">空气质量</div>
-                    <div><span id="air-aqi" style="font-weight:700; font-size:18px;">--</span> <span id="air-level" style="font-size:14px;">--</span></div>
+                <div style="text-align: right;">
+                    <div style="font-size: 14px; color: var(--text-grey);">下个假期</div>
+                    <div id="cal-holiday" style="font-size: 24px; font-weight: 600; color: var(--primary-red); margin-top: 8px;">--</div>
+                </div>
+            </div>
+            
+            <!-- Air Quality Card -->
+            <div class="col-3 card">
+                <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 8px;">空气质量</div>
+                <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                    <div>
+                        <span id="air-aqi" style="font-size: 32px; font-weight: 700;">--</span>
+                        <span id="air-level" class="tag tag-green" style="vertical-align: text-bottom;">--</span>
+                    </div>
+                </div>
+                <div id="air-tip" style="font-size: 12px; color: var(--text-grey); margin-top: 8px;">--</div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="col-4 card" style="background: #333; color: white;">
+                <div style="display: flex; justify-content: space-between; height: 100%;">
+                    <div style="display: flex; flex-direction: column; justify-content: space-between;">
+                         <div>
+                            <div style="font-size: 13px; opacity: 0.7;">今日扫描</div>
+                            <div id="scans-today" style="font-size: 28px; font-weight: 600;">--</div>
+                         </div>
+                         <div>
+                            <div style="font-size: 13px; opacity: 0.7;">敏感命中</div>
+                            <div id="hits-today" style="font-size: 28px; font-weight: 600; color: #FFB74D;">--</div>
+                         </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: space-between; text-align: right;">
+                        <div>
+                            <div style="font-size: 13px; opacity: 0.7;">实时告警</div>
+                            <div id="alerts-active" style="font-size: 28px; font-weight: 600; color: #EF5350;">--</div>
+                        </div>
+                        <div style="opacity: 0.5; font-size: 12px;">实时监控中</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="grid-12">
-            <!-- Left Column: Overview Stats -->
-            <div class="col-3">
-                <div class="card" style="text-align: center; margin-bottom: 20px; padding: 40px 20px;">
+        <!-- Row 2: Charts & Core Data -->
+        <div class="grid-12" style="margin-bottom: 20px;">
+            <div class="col-3 card">
+                 <div style="text-align: center; padding: 20px 0;">
                     <div id="risk-score" style="font-size: 80px; font-weight: 800; color: #C62828; line-height: 1;">--</div>
-                    <div style="font-size: 14px; color: var(--text-grey); margin-top: 10px; font-weight: 600;">当前合规评分</div>
-                </div>
-                
-                <div class="grid-2" style="gap: 12px; margin-bottom: 20px;">
-                    <div class="card" style="padding: 16px; text-align: center;">
-                        <div id="risk-today" style="font-size: 24px; font-weight: 700; color: #C62828;">--</div>
-                        <div style="font-size: 12px; color: var(--text-grey);">今日高危告警</div>
-                    </div>
-                     <div class="card" style="padding: 16px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: 700; color: #2E7D32;">98%</div>
-                        <div style="font-size: 12px; color: var(--text-grey);">已处置率</div>
-                    </div>
-                </div>
-
-                <div class="card" style="padding: 20px;">
-                    <div style="font-size: 12px; color: var(--text-grey);">纳管文件总数</div>
-                    <div id="total-files" style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">--</div>
-                    <div style="font-size: 12px; color: var(--text-grey);">累计扫描记录</div>
-                    <div id="total-records" style="font-size: 24px; font-weight: 600;">--</div>
+                    <div style="font-size: 14px; color: var(--text-grey); margin-top: 10px; font-weight: 600;">园区合规指数</div>
+                    <div style="font-size: 12px; color: var(--text-grey); margin-top: 4px;">击败了 85% 的同类园区</div>
                 </div>
             </div>
-
-            <!-- Middle Column: Trend & Alerts -->
-            <div class="col-6">
-                <div class="card" style="margin-bottom: 20px; height: 260px; display: flex; flex-direction: column;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <h3>风险趋势 (7日)</h3>
+            
+            <div class="col-9 card">
+                <div class="grid-12">
+                    <div class="col-4">
+                        <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 10px;">扫描量趋势 (7日)</div>
+                        <svg id="chart-scan" style="width: 100%; height: 120px;"></svg>
                     </div>
-                    <svg id="trend-chart" style="flex: 1; width: 100%;"></svg>
-                </div>
-
-                <div class="card" style="min-height: 400px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3>实时告警流</h3>
-                        <div class="tag tag-blue">Live</div>
+                    <div class="col-4">
+                        <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 10px;">敏感命中趋势 (7日)</div>
+                        <svg id="chart-hits" style="width: 100%; height: 120px;"></svg>
                     </div>
-                    <div id="alert-list" style="overflow-y: auto; max-height: 320px;">
-                        <!-- Alerts injected here -->
+                    <div class="col-4">
+                        <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 10px;">风险指数趋势 (7日)</div>
+                        <svg id="chart-risk" style="width: 100%; height: 120px;"></svg>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Right Column: Systems & Extras -->
-            <div class="col-3">
-                <div class="card" style="margin-bottom: 20px;">
-                    <h3>系统接入状态</h3>
-                    <div id="sys-list" style="margin-top: 16px;">
-                        <!-- Systems injected here -->
-                    </div>
+        <!-- Row 3: Alerts & Integrations -->
+        <div class="grid-12">
+             <div class="col-6 card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3>实时风险预警</h3>
+                    <span class="tag tag-red">LIVE</span>
                 </div>
-                
-                 <div class="card">
-                    <h3>Top 风险来源</h3>
-                    <div style="margin-top: 10px;">
-                        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
-                            <span>财务系统</span>
-                            <span style="font-weight:600;">34%</span>
-                        </div>
-                        <div style="background:#F5F5F7; height:6px; border-radius:3px; margin-bottom:16px;">
-                            <div style="width:34%; background:#C62828; height:100%; border-radius:3px;"></div>
-                        </div>
-
-                        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
-                            <span>OA办公</span>
-                            <span style="font-weight:600;">28%</span>
-                        </div>
-                        <div style="background:#F5F5F7; height:6px; border-radius:3px; margin-bottom:16px;">
-                            <div style="width:28%; background:#EF6C00; height:100%; border-radius:3px;"></div>
-                        </div>
-
-                        <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
-                            <span>访客WIFI</span>
-                            <span style="font-weight:600;">15%</span>
-                        </div>
-                        <div style="background:#F5F5F7; height:6px; border-radius:3px; margin-bottom:16px;">
-                            <div style="width:15%; background:#2E7D32; height:100%; border-radius:3px;"></div>
-                        </div>
-                    </div>
+                <div id="alert-list">
+                    <!-- Alerts -->
+                </div>
+            </div>
+            
+            <div class="col-3 card">
+                <h3 style="margin-bottom: 16px;">接入系统状态</h3>
+                <div id="sys-list">
+                    <!-- Systems -->
+                </div>
+            </div>
+            
+            <div class="col-3 card">
+                <h3 style="margin-bottom: 16px;">可接入插件</h3>
+                <div id="plugin-list">
+                    <!-- Plugins -->
+                </div>
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--text-grey);">
+                    可无缝对接门禁、视频、财务等子系统，实现全域数据合规纳管。
                 </div>
             </div>
         </div>
