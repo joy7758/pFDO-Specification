@@ -713,21 +713,22 @@ def render_park_dashboard() -> str:
             { id: 'card-briefing', x: 0, y: 0, w: 8, h: 4 },
             { id: 'card-stats', x: 8, y: 0, w: 4, h: 4 },
             
-            { id: 'card-actions', x: 0, y: 4, w: 8, h: 3 },
-            { id: 'card-score', x: 8, y: 4, w: 4, h: 3 },
+            { id: 'card-explain', x: 0, y: 4, w: 6, h: 6 },  /* New Explain Card */
+            { id: 'card-actions', x: 6, y: 4, w: 6, h: 3 },  /* Adjusted */
+            { id: 'card-score', x: 6, y: 7, w: 6, h: 3 },    /* Adjusted */
             
-            { id: 'card-must-focus', x: 0, y: 7, w: 4, h: 5 },
-            { id: 'card-behavior', x: 4, y: 7, w: 4, h: 5 },
-            { id: 'card-time-pressure', x: 8, y: 7, w: 4, h: 5 },
+            { id: 'card-must-focus', x: 0, y: 10, w: 4, h: 5 },
+            { id: 'card-behavior', x: 4, y: 10, w: 4, h: 5 },
+            { id: 'card-time-pressure', x: 8, y: 10, w: 4, h: 5 },
 
-            { id: 'card-risk-map', x: 0, y: 12, w: 6, h: 5 },
-            { id: 'card-weather', x: 6, y: 12, w: 6, h: 5 },
+            { id: 'card-risk-map', x: 0, y: 15, w: 6, h: 5 },
+            { id: 'card-weather', x: 6, y: 15, w: 6, h: 5 },
             
-            { id: 'card-charts', x: 0, y: 17, w: 8, h: 5 },
-            { id: 'card-alerts', x: 8, y: 17, w: 4, h: 5 },
+            { id: 'card-charts', x: 0, y: 20, w: 8, h: 5 },
+            { id: 'card-alerts', x: 8, y: 20, w: 4, h: 5 },
 
-            { id: 'card-systems', x: 0, y: 22, w: 6, h: 4 },
-            { id: 'card-plugins', x: 6, y: 22, w: 6, h: 4 }
+            { id: 'card-systems', x: 0, y: 25, w: 6, h: 4 },
+            { id: 'card-plugins', x: 6, y: 25, w: 6, h: 4 }
         ];
 
         let currentLayout = [];
@@ -909,6 +910,7 @@ def render_park_dashboard() -> str:
              loadTimePressure();
              
              // New Features
+             loadRiskExplain(); // Load explain card
              loadLeaderSummary();
              loadRiskThermometer();
              loadStreakStats();
@@ -1136,6 +1138,66 @@ def render_park_dashboard() -> str:
                 const data = await res.json();
                 
                 document.getElementById('streak-num').innerText = data.safe_days;
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadRiskExplain() {
+            try {
+                const res = await fetch('/api/v1/risk/explain');
+                const data = await res.json();
+                
+                document.getElementById('re-score').innerText = data.total_score;
+                document.getElementById('re-level').innerText = data.level;
+                
+                // Color level
+                const badge = document.getElementById('re-level-badge');
+                if(data.level === '严重' || data.level === '高') badge.style.backgroundColor = 'var(--primary-red)';
+                else if(data.level === '中') badge.style.backgroundColor = '#EF6C00';
+                else badge.style.backgroundColor = '#2E7D32';
+                
+                document.getElementById('re-driver').innerText = data.primary_driver ? data.primary_driver.name : '--';
+                
+                // Factors
+                const fContainer = document.getElementById('re-factors');
+                fContainer.innerHTML = '';
+                // Sort by contribution desc
+                const factors = data.factors || [];
+                factors.sort((a,b) => b.contribution - a.contribution);
+                
+                factors.slice(0, 4).forEach(f => {
+                    const row = document.createElement('div');
+                    row.style.marginBottom = '8px';
+                    // Calculate bar width (relative to max possible penalty, say 30?)
+                    // Or relative to max contribution in this set
+                    const maxC = factors[0].contribution || 1;
+                    const w = Math.min(100, (f.contribution / maxC) * 100);
+                    
+                    row.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
+                            <span>${f.name}</span>
+                            <span style="color:#666;">-${f.contribution}</span>
+                        </div>
+                        <div style="width:100%; height:4px; background:#eee; border-radius:2px;">
+                            <div style="width:${w}%; height:100%; background:var(--primary-red); border-radius:2px; opacity:0.7;"></div>
+                        </div>
+                    `;
+                    fContainer.appendChild(row);
+                });
+                
+                // Suggestions
+                const sContainer = document.getElementById('re-suggestions');
+                sContainer.innerHTML = '';
+                (data.suggestions || []).slice(0,2).forEach(s => {
+                    const div = document.createElement('div');
+                    div.style.background = '#F9F9F9';
+                    div.style.padding = '8px';
+                    div.style.borderRadius = '8px';
+                    div.style.marginTop = '8px';
+                    div.style.fontSize = '12px';
+                    div.innerHTML = `<span style="font-weight:600; color:#333;">${s.title}</span><br><span style="color:#666;">${s.detail}</span>`;
+                    sContainer.appendChild(div);
+                });
+                
             } catch(e) { console.error(e); }
         }
 

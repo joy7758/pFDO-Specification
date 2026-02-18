@@ -5,6 +5,7 @@ import random
 
 from .models import RiskOverviewResponse, RiskTrendResponse
 from .risk_engine import get_risk_overview, calc_risk_score, generate_mock_metrics
+from .risk_explainer import explain_risk, get_risk_model as get_explainer_model
 
 router = APIRouter(prefix="/api/v1/risk", tags=["Risk"])
 
@@ -27,3 +28,13 @@ def risk_trend(days: Optional[int] = 7):
         score = calc_risk_score(metrics)
         trend_list.append({"date": d.date().isoformat(), "score": score})
     return {"trend": trend_list}
+
+@router.get("/explain")
+def api_risk_explain():
+    """获取风险解释报告 (RRM-1.1)"""
+    return explain_risk()
+
+@router.get("/model")
+def api_risk_model():
+    """获取风险模型元数据"""
+    return get_explainer_model()

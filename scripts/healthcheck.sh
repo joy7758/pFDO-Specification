@@ -80,3 +80,14 @@ else
     echo "    建议运行: ./scripts/run_park.sh 查看详细日志"
     exit 1
 fi
+
+# 2026-02-18 Add Risk Explain Checks
+if ! curl -s http://127.0.0.1:8000/api/v1/risk/explain | grep "engine_version" > /dev/null; then
+    echo "❌ API /risk/explain is DOWN or missing engine_version"
+    exit 1
+fi
+
+if ! curl -s http://127.0.0.1:8000/api/v1/risk/model | grep "factors" > /dev/null; then
+    echo "❌ API /risk/model is DOWN or missing factors"
+    exit 1
+fi
