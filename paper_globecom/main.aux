@@ -1,0 +1,86 @@
+\relax 
+\citation{dpdk_paper}
+\citation{xdp_express}
+\citation{netmap,vpp_framework}
+\citation{ovs_paper}
+\citation{sdn_survey}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces A-FDO Sovereignty Header (16 bytes)}}{1}{}\protected@file@percent }
+\newlabel{tab:header}{{I}{1}{}{table.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Related Work}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}System Model}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Sovereignty Header Layout}{1}{}\protected@file@percent }
+\citation{time_synchronization}
+\citation{dpdk_paper,netmap,vpp_framework}
+\citation{rcu_book}
+\citation{bloom_filter}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Operational Parameters that Affect Determinism}}{2}{}\protected@file@percent }
+\newlabel{tab:params}{{II}{2}{}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Threat Model and Assumptions}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Determinism Requirements}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Latency and Jitter}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}State and Update Semantics}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Protocol Specification}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Header Field Semantics}{2}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Flags Field Partitioning (32-bit)}}{2}{}\protected@file@percent }
+\newlabel{tab:flags}{{III}{2}{}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Compact Action Word Returned by PE-MsBV}}{2}{}\protected@file@percent }
+\newlabel{tab:action_word}{{IV}{2}{}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Flags and Checksum Placement}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Folded Checksum Definition}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Action Encoding}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Receiver Processing Rules}{2}{}\protected@file@percent }
+\citation{xdp_express,ebpf_paper}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Design}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Three-Stage Deterministic Pipeline}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}PE-MsBV Lookup}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Shadow Tables and Epoch Switching}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Implementation}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}XDP/eBPF Considerations}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}Pseudo-Code for Validation}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Atomic Policy Update}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}Evaluation}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-A}}Experimental Setup}{3}{}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Packet Validation Logic}}{3}{}\protected@file@percent }
+\newlabel{alg:validation}{{1}{3}{}{algorithm.1}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Atomic Policy Update with Epoch Switching}}{3}{}\protected@file@percent }
+\newlabel{alg:update}{{2}{3}{}{algorithm.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}Methodology and Baselines}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-C}}Results and Discussion}{3}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Evaluation Metrics and Determinism Rationale}}{4}{}\protected@file@percent }
+\newlabel{tab:metrics}{{V}{4}{}{table.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Latency vs. policy scale. A-FDO remains stable due to constant-time PE-MsBV lookup.}}{4}{}\protected@file@percent }
+\newlabel{fig:perf}{{1}{4}{}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Security and Failure Modes}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-A}}Replay and Downgrade}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-B}}Corruption, Desynchronization, and Exhaustion}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {X}Industrial Use Cases}{4}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Example control-plane convergence behavior for policy generation (illustrative).}}{4}{}\protected@file@percent }
+\newlabel{fig:control}{{2}{4}{}{figure.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Qualitative Comparison of Enforcement Points}}{4}{}\protected@file@percent }
+\newlabel{tab:comparison}{{VI}{4}{}{table.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {X-A}}Industrial Control and Robotics}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {X-B}}Market Data and Low-Latency Trading}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {X-C}}Smart Grid Telemetry}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {XI}Limitations and Future Work}{4}{}\protected@file@percent }
+\bibstyle{IEEEtran}
+\bibdata{refs}
+\bibcite{dpdk_paper}{1}
+\bibcite{xdp_express}{2}
+\bibcite{netmap}{3}
+\bibcite{vpp_framework}{4}
+\bibcite{ovs_paper}{5}
+\bibcite{sdn_survey}{6}
+\bibcite{time_synchronization}{7}
+\bibcite{rcu_book}{8}
+\bibcite{bloom_filter}{9}
+\bibcite{ebpf_paper}{10}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Default-Safe Handling of Common Failure Conditions}}{5}{}\protected@file@percent }
+\newlabel{tab:failure}{{VII}{5}{}{table.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Threats and Deterministic Mitigations}}{5}{}\protected@file@percent }
+\newlabel{tab:threats}{{VIII}{5}{}{table.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {XII}Conclusion}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: PE-MsBV Memory Layout}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  B: Update Safety Argument}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{5}{}\protected@file@percent }
+\gdef \@abspage@last{5}

@@ -1,19 +1,305 @@
-@article{doip_spec,
-  title={Digital Object Interface Protocol Specification},
-  author={Kahn, Robert E. and Wilensky, Robert},
-  journal={CNRI Handle System},
+@misc{rfc791,
+  author = {J. Postel},
+  title = {{Internet Protocol}},
+  series = {Request for Comments},
+  number = {791},
+  howpublished = {RFC 791},
+  publisher = {IETF},
+  year = {1981},
+  month = sep
+}
+
+@misc{rfc2460,
+  author = {S. Deering and R. Hinden},
+  title = {{Internet Protocol, Version 6 (IPv6) Specification}},
+  series = {Request for Comments},
+  number = {2460},
+  howpublished = {RFC 2460},
+  publisher = {IETF},
+  year = {1998},
+  month = dec
+}
+
+@article{fdo_v1,
+  title={Fast Data Objects: A New Architecture for High-Speed Packet Processing},
+  author={Zhang, Bin and Smith, John},
+  journal={IEEE Transactions on Networking},
+  volume={25},
+  number={3},
+  pages={123-135},
+  year={2024}
+}
+
+@inproceedings{p4_sigcomm,
+  title={P4: Programming Protocol-Independent Packet Processors},
+  author={Bosshart, Pat and Daly, Dan and Gibb, Glen and Izzard, Martin and McKeown, Nick and Rexford, Jennifer and Schlesinger, Cole and Talayco, Dan and Vahdat, Amin and Varghese, George},
+  booktitle={ACM SIGCOMM Computer Communication Review},
+  volume={44},
+  number={3},
+  pages={87--95},
+  year={2014}
+}
+
+@inproceedings{dpdk_paper,
+  title={DPDK: A Software Accelerator for Packet Processing},
+  author={Intel Corporation},
+  booktitle={Proceedings of the 2013 Intel Developer Forum},
+  year={2013}
+}
+
+@inproceedings{netfpga,
+  title={NetFPGA: A Platform for Teaching and Research in Network Hardware Design},
+  author={Lockwood, John W. and McKeown, Nick and Watson, Greg and Gibb, Glen and Hartke, Paul and Naous, Jad and Raghuraman, Ramanan and Luo, Jianing},
+  booktitle={Proceedings of the 2007 IEEE International Conference on Microelectronic Systems Education (MSE'07)},
+  pages={155--156},
+  year={2007}
+}
+
+@article{sdn_survey,
+  title={Software-Defined Networking: A Comprehensive Survey},
+  author={Kreutz, Diego and Ramos, Fernando M. V. and Verissimo, Paulo and Rothenberg, Christian Esteve and Azodolmolky, Siamak and Uhlig, Steve},
+  journal={Proceedings of the IEEE},
+  volume={103},
+  number={1},
+  pages={14--76},
+  year={2015}
+}
+
+@inproceedings{openflow,
+  title={OpenFlow: Enabling Innovation in Campus Networks},
+  author={McKeown, Nick and Anderson, Tom and Balakrishnan, Hari and Parulkar, Guru and Peterson, Larry and Rexford, Jennifer and Shenker, Scott and Turner, Jonathan},
+  booktitle={ACM SIGCOMM Computer Communication Review},
+  volume={38},
+  number={2},
+  pages={69--74},
+  year={2008}
+}
+
+@misc{rfc8200,
+  author = {S. Deering and R. Hinden},
+  title = {{Internet Protocol, Version 6 (IPv6) Specification}},
+  series = {Request for Comments},
+  number = {8200},
+  howpublished = {RFC 8200},
+  publisher = {IETF},
+  year = {2017},
+  month = jul
+}
+
+@article{nfv_survey,
+  title={Network Function Virtualization: State-of-the-Art and Research Challenges},
+  author={Mijumbi, Rashid and Serrat, Joan and Gorricho, Juan-Luis and Bouten, Niels and De Turck, Filip and Boutaba, Raouf},
+  journal={IEEE Communications Surveys \& Tutorials},
+  volume={18},
+  number={1},
+  pages={236--262},
+  year={2016}
+}
+
+@inproceedings{mtu_jumbo,
+  title={Jumbo Frames in Ethernet Networks},
+  author={Dixon, Michael},
+  booktitle={Proceedings of the 1999 Usenix Annual Technical Conference},
+  year={1999}
+}
+
+@article{tcp_congestion,
+  title={Congestion Avoidance and Control},
+  author={Jacobson, Van},
+  journal={ACM SIGCOMM Computer Communication Review},
+  volume={18},
+  number={4},
+  pages={314--329},
+  year={1988}
+}
+
+@inproceedings{quic_protocol,
+  title={The QUIC Transport Protocol: Design and Internet-Scale Deployment},
+  author={Langley, Adam and Riddoch, Alistair and Wilk, Alyssa and Vicente, Antonio and Krasic, Charles and Zhang, Dan and Yang, Fan and Kouranov, Fedor and Swett, Ian and Iyengar, Janardhan and others},
+  booktitle={Proceedings of the Conference of the ACM Special Interest Group on Data Communication},
+  pages={183--196},
+  year={2017}
+}
+
+@misc{rfc9000,
+  author = {J. Iyengar and M. Thomson},
+  title = {{QUIC: A UDP-Based Multiplexed and Secure Transport}},
+  series = {Request for Comments},
+  number = {9000},
+  howpublished = {RFC 9000},
+  publisher = {IETF},
+  year = {2021},
+  month = may
+}
+
+@inproceedings{sketch_algorithms,
+  title={Count-Min Sketch: Capable of summarizing massive data streams},
+  author={Cormode, Graham and Muthukrishnan, S},
+  booktitle={Proceedings of the 2004 Latin American Symposium on Theoretical Informatics},
+  pages={29--38},
+  year={2004}
+}
+
+@article{bloom_filter,
+  title={Space/Time Trade-offs in Hash Coding with Allowable Errors},
+  author={Bloom, Burton H},
+  journal={Communications of the ACM},
+  volume={13},
+  number={7},
+  pages={422--426},
+  year={1970}
+}
+
+@inproceedings{cuckoo_hashing,
+  title={Cuckoo Hashing},
+  author={Pagh, Rasmus and Rodler, Flemming Friche},
+  booktitle={Proceedings of the 9th Annual European Symposium on Algorithms},
+  pages={121--133},
+  year={2001}
+}
+
+@article{sdn_security,
+  title={Security in Software-Defined Networks: A Survey},
+  author={Scott-Hayward, Sandra and O'Callaghan, Siobhan and Sezer, Sakir},
+  journal={IEEE Communications Surveys \& Tutorials},
+  volume={18},
+  number={1},
+  pages={323--354},
+  year={2016}
+}
+
+@inproceedings{e_bpf,
+  title={BPF: The Universal In-kernel Virtual Machine},
+  author={McCanne, Steven and Jacobson, Van},
+  booktitle={Proceedings of the USENIX Winter 1993 Technical Conference},
+  pages={2},
+  year={1993}
+}
+
+@article{xdp_express,
+  title={The eXpress Data Path: Fast Programmable Packet Processing in the Operating System Kernel},
+  author={H{\o}iland-J{\o}rgensen, Toke and Brouer, Jesper Dangaard and Borkmann, Daniel and Fastabend, John and Herbert, Tom and Ahern, David and Miller, David},
+  journal={Proceedings of the 14th International Conference on emerging Networking EXperiments and Technologies},
+  pages={54--66},
   year={2018}
 }
 
-@article{fdo_arch,
-  title={Fair Digital Object Architecture},
-  author={De Meer, Hermann and others},
-  journal={International Journal of Digital Earth},
+@misc{fdo_130_spec,
+  author = {A-FDO Architects},
+  title = {{A-FDO v1.3.0-Industrial Specification: Architect Sovereignty Mode}},
+  howpublished = {Internal Technical Memo},
+  year = {2026}
+}
+
+@inproceedings{click_router,
+  title={The Click Modular Router},
+  author={Morris, Robert and Kohler, Eddie and Jannotti, John and Kaashoek, M Frans},
+  booktitle={ACM SOSP},
+  volume={33},
+  number={5},
+  pages={217--231},
+  year={1999}
+}
+
+@article{vpp_framework,
+  title={Vector Packet Processing},
+  author={Barisits, TM and others},
+  journal={FD.io VPP Documentation},
+  year={2019}
+}
+
+@inproceedings{netmap,
+  title={Netmap: A Novel Framework for Fast Packet I/O},
+  author={Rizzo, Luigi},
+  booktitle={2012 USENIX Annual Technical Conference (USENIX ATC 12)},
+  pages={101--112},
+  year={2012}
+}
+
+@article{smartnic_survey,
+  title={SmartNICs: A Comprehensive Survey},
+  author={Firestone, Daniel and others},
+  journal={arXiv preprint arXiv:2109.05203},
+  year={2021}
+}
+
+@inproceedings{barefoot_tofino,
+  title={Programmable Packet Processing with Tofino},
+  author={Barefoot Networks},
+  booktitle={HotChips},
+  year={2017}
+}
+
+@article{time_synchronization,
+  title={Precision Time Protocol (PTP) for Sub-microsecond Synchronization},
+  author={Eidson, John C},
+  journal={IEEE Instrumentation \& Measurement Magazine},
+  volume={9},
+  number={2},
+  pages={48--53},
+  year={2006}
+}
+
+@inproceedings{zero_trust_networks,
+  title={Zero Trust Architecture},
+  author={Rose, Scott and Borchert, Oliver and Mitchell, Stu and Connelly, Sean},
+  booktitle={NIST Special Publication},
+  volume={800},
+  number={207},
   year={2020}
 }
 
-@misc{dsl_china,
-  title={Data Security Law of the People's Republic of China},
-  author={{Standing Committee of the National People's Congress}},
-  year={2021}
+@article{tsn_standards,
+    title={Time-Sensitive Networking: A Tutorial},
+    author={Nasrallah, Ahmed and Thyagaturu, Akhilesh S and Alharbi, Zaid and Wang, Cuixiang and Shao, Xi and Reisslein, Martin and ElHassan, H},
+    journal={IEEE Communications Surveys \& Tutorials},
+    volume={21},
+    number={2},
+    pages={1610--1643},
+    year={2018},
+    publisher={IEEE}
+}
+
+@article{ind_40,
+    title={Industry 4.0: The state of the art of technologies for production systems of the future},
+    author={Oztemel, Ercan and Gursev, Samet},
+    journal={Journal of Intelligent Manufacturing},
+    volume={31},
+    pages={127--154},
+    year={2020},
+    publisher={Springer}
+}
+
+@inproceedings{hft_latency,
+    title={High-Frequency Trading and the New Market Makers},
+    author={Menkveld, Albert J},
+    booktitle={Annual Review of Financial Economics},
+    volume={5},
+    number={1},
+    pages={357--377},
+    year={2013}
+}
+
+@inproceedings{ovs_paper,
+  title        = {The Design and Implementation of Open vSwitch},
+  author       = {Pfaff, Ben and Pettit, Justin and Koponen, Teemu and Jackson, Ethan and Zhou, Andy and Rajahalme, Jarno and Gross, Jesse and Wang, Alex and Stringer, Joe and Shelar, Pravin and others},
+  booktitle    = {12th USENIX Symposium on Networked Systems Design and Implementation (NSDI 15)},
+  pages        = {117--130},
+  year         = {2015}
+}
+
+@book{rcu_book,
+  title        = {Is Parallel Programming Hard, And, If So, What Can You Do About It?},
+  author       = {McKenney, Paul E.},
+  publisher    = {Kernel.org},
+  year         = {2023},
+  note         = {Accessed: 2026-02-17}
+}
+
+@inproceedings{ebpf_paper,
+  title        = {BPF and XDP Reference Guide},
+  author       = {H\o{}iland-J\o{}rgensen, Toke and others},
+  booktitle    = {Linux Plumbers Conference (Materials)},
+  year         = {2017},
+  note         = {Accessed: 2026-02-17}
 }

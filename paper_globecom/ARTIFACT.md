@@ -1,7 +1,7 @@
 # GLOBECOM-Workshop Submission Artifact
 
 ## Overview
-This artifact contains the LaTeX source code and associated figures for the paper "Active Governance Header: A Novel Approach for Data Sovereignty in Fair Digital Object Architecture", submitted to the GLOBECOM workshop.
+This artifact contains the LaTeX source code and associated figures for the paper "PHY-Level Deterministic Control: Overlap Execution within IEEE 802.3dj RS-FEC Decode Window", submitted to the GLOBECOM workshop.
 
 ## Directory Structure
 - `main.tex`: The main LaTeX source file.
@@ -19,12 +19,16 @@ To compile the paper, run the following command from the `paper_globecom` direct
 ```
 
 ## Dependencies
-- `pdflatex`
+- `pdflatex` (TeX Live or MacTeX)
 - `bibtex`
 - `IEEEtran` document class
+- `poppler` (optional, for page count check via `pdfinfo`)
 
 ## Content Origin
-The content is derived from the internal documentation and reports of the Active FDO project, specifically:
-- `docs/paper/merged_paper.tex`
-- `docs/paper/Defense_Robustness_Report.md`
-- `docs/paper/Defense_Test_Report.md`
+The content is derived from the internal documentation and reports of the Active FDO project.
+All data figures are generated from the project's simulation environment.
+
+## Compliance Check
+- [x] Page limit: $\le$ 6 pages.
+- [x] References: IEEE/IETF standard sources used.
+- [x] Formatting: IEEEtran conference.

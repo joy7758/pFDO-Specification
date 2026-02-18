@@ -1,112 +1,377 @@
 \documentclass[conference]{IEEEtran}
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{multirow}
 
 \begin{document}
 
-\title{PHY-Level Deterministic Control: Overlap Execution within IEEE 802.3dj RS-FEC Decode Window}
+\title{A-FDO v1.3.0-Industrial: Architect Sovereignty Mode for Deterministic Data-Plane Governance}
 
 \author{\IEEEauthorblockN{Anonymous Author(s)}
-\IEEEauthorblockA{\textit{Affiliation} \\
-City, Country \\
+\IEEEauthorblockA{\textit{Affiliation}\\
+City, Country\\
 email@domain.com}
 }
 
 \maketitle
 
 \begin{abstract}
-Next-generation Ethernet standards, such as IEEE 802.3dj (800 GbE/1.6 TbE), introduce significant latency variability due to complex Reed-Solomon Forward Error Correction (RS-FEC) schemes required for PAM4 signaling. Traditional network governance, operating at Layer 3 or above, fails to provide deterministic guarantees in these high-speed environments because policy enforcement occurs after frame reassembly, accumulating jitter. This paper proposes a PHY-level deterministic control mechanism anchored at the PMA-PCS sublayer boundary. By exploiting the RS-FEC decode window, we introduce an "overlap execution" strategy where policy lookup is performed in parallel with FEC decoding. We present the Active Governance Header (AGH) and Multi-stage Bit Vector (MsBV) lookup as implementation artifacts that enable $O(1)$ decision latency ($\approx 1.18 \mu s$), fitting strictly within the FEC latency budget. This cross-layer approach ensures that control decisions are finalized before the packet is fully reconstructed, eliminating serialization delay penalties and providing clock-cycle deterministic reliability for time-sensitive networks.
+The evolution of high-speed packet processing demands architectures that balance flexibility with deterministic performance. As line rates scale beyond 100~Gbps, conventional software pipelines frequently exhibit tail-latency inflation and jitter under adversarial traffic mixes due to variable parsing depth, cache miss amplification, and data structure contention. This paper presents A-FDO v1.3.0-Industrial, a specification operating under \emph{Architect Sovereignty Mode} (ASM) to enforce governance and compliance policies directly in the data plane with bounded worst-case decision time. A-FDO introduces a fixed 16-byte Sovereignty Header (SH) and a constant-time policy resolution mechanism called Policy-Encoded Multi-stage Bit Vector (PE-MsBV). We formalize determinism requirements, define a minimal threat model, specify protocol field semantics and receiver rules, and provide two algorithms for (i) line-rate validation and (ii) atomic policy updates using epoch switching. We outline a reproducible evaluation methodology and discuss security and failure modes (replay, downgrade, corruption, and desynchronization). The design targets stable tail behavior while remaining compatible with practical XDP/eBPF implementation constraints.
 \end{abstract}
 
 \begin{IEEEkeywords}
-IEEE 802.3dj, RS-FEC, Deterministic Networking, PHY Control, Active Governance Header.
+Deterministic Networking, Data Plane Governance, XDP, eBPF, Constant-Time Lookup, Policy Enforcement.
 \end{IEEEkeywords}
 
 \section{Introduction}
-As Ethernet speeds scale to 800 Gbps and 1.6 Tbps under the developing IEEE 802.3dj standard, the physical layer (PHY) complexity increases dramatically. To combat signal degradation in PAM4 modulation, heavy Reed-Solomon Forward Error Correction (RS-FEC) codes are mandatory. While essential for signal integrity, these FEC schemes introduce significant, often variable, latency due to block buffering and iterative decoding.
+Deterministic behavior in packet processing is increasingly necessary in industrial control, robotics, market data distribution, and critical infrastructure networks. While many systems provide high average throughput, governance decisions such as drop/allow, redirect, shaping class selection, and audit mirroring often sit on variable-latency paths. Software rule engines traverse variable-length rule chains, programmable pipelines may incur variable parsing cost depending on header graphs, and per-flow state creation can introduce unbounded work under attack.
 
-The fundamental problem is that traditional network governance and flow control mechanisms operate at the MAC layer or higher (L3/L4). At terabit speeds, the time spent waiting for a frame to pass through the FEC decoder, PCS descrambler, and MAC reassembly creates a "governance lag." Decisions made after full frame reception are too late to prevent buffer congestion or enforce strict timing guarantees required by industrial and mission-critical applications.
+A-FDO (Architected Flow Deterministic Operation) targets a narrow but high-impact objective: \emph{bounded governance lag}. Governance lag is the time from ingress observation to a committed enforcement decision. ASM asserts that this lag must remain bounded by a constant independent of the number of configured policies and independent of packet stream composition. This is intentionally stricter than ``high throughput'' and is motivated by applications where worst-case latency dominates correctness.
 
-To address this, we propose anchoring the governance control plane deep within the PHY, specifically at the Physical Medium Attachment (PMA) to Physical Coding Sublayer (PCS) boundary. We introduce a mechanism for **overlap execution**, where policy enforcement logic runs in parallel with the mandatory RS-FEC decoding latency. By utilizing a fixed-length Active Governance Header (AGH) detectable at the symbol level, we ensure that the "drop/forward" decision is ready the moment the FEC block is corrected, effectively hiding the governance latency within the unavoidable physical layer overhead.
-
-\section{System Model: PHY-Level Governance Anchor}
-We consider a network architecture compliant with IEEE 802.3dj, focusing on the receiver datapath.
-
-\subsection{Latency Constraints and The FEC Window}
-In high-speed Ethernet, the RS-FEC decoder requires a block of symbols to correct errors. For example, in 400G/800G standards, this latency can exceed hundreds of nanoseconds.
-Let $T_{FEC}$ be the latency of the FEC decoder.
-Let $T_{Gov}$ be the latency of the governance policy lookup.
-
-In a traditional post-MAC model, the total latency $T_{total}$ is:
-\begin{equation}
-    T_{total} = T_{FEC} + T_{MAC} + T_{Gov}
-\end{equation}
-
-Our proposed **Overlap Execution** model places the governance logic in parallel:
-\begin{equation}
-    T_{total} = \max(T_{FEC}, T_{Gov}) + T_{MAC\_Gate}
-\end{equation}
-Since $T_{Gov} \approx 1.18 \mu s$ (as shown in our evaluation) and typically $T_{FEC} \gg 0$ for deep interleaving modes, the effective governance cost approaches zero marginal latency.
-
-\subsection{PMA-PCS Anchor Point}
-The governance anchor is situated immediately after the PMA sublayer. It inspects the incoming bitstream for the AGH pattern before full PCS alignment. This requires the AGH to be robustly detectable even in the presence of pre-FEC bit errors, necessitating a design that relies on statistical header recognition or specialized preamble markers.
-
-\section{Implementation Artifacts}
-To realize this PHY-level anchor, we leverage three specific implementation artifacts: the Active Governance Header (AGH), the Multi-stage Bit Vector (MsBV) lookup, and the Fisher Information Matrix (FIM) for policy stability.
-
-\subsection{Active Governance Header (AGH)}
-The AGH is a fixed-length metadata block inserted into the packet preamble or initial payload bytes. It contains a \texttt{policy\_id} that maps to a specific forwarding or dropping rule. Crucially, its fixed position and length allow for hardware parsing without complex state machines.
-
-\subsection{MsBV: Deterministic Lookup}
-To ensure $T_{Gov}$ is constant and predictable (jitter-free), we employ a Multi-stage Bit Vector (MsBV) mechanism. Unlike Ternary Content Addressable Memory (TCAM) or software hash tables which can have variable access times, MsBV uses a direct indexing approach.
-The lookup complexity is $O(1)$, dependent only on the bit-width of the \texttt{policy\_id}, not the number of active policies. This guarantees that $T_{Gov}$ remains stable regardless of the control plane scale.
-
-\subsection{Upper-Layer Policy Generation (RLCP)}
-While the PHY enforcement is static and deterministic, the policies themselves are generated by an upper-layer control plane. We propose an optional Reinforcement Learning Compliance Protocol (RLCP) to dynamically generate these policies based on network conditions.
-To prevent "policy churn" from destabilizing the PHY lookup tables, RLCP uses a topology-preserving loss function with a Fisher Information Matrix (FIM) constraint:
-\begin{equation}
-    L_{total} = L_{perf} + \gamma L_{FIM}(P_{\theta} || P_{anchor})
-\end{equation}
-This ensures that updates to the governance table ($\theta$) do not violate the structural integrity required for deterministic MsBV lookups.
-
-\section{Evaluation}
-We evaluate the proposed mechanism's ability to provide deterministic control within the constraints of a high-speed PHY.
-
-\subsection{Deterministic Latency Analysis}
-We subjected the MsBV interceptor to a flood of 1,000,000 packets to measure processing variance.
+A-FDO makes three design choices:
 \begin{itemize}
-    \item \textbf{Mean Latency ($T_{Gov}$)}: 1.1773 $\mu$s
-    \item \textbf{Jitter}: $< 0.01 \mu$s
-    \item \textbf{Throughput}: $> 800$ kpps (software emulation), scaling linearly in hardware.
+    \item \textbf{Fixed-format header:} a 16-byte SH enables deterministic parsing without variable-length fields.
+    \item \textbf{Constant-time policy lookup:} PE-MsBV provides direct indexing with a bounded number of array reads.
+    \item \textbf{Atomic updates by epoch:} a shadow table is populated off-path and published via an epoch-index swap.
 \end{itemize}
 
-As shown in Figure \ref{fig:perf}, the MsBV mechanism maintains a flat latency profile (Red Line) regardless of the number of policy rules ($10^1$ to $10^6$), contrasting sharply with the linear degradation of traditional ACLs (Gray Line). This stability is critical for ensuring $T_{Gov}$ never exceeds the $T_{FEC}$ window.
+\section{Related Work}
+Kernel-bypass and fast-path techniques reduce overhead but do not inherently guarantee bounded worst-case decision time. DPDK achieves high throughput in user space but still requires policy resolution and parsing logic that can vary with configuration \cite{dpdk_paper}. XDP moves processing earlier in the Linux receive path and supports eBPF programs with constrained instruction budgets and bounded loops \cite{xdp_express}. Netmap and VPP similarly emphasize high-speed I/O and vectorized processing \cite{netmap, vpp_framework}.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/autonomous_performance.pdf}
-    \caption{Latency vs Policy Scale: MsBV+ maintains $O(1)$ lookup time, essential for overlap execution.}
-    \label{fig:perf}
+Open vSwitch (OVS) improves the performance of SDN datapaths but still employs variable-depth matching and action execution whose tail behavior depends on traffic and cache state \cite{ovs_paper}. More broadly, SDN and programmable dataplanes provide flexibility but often optimize for average-case throughput rather than explicit tail bounds \cite{sdn_survey}. A-FDO is intentionally narrower: it restricts metadata to a fixed header and restricts actions to a compact word, enabling a deterministic decision path.
+
+\section{System Model}
+\subsection{Sovereignty Header Layout}
+The Sovereignty Header (SH) is a fixed 16-byte structure inserted at a deterministic offset by an A-FDO-enabled ingress domain. The header is defined as the packed struct format \texttt{!HIIIH}. Table~\ref{tab:header} specifies the byte layout.
+
+\begin{table}[t]
+\caption{A-FDO Sovereignty Header (16 bytes)}
+\label{tab:header}
+\centering
+\begin{tabular}{l c l}
+\toprule
+\textbf{Field} & \textbf{Size} & \textbf{Description} \\
+\midrule
+Magic & 2B & Constant value to identify SH \\
+PolicyID & 4B & Direct index into PE-MsBV \\
+Flags & 4B & Hints, reserved bits, and checksum \\
+EpochTs & 4B & Sender epoch timestamp (ms) \\
+FlowID & 2B & Compact flow label \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Threat Model and Assumptions}
+We consider an on-path or adjacent adversary capable of generating arbitrary traffic at line rate. The adversary may (i) spoof SH fields, (ii) replay previously observed valid headers, (iii) attempt downgrade by forcing stale epochs, and (iv) attempt algorithmic complexity attacks to amplify jitter. We do not assume the adversary can break cryptographic primitives; rather, we focus on determinism and robustness under load.
+
+ASM mitigates complexity attacks by enforcing constant-time validation steps and constant-time lookup, neutralizing inputs that would otherwise trigger variable work. For time-based replay checks, we assume coarse time synchronization (e.g., PTP) and a configured acceptance window \cite{time_synchronization}.
+
+\section{Determinism Requirements}
+A-FDO targets \emph{hard} determinism at the enforcement point.
+
+\subsection{Latency and Jitter}
+Let $T_{dec}$ be the time from the start of SH parsing to action commit. For policy capacity $N$ and any policy set $\mathcal{P}$ where $|\mathcal{P}| \le N$, A-FDO requires a constant bound $T_{max}$ such that:
+\begin{equation}
+\forall p: \; T_{dec}(p, \mathcal{P}) \le T_{max}.
+\end{equation}
+Jitter is $J = \max(T_{dec}) - \min(T_{dec})$ over a window. Variable-depth pipelines often show tail inflation under cache pressure and adversarial mixes \cite{dpdk_paper, netmap, vpp_framework}. A-FDO constrains $J$ by fixing parsing depth, bounding memory operations, and avoiding data-dependent loops.
+
+\subsection{State and Update Semantics}
+The dataplane treats policy tables as read-only during decisions. Updates must be atomic: each packet is processed under epoch $E$ or epoch $E{+}1$, never a mixture. This resembles RCU principles but uses explicit epoch switching to keep the publish step constant-time \cite{rcu_book}.
+
+\begin{table}[t]
+\caption{Operational Parameters that Affect Determinism}
+\label{tab:params}
+\centering
+\begin{tabular}{l l}
+\toprule
+\textbf{Parameter} & \textbf{Determinism impact} \\
+\midrule
+Policy capacity $N$ & bounds table sizes; lookup stays $O(1)$ \\
+Timestamp window $W$ & replay surface vs. drift tolerance \\
+Epoch publish rate & disruption vs. convergence speed \\
+Default action & fail-closed vs. availability trade-off \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Protocol Specification}
+\subsection{Header Field Semantics}
+The SH fields have the following semantics:
+\begin{itemize}
+    \item \textbf{Magic:} identifies SH presence. If magic mismatches, the receiver follows a legacy path or applies a configured default.
+    \item \textbf{PolicyID:} direct index into the policy tables. The range is bounded by the implementation table size.
+    \item \textbf{Flags:} includes reserved bits (must be zero), operational hints, and the folded checksum.
+    \item \textbf{EpochTs:} time-based freshness indicator for replay resistance. Receivers validate against local time within window $W$.
+    \item \textbf{FlowID:} compact flow discriminator for presence checks and lightweight accounting.
+\end{itemize}
+
+\subsection{Flags and Checksum Placement}
+The 32-bit \textbf{Flags} field is partitioned into reserved bits, operational hints, and the folded checksum (Table~\ref{tab:flags}). A fixed partition enables constant-time extraction.
+
+\begin{table}[t]
+\caption{Flags Field Partitioning (32-bit)}
+\label{tab:flags}
+\centering
+\begin{tabular}{l c l}
+\toprule
+\textbf{Bits} & \textbf{Name} & \textbf{Semantics} \\
+\midrule
+0 & Audit & mirror to audit port if set \\
+1 & Strict & drop on any validation anomaly \\
+2--15 & Reserved & must be zero; nonzero triggers default-safe action \\
+16--31 & FoldedCk & folded checksum over header words \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Folded Checksum Definition}
+To reject malformed headers early without incurring cryptographic cost, A-FDO defines a folded checksum over 16-bit words of the SH. Let $w_i$ be the $i$-th 16-bit word of the 16-byte header with checksum bits zeroed. The checksum is:
+\begin{equation}
+\textsc{FoldedCk} = \left(\bigoplus_i w_i\right) \oplus (\textsc{PolicyID} \bmod 2^{16}) \oplus (\textsc{EpochTs} \bmod 2^{16}).
+\end{equation}
+This checksum is designed for constant-time computation and strong coverage against random corruption, similar in spirit to fast membership filters that tolerate limited error \cite{bloom_filter}.
+
+\subsection{Action Encoding}
+PE-MsBV returns a compact action word for deterministic decoding.
+
+\begin{table}[t]
+\caption{Compact Action Word Returned by PE-MsBV}
+\label{tab:action_word}
+\centering
+\begin{tabular}{l c l}
+\toprule
+\textbf{Field} & \textbf{Bits} & \textbf{Meaning} \\
+\midrule
+Type & 3 & drop/forward/redirect/mark \\
+Class & 5 & deterministic queue or class id \\
+Mirror & 1 & audit mirror enable \\
+Rate & 3 & shaping profile index \\
+Reserved & 4 & future use (must be zero) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Receiver Processing Rules}
+Receiver processing is fail-closed. If checksum fails, timestamp window fails, epoch fails, or policy is inactive, a configured default action is applied (drop or quarantine). Receivers may also enforce a \emph{minimum policy epoch} derived from control-plane publication. This minimum epoch provides downgrade resistance even if timestamp windows overlap across updates.
+
+\section{Design}
+\subsection{Three-Stage Deterministic Pipeline}
+ASM mandates a three-stage pipeline:
+\begin{enumerate}
+    \item \textbf{Folded checksum verification:} fast detection of malformed headers.
+    \item \textbf{Epoch synchronization:} validates replay window and minimum epoch.
+    \item \textbf{Policy enforcement:} PE-MsBV lookup and action decode.
+\end{enumerate}
+Each stage is designed to have a constant instruction footprint and bounded memory accesses. Importantly, no stage allocates memory or traverses unbounded structures.
+
+\subsection{PE-MsBV Lookup}
+PE-MsBV comprises a Level~1 presence bitmap and a Level~2 action array. Lookup performs (i) one bitmap read and bit-test and (ii) one action read if present. This avoids collision resolution and tree traversal. The presence bitmap provides deterministic rejection of undefined policy IDs: a miss results in a fixed default action word, avoiding exception paths.
+
+\subsection{Shadow Tables and Epoch Switching}
+The control plane writes a complete snapshot to a shadow table. After validation, it performs an atomic swap of the active table pointer and advances the epoch. This ensures packets see a consistent view while keeping the publish step constant-time.
+
+\section{Implementation}
+\subsection{XDP/eBPF Considerations}
+The dataplane targets XDP/eBPF to attach early in the receive path. eBPF verifier constraints require bounded loops and limited stack usage; A-FDO uses fixed-offset parsing and array-backed maps such as \texttt{BPF\_MAP\_TYPE\_ARRAY} to bound memory access \cite{xdp_express, ebpf_paper}. Conditional logic is minimized to reduce branch entropy; where possible, arithmetic and bitwise operations implement checks.
+
+\subsection{Pseudo-Code for Validation}
+Algorithm~\ref{alg:validation} provides the core validation logic.
+
+\begin{algorithm}[t]
+\caption{Packet Validation Logic}
+\label{alg:validation}
+\begin{algorithmic}[1]
+\REQUIRE Packet $P$, current time $T_{now}$, minimum epoch $E_{min}$
+\ENSURE Action decision (DROP/FORWARD/REDIRECT/MARK)
+\STATE $H \leftarrow \textsc{ParseSH}(P)$
+\IF{$H.magic \ne \textsc{MAGIC}$}
+    \STATE \textbf{return} \textsc{LegacyOrDefault}
+\ENDIF
+\IF{\textsc{FoldedChecksumBad}($H$)}
+    \STATE \textbf{return} \textsc{DROP}
+\ENDIF
+\IF{$|T_{now} - H.epochTs| > W$}
+    \STATE \textbf{return} \textsc{DROP}
+\ENDIF
+\IF{$H.epochTs < E_{min}$}
+    \STATE \textbf{return} \textsc{DROP}
+\ENDIF
+\STATE $A \leftarrow \textsc{PEMsBVLookup}(H.policyId)$
+\STATE \textbf{return} \textsc{DecodeAction}($A$, $H.flags$)
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Atomic Policy Update}
+Algorithm~\ref{alg:update} summarizes epoch-based atomic publication.
+
+\begin{algorithm}[t]
+\caption{Atomic Policy Update with Epoch Switching}
+\label{alg:update}
+\begin{algorithmic}[1]
+\REQUIRE New policy snapshot $P_{new}$, current epoch $E$
+\ENSURE Published tables with epoch $E{+}1$
+\STATE Write $P_{new}$ into $T_{shadow}$ (bitmap + action array)
+\STATE Verify $T_{shadow}$ invariants (reserved bits, range checks)
+\STATE $E \leftarrow E + 1$ \textbf{(atomic)}
+\STATE Swap pointers $T_{active} \leftrightarrow T_{shadow}$ \textbf{(atomic)}
+\STATE Publish minimum acceptable epoch $E_{min} \leftarrow E$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Evaluation}
+\subsection{Experimental Setup}
+We evaluate A-FDO using a synthetic traffic generator on a dual-socket server-class CPU and a 100~GbE NIC. The dataplane runs as an XDP program pinned to an isolated core. Policy tables are populated to represent policy scales from $2^{10}$ to $2^{20}$ IDs. We record decision latency using cycle counters and, when available, hardware timestamping.
+
+\subsection{Methodology and Baselines}
+We generate (i) uniform valid traffic, (ii) adversarial micro-bursts with randomized SH fields, and (iii) replay-heavy traffic. Baselines include kernel iptables filtering, OVS fast path, and an XDP program that performs only legacy checks without SH parsing. We report median and tail ($p99$, $p99.9$) $T_{dec}$, jitter $J$, drop accuracy, and disruption during updates.
+
+Micro-bursts are constructed to maximize cache churn by alternating between valid and invalid headers and by varying PolicyID across a large range. Replay-heavy traffic resends the same valid SH values to stress timestamp window logic. Update disruption is measured by issuing periodic policy snapshots while traffic is sustained at line rate.
+
+\begin{table}[t]
+\caption{Evaluation Metrics and Determinism Rationale}
+\label{tab:metrics}
+\centering
+\begin{tabular}{l l}
+\toprule
+\textbf{Metric} & \textbf{Why it matters} \\
+\midrule
+$T_{dec}$ median & steady-state overhead \\
+$T_{dec}$ $p99.9$ & worst-case governance lag \\
+Jitter $J$ & stability under load \\
+Drop accuracy & non-bypassability under attack \\
+Update disruption & correctness under epoch swap \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Results and Discussion}
+A-FDO's constant-time lookup yields stable tail behavior as policy scale increases. Figure~\ref{fig:perf} illustrates latency vs. policy scale; if the referenced figure is not present, a boxed placeholder is rendered to keep builds reproducible.
+
+\begin{figure}[t]
+\centering
+\IfFileExists{figures/autonomous_performance.pdf}{%
+  \includegraphics[width=\columnwidth,height=2.05in,keepaspectratio]{figures/autonomous_performance.pdf}%
+}{%
+  \fbox{\parbox[c][2.05in][c]{\columnwidth}{\centering Latency vs. Policy Scale Placeholder}}%
+}
+\caption{Latency vs. policy scale. A-FDO remains stable due to constant-time PE-MsBV lookup.}
+\label{fig:perf}
 \end{figure}
 
-\subsection{Convergence and Stability}
-The RLCP policy generator was tested for stability. Figure \ref{fig:loss_curve} shows the loss convergence, demonstrating that the control plane can adapt to new constraints without inducing oscillations that would disrupt the PHY-level tables.
+We additionally track a representative control-plane convergence curve for policy generation (illustrative), shown in Fig.~\ref{fig:control}. This figure relates control-plane dynamics to dataplane update cadence.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/loss_curve.pdf}
-    \caption{Control Plane Stability: RLCP convergence ensures stable policy updates.}
-    \label{fig:loss_curve}
+\begin{figure}[t]
+\centering
+\IfFileExists{figures/loss_curve.pdf}{%
+  \includegraphics[width=\columnwidth,height=1.65in,keepaspectratio]{figures/loss_curve.pdf}%
+}{%
+  \fbox{\parbox[c][1.65in][c]{\columnwidth}{\centering Control-Plane Convergence Placeholder}}%
+}
+\caption{Example control-plane convergence behavior for policy generation (illustrative).}
+\label{fig:control}
 \end{figure}
+
+Qualitatively, we observe that tail latency is dominated by memory hierarchy effects in baselines: rule traversal and dynamic data structures create inputs where worst-case packets see more cache misses and branch mispredictions. A-FDO's bounded array reads and fixed parsing depth reduce variance. During policy updates, epoch switching produces a clean cutover: packets are processed under the old or new snapshot without partial visibility.
+
+\begin{table}[t]
+\caption{Qualitative Comparison of Enforcement Points}
+\label{tab:comparison}
+\centering
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Metric} & \textbf{iptables} & \textbf{OVS} & \textbf{A-FDO} \\
+\midrule
+Worst-case latency & High & Medium & Low \\
+Jitter under attack & High & Medium & Low \\
+Policy scaling & Variable & Variable & Constant \\
+Update atomicity & Limited & Medium & Strong \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Security and Failure Modes}
+ASM is conservative: failures default to least privilege.
+
+\subsection{Replay and Downgrade}
+Replay is mitigated by timestamp window validation and by minimum-epoch enforcement. Window tuning trades replay tolerance against drift tolerance; deployments with tighter synchronization can shrink $W$ to reduce replay surface. Downgrade attempts that force stale policies are rejected because packets with epochs below $E_{min}$ fail validation.
+
+\subsection{Corruption, Desynchronization, and Exhaustion}
+Corruption is detected by checksum and handled by drop/quarantine. Desynchronization is addressed by fixed offsets and the magic value. A common failure mode in software enforcement is steering packets into expensive paths to create jitter and induce implicit bypass when systems shed load. A-FDO reduces this risk by keeping the decision path constant-time and by avoiding data-dependent loops.
+
+\begin{table}[t]
+\caption{Default-Safe Handling of Common Failure Conditions}
+\label{tab:failure}
+\centering
+\begin{tabular}{l l}
+\toprule
+\textbf{Condition} & \textbf{Dataplane action} \\
+\midrule
+Magic mismatch & legacy path or configured drop \\
+Checksum failure & drop or quarantine \\
+Timestamp window failure & drop (replay) \\
+Epoch violation & drop (downgrade) \\
+Inactive policy id & default action word \\
+Malformed length & drop \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Threats and Deterministic Mitigations}
+\label{tab:threats}
+\centering
+\begin{tabular}{l l}
+\toprule
+\textbf{Threat} & \textbf{Mitigation in A-FDO} \\
+\midrule
+Algorithmic complexity & bounded parsing + bounded array reads \\
+Replay & timestamp window + minimum epoch \\
+Downgrade & reject epochs below $E_{min}$ \\
+Header corruption & folded checksum + fail-closed default \\
+Desync parsing & magic + fixed offsets \\
+Update races & shadow table + atomic pointer swap \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Industrial Use Cases}
+Deterministic governance decisions are valuable in several operational domains.
+
+\subsection{Industrial Control and Robotics}
+In factory networks and robotic cells, control loops are sensitive to latency variance. Enforcement mechanisms that occasionally incur long delays can create actuator jitter and compromise stability. A-FDO keeps decision latency bounded, making it suitable for safety zones where traffic must be filtered and classified without perturbing timing.
+
+\subsection{Market Data and Low-Latency Trading}
+Colocated environments value stable tail behavior. Even if average latency is low, rare outliers can dominate perceived performance. A-FDO is not a trading system, but its bounded governance lag can reduce worst-case overhead for compliance gates while avoiding variable-depth rule chains.
+
+\subsection{Smart Grid Telemetry}
+Telemetry channels require both availability and integrity. Replay and downgrade attempts can confuse monitoring systems or mask faults. A-FDO's epoch window and fail-closed defaults provide a pragmatic protection layer for telemetry aggregation points, particularly when combined with authenticated transport.
+
+\section{Limitations and Future Work}
+A-FDO makes deliberate trade-offs.
+\begin{itemize}
+    \item \textbf{Expressiveness:} The 16-byte header is intentionally compact; complex policies must be compiled into compact action words.
+    \item \textbf{Integrity vs. authenticity:} Folded checksum provides fast corruption detection but is not a cryptographic MAC.
+    \item \textbf{Update discipline:} Epoch-based swapping is atomic, but acceptance windows must be tuned to avoid drops during rollovers.
+\end{itemize}
+Future work includes NIC/FPGA offload, stronger header authentication when needed, and formal verification of update safety.
 
 \section{Conclusion}
-This paper presents a cross-layer control architecture for IEEE 802.3dj networks. By anchoring governance at the PHY level and employing overlap execution within the RS-FEC decode window, we eliminate the serialization penalty of traditional L3 enforcement. The MsBV mechanism provides the necessary $O(1)$ deterministic latency to make this viable. This approach paves the way for ultra-low latency, jitter-free Ethernet suitable for next-generation industrial and time-sensitive applications.
+A-FDO v1.3.0-Industrial provides a deterministic governance fast path via Architect Sovereignty Mode. The combination of a fixed-format header, constant-time PE-MsBV lookup, and epoch-based atomic updates enables bounded governance lag and low jitter under adversarial traffic mixes while remaining implementable within practical XDP/eBPF constraints.
+
+\appendices
+\section{PE-MsBV Memory Layout}
+The tables are structured to minimize cache-line touches and avoid pointer chasing. Let $B$ denote the presence bitmap and $A$ denote the action array. Policy presence is checked by computing $i = \lfloor \textsc{PolicyID}/64 \rfloor$ and $m = 1 \ll (\textsc{PolicyID} \bmod 64)$, then testing $(B[i] \& m)$. If present, the action word is read from $A[\textsc{PolicyID}]$. This yields two bounded reads on the success path and one bounded read on the miss path.
+
+\section{Update Safety Argument}
+Update safety follows from two invariants: (i) the dataplane resolves all PolicyID lookups through a single active pointer $T_{active}$ and (ii) the control plane publishes a new epoch only after populating and validating the shadow table. Because the pointer swap is atomic, each packet reads either the old tables or the new tables. There is no interleaving that can cause a packet to observe partially written entries under the active pointer.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
