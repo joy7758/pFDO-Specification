@@ -1,5 +1,4 @@
 import random
-import math
 import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
@@ -198,12 +197,26 @@ def narrative_summary() -> Dict[str, Any]:
     start_score = score_trend[0]
     end_score = score_trend[-1]
     score_diff = end_score - start_score
-    
+    change_rate = (score_diff / start_score * 100.0) if start_score else 0.0
+
+    avg_score = sum(score_trend) / len(score_trend)
     avg_hits = sum(hits_trend) / len(hits_trend)
     end_hits = hits_trend[-1]
-    
-    max_alerts = max(alerts_trend)
     end_alerts = alerts_trend[-1]
+
+    # 拐点检测：寻找斜率符号变化点，输出第一个最显著拐点
+    turning_idx = 0
+    max_turn_strength = -1
+    for idx in range(1, len(score_trend) - 1):
+        left = score_trend[idx] - score_trend[idx - 1]
+        right = score_trend[idx + 1] - score_trend[idx]
+        if left * right < 0:
+            strength = abs(left) + abs(right)
+            if strength > max_turn_strength:
+                max_turn_strength = strength
+                turning_idx = idx
+    turning_date = series["dates"][turning_idx]
+    turning_score = score_trend[turning_idx]
     
     evidence = []
     title = ""
@@ -215,9 +228,9 @@ def narrative_summary() -> Dict[str, Any]:
         title = f"合规指数显著提升 {score_diff} 点"
         summary_text = "得益于持续的合规治理行动，园区整体风险指数在过去 30 天内显著改善。敏感数据命中率大幅下降，高风险告警已全部清零。建议继续保持当前的自动化拦截策略，并逐步开展历史数据清洗工作。"
         evidence = [
-            f"合规指数由 {start_score} 升至 {end_score}",
-            f"敏感数据命中率下降 {(1 - end_hits/avg_hits)*100:.0f}%",
-            "高风险活跃告警清零"
+            f"关键拐点出现在 {turning_date}，合规指数 {turning_score}",
+            f"30日合规指数均值 {avg_score:.1f}，当前值 {end_score}",
+            f"合规指数变化率 {change_rate:+.1f}%，敏感命中下降 {(1 - end_hits / avg_hits) * 100:.0f}%"
         ]
         actions = [
             {"id": "act_imp_1", "label": "固化当前策略"},
@@ -229,9 +242,9 @@ def narrative_summary() -> Dict[str, Any]:
         title = "检测到严重的数据泄露威胁"
         summary_text = "紧急状态：园区正面临严重的数据安全威胁！过去 72 小时内，API 接口遭到持续的异常爬取，敏感数据泄露风险激增。核心数据库检测到多起未授权访问尝试，合规指数已跌至历史低点。"
         evidence = [
-            f"合规指数暴跌至 {end_score} 分",
-            f"单日敏感命中激增至 {end_hits} 条",
-            f"实时高风险告警 {end_alerts} 起"
+            f"关键拐点出现在 {turning_date}，合规指数 {turning_score}",
+            f"30日合规指数均值 {avg_score:.1f}，当前值 {end_score}",
+            f"合规指数变化率 {change_rate:+.1f}%，实时高风险告警 {end_alerts} 起"
         ]
         actions = [
             {"id": "act_cri_1", "label": "立即熔断保护"},
@@ -243,9 +256,9 @@ def narrative_summary() -> Dict[str, Any]:
         title = "系统整体运行平稳无异常"
         summary_text = "园区数据合规态势整体平稳，各项指标在预期范围内波动。偶发性敏感词命中主要集中在非结构化文档上传，未发现系统性风险。建议维持常态化监控，并关注即将到来的节假日流量高峰。"
         evidence = [
-            f"合规指数维持在 {end_score} 分左右",
-            f"日均敏感命中 {int(avg_hits)} 条",
-            "无未处理的高风险告警"
+            f"关键拐点出现在 {turning_date}，合规指数 {turning_score}",
+            f"30日合规指数均值 {avg_score:.1f}，当前值 {end_score}",
+            f"合规指数变化率 {change_rate:+.1f}%，日均敏感命中 {int(avg_hits)} 条"
         ]
         actions = [
             {"id": "act_sta_1", "label": "执行例行巡检"},

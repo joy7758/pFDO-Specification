@@ -346,6 +346,17 @@ def _base_css() -> str:
         }
         .nc-title { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; text-transform: uppercase; }
         .nc-val { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .sim-switch-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .sim-btn {
+            border: 1px solid #e5e5e5;
+            background: #fff;
+            color: #333;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .sim-btn.active { border-color: #c62828; color: #c62828; background: #ffebee; }
         
         /* Risk Thermometer (Left Side) */
         .risk-thermometer-container {
@@ -748,6 +759,19 @@ def render_park_dashboard() -> str:
     
     js = """
     <script>
+        const currentQuery = new URLSearchParams(window.location.search);
+        const simQuery = currentQuery.get('sim');
+        function apiPath(path) {
+            if (simQuery && ['improving', 'stable', 'crisis'].includes(simQuery)) {
+                const sep = path.includes('?') ? '&' : '?';
+                return `${path}${sep}sim=${simQuery}`;
+            }
+            return path;
+        }
+        function switchSim(mode) {
+            window.location.href = `/park?sim=${mode}`;
+        }
+
         // --- Layout Config ---
         const DEFAULT_LAYOUT = [
             { id: 'card-briefing', x: 0, y: 0, w: 4, h: 4 },
@@ -960,48 +984,62 @@ def render_park_dashboard() -> str:
         
         async function loadNarrativeStatus() {
             try {
-                const res = await fetch('/api/v1/narrative/status');
+                const res = await fetch(apiPath('/api/v1/narrative/status'));
                 const data = await res.json();
                 if(data.error) return;
                 
-                document.getElementById('nc-mode').innerText = data.data_mode;
-                document.getElementById('nc-sim').innerText = data.simulation_mode;
+                document.getElementById('nc-mode').innerText = data.effective_mode_label || '--';
+                document.getElementById('nc-sim').innerText = data.effective_mode || '--';
                 document.getElementById('nc-ver').innerText = data.engine_version;
+                document.getElementById('nc-source').innerText = data.source === 'query_param' ? 'query' : 'env';
+
+                const mode = data.effective_mode || '';
+                ['improving', 'stable', 'crisis'].forEach(m => {
+                    const el = document.getElementById(`sim-btn-${m}`);
+                    if (!el) return;
+                    if (m === mode) el.classList.add('active');
+                    else el.classList.remove('active');
+                });
             } catch(e) { console.error(e); }
         }
 
         async function loadNarrativeSummary() {
             try {
-                const res = await fetch('/api/v1/narrative/summary');
+                const res = await fetch(apiPath('/api/v1/narrative/summary'));
                 const data = await res.json();
                 
-                const card = document.getElementById('card-narrative-summary');
-                
-                // Set summary text
+                document.getElementById('ns-title').innerText = data.title || "暂无结论";
                 document.getElementById('ns-text').innerText = data.summary || "暂无叙事摘要";
+                document.getElementById('nc-oneline').innerText = data.title || "暂无";
+
+                const evidenceDiv = document.getElementById('ns-evidence');
+                evidenceDiv.innerHTML = '';
+                (data.evidence || []).forEach((item) => {
+                    const li = document.createElement('li');
+                    li.style.marginBottom = '4px';
+                    li.textContent = item;
+                    evidenceDiv.appendChild(li);
+                });
                 
-                // Render suggested actions inside narrative card
                 const actDiv = document.getElementById('ns-actions');
                 actDiv.innerHTML = '';
                 if(data.actions && data.actions.length > 0) {
-                     data.actions.forEach(act => {
-                         const btn = document.createElement('div');
-                         btn.style.marginTop = '8px';
-                         btn.style.padding = '8px';
-                         btn.style.background = '#F9F9F9';
-                         btn.style.borderRadius = '8px';
-                         btn.style.fontSize = '12px';
-                         btn.style.cursor = 'pointer';
-                         btn.innerHTML = `<span style="font-weight:600;">${act.name}</span>: ${act.description}`;
-                         actDiv.appendChild(btn);
-                     });
+                    data.actions.slice(0, 2).forEach(act => {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn btn-secondary';
+                        btn.style.marginRight = '8px';
+                        btn.style.marginTop = '8px';
+                        btn.innerText = act.label || '执行动作';
+                        btn.onclick = () => runAction(act.id);
+                        actDiv.appendChild(btn);
+                    });
                 }
             } catch(e) { console.error(e); }
         }
 
         async function loadTrends() {
              try {
-                 const res = await fetch('/api/v1/trends');
+                 const res = await fetch(apiPath('/api/v1/trends'));
                  const data = await res.json();
                  
                  // Update narrative label
@@ -1016,7 +1054,7 @@ def render_park_dashboard() -> str:
                       if (last < first - 10) mode = 'crisis';
                       
                       let cls = 'nl-stable';
-                      let text = '平稳波动';
+                      let text = '平稳运行';
                       if(mode === 'improving') { cls = 'nl-improving'; text = '持续改善'; }
                       if(mode === 'crisis') { cls = 'nl-crisis'; text = '风险上升'; }
                       
@@ -1063,7 +1101,7 @@ def render_park_dashboard() -> str:
 
         async function loadActions() {
             try {
-                const res = await fetch('/api/v1/actions');
+                const res = await fetch(apiPath('/api/v1/actions'));
                 const data = await res.json();
                 const container = document.getElementById('action-container');
                 container.innerHTML = '';
@@ -1084,7 +1122,7 @@ def render_park_dashboard() -> str:
         async function runAction(id, btnEl) {
             if(btnEl) btnEl.classList.add('processing');
             try {
-                const res = await fetch(`/api/v1/actions/${id}/run`, { method: 'POST' });
+                const res = await fetch(apiPath(`/api/v1/actions/${id}/run`), { method: 'POST' });
                 const data = await res.json();
                 if(data.success) {
                     showToast(`执行成功：${data.message}`);
@@ -1131,7 +1169,7 @@ def render_park_dashboard() -> str:
 
         async function loadBriefing() {
             try {
-                const res = await fetch('/api/v1/briefing');
+                const res = await fetch(apiPath('/api/v1/briefing'));
                 const data = await res.json();
                 
                 document.getElementById('br-title').innerText = data.title;
@@ -1158,7 +1196,7 @@ def render_park_dashboard() -> str:
         }
 
         async function loadStats() {
-            fetch('/api/v1/overview').then(r=>r.json()).then(d => {
+            fetch(apiPath('/api/v1/overview')).then(r=>r.json()).then(d => {
                 document.getElementById('risk-score').innerText = d.risk_score;
                 document.getElementById('scan-count').innerText = d.scans_today;
             });
@@ -1173,7 +1211,7 @@ def render_park_dashboard() -> str:
 
         async function loadMustFocus() {
             try {
-                const res = await fetch('/api/v1/must-focus');
+                const res = await fetch(apiPath('/api/v1/must-focus'));
                 const data = await res.json();
                 
                 // Border Red logic
@@ -1262,7 +1300,7 @@ def render_park_dashboard() -> str:
 
         async function loadRiskThermometer() {
             try {
-                const res = await fetch('/api/v1/risk-thermometer');
+                const res = await fetch(apiPath('/api/v1/risk-thermometer'));
                 const data = await res.json();
                 
                 const fill = document.getElementById('rt-fill');
@@ -1369,8 +1407,16 @@ def render_park_dashboard() -> str:
     <div class="narrative-control">
         <div class="nc-title">NARRATIVE ENGINE</div>
         <div class="nc-val"><span id="nc-mode">--</span> / <span id="nc-sim">--</span></div>
+        <div style="font-size:12px; color:#666;">来源：<span id="nc-source">--</span></div>
         <div class="nc-title">VERSION</div>
         <div class="nc-val" id="nc-ver">--</div>
+        <div class="nc-title">今日结论</div>
+        <div style="font-size:12px; color:#333;" id="nc-oneline">--</div>
+        <div class="sim-switch-row">
+            <button id="sim-btn-improving" class="sim-btn" onclick="switchSim('improving')">持续改善</button>
+            <button id="sim-btn-stable" class="sim-btn" onclick="switchSim('stable')">平稳运行</button>
+            <button id="sim-btn-crisis" class="sim-btn" onclick="switchSim('crisis')">风险上升</button>
+        </div>
     </div>
     
     <!-- Risk Thermometer -->
@@ -1379,7 +1425,7 @@ def render_park_dashboard() -> str:
             <div id="rt-fill" class="rt-bar-fill" style="height:0%;"></div>
         </div>
         <div class="rt-label" id="rt-val">--</div>
-        <div style="font-size:10px; color:#999;">Risk</div>
+        <div style="font-size:10px; color:#999;">风险温度</div>
     </div>
 
     <!-- Static Header Row -->
@@ -1424,8 +1470,10 @@ def render_park_dashboard() -> str:
                 <div class="drag-handle">拖拽移动</div>
                 <div class="resize-handle"></div>
                 <h3>叙事摘要</h3>
-                <p id="ns-text" style="font-size:14px; margin-bottom:12px; color:#555;">...</p>
-                <div id="ns-actions" style="flex:1; overflow-y:auto;">
+                <div id="ns-title" style="font-size:16px; font-weight:600; margin-bottom:8px;">...</div>
+                <p id="ns-text" style="font-size:14px; margin-bottom:8px; color:#555;">...</p>
+                <ul id="ns-evidence" style="font-size:12px; color:#666; padding-left:16px; margin-bottom:8px;"></ul>
+                <div id="ns-actions" style="flex:1; overflow-y:auto; margin-top:8px;">
                     <!-- Actions -->
                 </div>
             </div>

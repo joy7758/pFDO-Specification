@@ -65,7 +65,11 @@
 v2.0 引入了确定性叙事模拟引擎，用于生成一致的、可解释的趋势数据，支持演示与演练场景。
 
 #### 环境变量控制
-可以通过设置环境变量 `DATA_MODE` 和 `SIMULATION_MODE` 来切换不同的叙事剧本。
+可以通过设置环境变量 `DATA_MODE` 和 `SIMULATION_MODE` 来切换不同的叙事剧本。三种模式中文名固定如下：
+
+- `improving` => `持续改善`
+- `stable` => `平稳运行`
+- `crisis` => `风险上升`
 
 **1. 危机叙事 (Crisis Mode)**
 风险急剧上升，告警激增，模拟严重的数据泄露事件。
@@ -84,6 +88,20 @@ DATA_MODE=simulation SIMULATION_MODE=improving ./scripts/run_park.sh
 ```bash
 DATA_MODE=simulation SIMULATION_MODE=stable ./scripts/run_park.sh
 ```
+
+#### 大屏只读切换（不修改环境变量）
+可直接访问下列 URL 在前端演示不同叙事宇宙：
+
+```bash
+http://127.0.0.1:8000/park?sim=improving
+http://127.0.0.1:8000/park?sim=stable
+http://127.0.0.1:8000/park?sim=crisis
+```
+
+接口 `GET /api/v1/narrative/status` 会返回：
+
+- `effective_mode`：最终生效模式
+- `source`：模式来源（`query_param` 或 `env_var`）
 
 #### API 示例
 验证叙事引擎状态与输出：
@@ -106,12 +124,12 @@ curl -s http://127.0.0.1:8000/api/v1/narrative/series
 1.  **环境感知**: 实时天气、体感温度、风速、空气质量 (AQI) 及健康建议。
 2.  **时间服务**: 公历/农历双显，节气提醒，以及法定节假日倒计时。
 3.  **合规总览**: 实时 PII 扫描量、敏感信息命中数、实时告警流 (Alerts Stream)。
-4.  **趋势分析**: **30 日**数据合规指数与风险事件趋势图 (SVG 渲染)，支持叙事标注。
+4.  **趋势分析**: **30 日**合规指数与风险事件趋势图 (SVG 渲染)，支持叙事标注。
 5.  **生态集成**: 展示已接入的子系统（OA/CRM/IoT）与可扩展插件（门禁/能耗/视频）。
 6.  **行为驱动引擎**: 包含必须关注事项、用户行为统计、时间压力指数，辅助即时决策。
 7.  **领导者视角**: 右上角 Leader Summary 面板，展示效率、团队状态与预算概况。
 8.  **叙事控制卡**: 实时显示当前数据模式与叙事剧本状态。
-9.  **风险温度计**: 左侧动态 Risk Thermometer，直观展示实时风险热度。
+9.  **风险温度计**: 左侧动态 Risk Thermometer（0-100，越高越危险），直观展示实时风险热度。
 10. **安全连胜**: 底部展示连续安全天数 (Streak Stats)。
 
 ### 🆕 v1.3.0 RedRock Risk Engine (RRM-1.0)

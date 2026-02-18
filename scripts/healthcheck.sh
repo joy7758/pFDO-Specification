@@ -87,6 +87,18 @@ else
     FAILED=1
 fi
 
+# 检查 Narrative Summary 结构
+echo -n "    检查叙事摘要结构 (title/summary/evidence/actions) ... "
+NAR_SUMMARY_RES=$(curl -s "$BASE_URL/api/v1/narrative/summary")
+VALID_NAR_SUMMARY=$(echo "$NAR_SUMMARY_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); ok=(isinstance(data.get('title'), str) and isinstance(data.get('summary'), str) and isinstance(data.get('evidence'), list) and isinstance(data.get('actions'), list)); print('OK' if ok else 'FAIL')")
+if [ "$VALID_NAR_SUMMARY" == "OK" ]; then
+    echo "✅ 通过"
+else
+    echo "❌ 失败 (叙事摘要结构不合法)"
+    echo "    Response: $NAR_SUMMARY_RES"
+    FAILED=1
+fi
+
 if [ $FAILED -eq 0 ]; then
     echo ">>> 所有检查通过！服务运行正常。"
     exit 0
