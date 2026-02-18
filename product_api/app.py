@@ -6,8 +6,9 @@ import shutil
 import json
 from typing import Dict, List, Any
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 from .parser import parse_csv, parse_json, parse_txt
 from .record_model import Record
@@ -20,8 +21,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# 挂载模板目录
+templates = Jinja2Templates(directory="templates")
+
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@app.get("/park", response_class=HTMLResponse)
+async def park_page(request: Request):
+    """园区合规共建平台大屏"""
+    return templates.TemplateResponse("park.html", {"request": request})
 
 
 @app.get("/health")
@@ -157,6 +167,7 @@ def index():
             
             <div class="actions">
                 <a href="/demo" class="btn btn-primary">立即体验</a>
+                <a href="/park" class="btn btn-primary" style="background-color:#4CAF50; border-color:#4CAF50;">进入园区大屏</a>
                 <a href="/api/park/dashboard" class="btn btn-secondary" target="_blank">查看园区大屏数据 (JSON)</a>
                 <a href="/docs" class="btn btn-outline" target="_blank">接口文档 (Swagger UI)</a>
             </div>
