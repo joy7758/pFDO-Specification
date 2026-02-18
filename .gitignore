@@ -32,3 +32,20 @@ paper_globecom.zip
 *.png
 research-omap/
 .DS_Store
+
+# macOS
+.DS_Store
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# rust
+target/
+
+# uploads / runtime
+product_api/uploads/
+*.log
+
