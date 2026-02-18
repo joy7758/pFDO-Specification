@@ -5,6 +5,7 @@ import os
 import shutil
 import json
 import traceback
+from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request, Body, Depends
@@ -166,12 +167,12 @@ def api_v1_risk_map() -> Dict[str, Any]:
 @app.get("/api/v1/layout")
 def api_v1_get_layout():
     """获取用户布局 (TODO: 暂未启用后端存储，返回默认标识)"""
-    return {"layout": "default", "msg": "Layout persistence is client-side only for now."}
+    return {"layout": "default", "msg": "布局持久化当前仅在浏览器侧生效。"}
 
 @app.post("/api/v1/layout")
 def api_v1_save_layout(layout: Dict[str, Any] = Body(...)):
     """保存用户布局 (TODO: 暂未启用后端存储)"""
-    return {"success": True, "msg": "Layout saved (mock)."}
+    return {"success": True, "msg": "布局保存成功（模拟）。"}
 
 @app.get("/api/v1/must-focus")
 def api_v1_must_focus() -> Dict[str, Any]:
@@ -218,7 +219,13 @@ def api_v1_narrative_status() -> Dict[str, Any]:
         return get_narrative_status()
     except Exception as e:
         traceback.print_exc()
-        return {"error": str(e), "fallback": True}
+        return {
+            "error": str(e),
+            "fallback": True,
+            "schema_version": "NSE-1.0",
+            "generated_at": datetime.now().isoformat(),
+            "inputs": {"data_mode": "unknown", "source": "fallback"}
+        }
 
 @app.get("/api/v1/narrative/series")
 def api_v1_narrative_series() -> Dict[str, Any]:
@@ -236,7 +243,17 @@ def api_v1_narrative_summary() -> Dict[str, Any]:
         return get_narrative_summary()
     except Exception as e:
         traceback.print_exc()
-        return {"error": str(e), "fallback": True, "title": "Error", "summary": "Engine Error", "actions": []}
+        return {
+            "error": str(e),
+            "fallback": True,
+            "schema_version": "NSE-1.0",
+            "generated_at": datetime.now().isoformat(),
+            "inputs": {"data_mode": "unknown", "source": "fallback"},
+            "title": "叙事引擎异常",
+            "summary": "叙事引擎暂时不可用，请稍后重试。",
+            "evidence": [],
+            "actions": []
+        }
 
 
 # 保留旧接口兼容 (Deprecated)
@@ -318,7 +335,7 @@ async def upload(file: UploadFile = File(...)) -> Dict:
         else:
             raise HTTPException(
                 status_code=400,
-                detail="Unsupported file type. Please upload csv/json/txt/log",
+                detail="不支持的文件类型，请上传 csv/json/txt/log。",
             )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Parse failed: {e}")

@@ -19,6 +19,7 @@ from .config import (
     get_data_mode,
     get_simulation_label
 )
+from .context import get_simulation_mode_context
 from .narrative import (
     generate_trend_series, 
     today_snapshot, 
@@ -30,6 +31,24 @@ from .narrative import (
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 ENGINE_VERSION = "RRM-1.0"
 NARRATIVE_VERSION = "NSE-2.0"
+NARRATIVE_SCHEMA_VERSION = "NSE-1.0"
+
+
+def _clamp_0_100(value: float) -> int:
+    return int(max(0, min(100, round(value))))
+
+
+def _build_narrative_inputs() -> Dict[str, Any]:
+    data_mode = get_data_mode()
+    source = "query_param" if get_simulation_mode_context() else "env_var"
+    payload: Dict[str, Any] = {
+        "data_mode": data_mode,
+        "source": source,
+        "sim": get_simulation_mode()
+    }
+    if data_mode in ("demo", "simulation"):
+        payload["seed"] = get_demo_seed()
+    return payload
 
 def _rng(tag: str):
     """
@@ -63,8 +82,12 @@ def calculate_dynamic_risk_score() -> Dict[str, Any]:
     if is_simulation_mode():
         # 叙事模拟模式托底
         snap = today_snapshot()
+        compliance_score = _clamp_0_100(snap["risk_score"])
+        risk_score = _clamp_0_100(100 - compliance_score)
         return {
-            "score": snap["risk_score"],
+            "score": compliance_score,
+            "compliance_score": compliance_score,
+            "risk_score": risk_score,
             "file_count": 120, # Mock
             "hits_today": snap["hits_today"],
             "alerts_active": snap["alerts_active"],
@@ -90,10 +113,13 @@ def calculate_dynamic_risk_score() -> Dict[str, Any]:
     final_score = base_score - file_penalty - hits_penalty - alert_penalty
     
     # 修正范围
-    final_score = max(0, min(100, final_score))
+    compliance_score = _clamp_0_100(final_score)
+    risk_score = _clamp_0_100(100 - compliance_score)
     
     return {
-        "score": final_score,
+        "score": compliance_score,
+        "compliance_score": compliance_score,
+        "risk_score": risk_score,
         "file_count": file_count,
         "hits_today": hits_today,
         "alerts_active": alerts_active,
@@ -132,7 +158,8 @@ def get_overview_stats() -> Dict[str, Any]:
         "park_name": "红岩 · 数字化示范园区",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "engine_version": ver,
-        "risk_score": risk_data['score'],
+        "risk_score": risk_data['risk_score'],
+        "compliance_score": risk_data['compliance_score'],
         "total_files": risk_data['file_count'],
         "total_records": total_records,
         "risk_events_today": 3 + (risk_data['file_count'] % 3),
@@ -433,7 +460,7 @@ def get_briefing_data() -> Dict[str, Any]:
                     {"label": "今日扫描", "value": f"{overview.get('scans_today', 0):,}", "unit": "次", "color": "blue"},
                     {"label": "敏感命中", "value": f"{overview.get('hits_today', 0):,}", "unit": "条", "color": "orange"},
                     {"label": "实时告警", "value": overview.get('alerts_active', 0), "unit": "个", "color": "red"},
-                    {"label": "合规指数", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
+                    {"label": "合规指数", "value": overview.get('compliance_score', 0), "unit": "分", "color": "green"},
                 ],
                 "links": [],
                 "must_focus_count": snap.get("must_focus_count", 0)
@@ -452,12 +479,12 @@ def get_briefing_data() -> Dict[str, Any]:
             {"label": "今日扫描", "value": f"{overview.get('scans_today', 0):,}", "unit": "次", "color": "blue"},
             {"label": "敏感命中", "value": f"{overview.get('hits_today', 0):,}", "unit": "条", "color": "orange"},
             {"label": "实时告警", "value": overview.get('alerts_active', 0), "unit": "个", "color": "red"},
-            {"label": "合规指数", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
+            {"label": "合规指数", "value": overview.get('compliance_score', 0), "unit": "分", "color": "green"},
             {"label": "自动处理", "value": overview.get('handled_rate', '0%'), "unit": "", "color": "grey"}
         ]
         
         # 3. 生成 Summary
-        score = overview.get('risk_score', 0)
+        score = overview.get('compliance_score', 0)
         scan_vol = overview.get('scans_today', 0)
         hits = overview.get('hits_today', 0)
         active_alerts = overview.get('alerts_active', 0)
@@ -630,7 +657,7 @@ def get_ticker_items() -> List[Dict[str, Any]]:
         briefing_text = (
             f"扫描 {overview.get('scans_today', 0):,} 次｜"
             f"敏感命中 {overview.get('hits_today', 0)}｜"
-            f"合规指数 {overview.get('risk_score', 0)}"
+            f"合规指数 {overview.get('compliance_score', 0)}"
         )
         items.append(make_item(
             4, "灰", "运营简报",
@@ -738,9 +765,9 @@ def get_leader_summary() -> Dict[str, Any]:
     """获取领导视角的摘要信息"""
     return {
         "efficiency": f"{random.randint(85, 98)}%",
-        "team_status": "Highly Active",
+        "team_status": "高效协同",
         "budget_usage": f"{random.randint(40, 70)}%",
-        "core_metric": "Stable"
+        "core_metric": "平稳"
     }
 
 def get_risk_thermometer() -> Dict[str, Any]:
@@ -751,13 +778,13 @@ def get_risk_thermometer() -> Dict[str, Any]:
             "temperature": snap["temperature"],
             "level": "high" if snap["temperature"] > 80 else ("medium" if snap["temperature"] > 50 else "low"),
             "max": 100,
-            "source_score": snap["risk_score"],
+            "source_score": _clamp_0_100(100 - snap["temperature"]),
             "engine_version": NARRATIVE_VERSION
         }
 
     # 使用动态评分模型计算
     risk_data = calculate_dynamic_risk_score()
-    score = risk_data['score']
+    score = risk_data['compliance_score']
     
     # 评分 (0-100, 100=安全) 转换为 温度 (0-100, 100=危险)
     # 反向映射：Score 100 -> Temp 0; Score 0 -> Temp 100
@@ -797,6 +824,9 @@ def get_narrative_status() -> Dict[str, Any]:
     status = get_narrative_status_data()
     # Add label for display
     status["effective_mode_label"] = get_simulation_label(status["effective_mode"])
+    status["schema_version"] = NARRATIVE_SCHEMA_VERSION
+    status["generated_at"] = datetime.now().isoformat()
+    status["inputs"] = _build_narrative_inputs()
     return status
 
 def get_narrative_series() -> Dict[str, Any]:
@@ -805,4 +835,8 @@ def get_narrative_series() -> Dict[str, Any]:
 
 def get_narrative_summary() -> Dict[str, Any]:
     """获取叙事摘要"""
-    return narrative_summary()
+    payload = narrative_summary()
+    payload["schema_version"] = NARRATIVE_SCHEMA_VERSION
+    payload["generated_at"] = datetime.now().isoformat()
+    payload["inputs"] = _build_narrative_inputs()
+    return payload

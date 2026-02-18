@@ -691,7 +691,7 @@ def render_demo_result(text: str, result: Dict[str, Any]) -> str:
                 <div style="font-family: monospace; white-space: pre-wrap; font-size: 14px; line-height: 1.8; color: #333;">{highlighted}</div>
             </div>
             <div class="col-4 card">
-                <h3>结构化结果 (JSON)</h3>
+                <h3>结构化结果</h3>
                 <pre style="max-height: 400px; overflow-y: auto;">{json_str}</pre>
             </div>
         </div>
@@ -703,7 +703,7 @@ def render_docs_cn() -> str:
     # 保持原样
     content = """
     <div class="container" style="max-width: 900px; padding-top: 40px;">
-        <h1>API 接口文档</h1>
+        <h1>接口说明文档</h1>
         <p>（此处省略详情，与之前保持一致）</p>
     </div>
     """
@@ -991,7 +991,7 @@ def render_park_dashboard() -> str:
                 document.getElementById('nc-mode').innerText = data.effective_mode_label || '--';
                 document.getElementById('nc-sim').innerText = data.effective_mode || '--';
                 document.getElementById('nc-ver').innerText = data.engine_version;
-                document.getElementById('nc-source').innerText = data.source === 'query_param' ? 'query' : 'env';
+                document.getElementById('nc-source').innerText = data.source === 'query_param' ? '请求参数' : '环境变量';
 
                 const mode = data.effective_mode || '';
                 ['improving', 'stable', 'crisis'].forEach(m => {
@@ -1197,7 +1197,7 @@ def render_park_dashboard() -> str:
 
         async function loadStats() {
             fetch(apiPath('/api/v1/overview')).then(r=>r.json()).then(d => {
-                document.getElementById('risk-score').innerText = d.risk_score;
+                document.getElementById('risk-score').innerText = d.compliance_score;
                 document.getElementById('scan-count').innerText = d.scans_today;
             });
         }
@@ -1279,7 +1279,7 @@ def render_park_dashboard() -> str:
                 const badge = document.getElementById('tp-badge');
                 if (data.level === 'high' || data.level === 'medium') {
                     badge.style.display = 'inline-block';
-                    badge.innerText = data.level === 'high' ? 'High Pressure' : 'Medium Pressure';
+                    badge.innerText = data.level === 'high' ? '高压' : '中压';
                 } else {
                     badge.style.display = 'none';
                 }
@@ -1395,20 +1395,20 @@ def render_park_dashboard() -> str:
     <!-- Leader Summary Panel -->
     <div class="leader-summary">
         <div class="ls-title">
-            <span>Leader Summary</span>
-            <span style="font-weight:normal; color:#999; font-size:12px;">Live</span>
+            <span>领导摘要</span>
+            <span style="font-weight:normal; color:#999; font-size:12px;">实时</span>
         </div>
-        <div class="ls-item"><span>Efficiency</span><span id="ls-efficiency">--</span></div>
-        <div class="ls-item"><span>Team Status</span><span id="ls-team">--</span></div>
-        <div class="ls-item"><span>Budget Usage</span><span id="ls-budget">--</span></div>
+        <div class="ls-item"><span>效率</span><span id="ls-efficiency">--</span></div>
+        <div class="ls-item"><span>团队状态</span><span id="ls-team">--</span></div>
+        <div class="ls-item"><span>预算使用</span><span id="ls-budget">--</span></div>
     </div>
     
     <!-- Narrative Mode Control Card -->
     <div class="narrative-control">
-        <div class="nc-title">NARRATIVE ENGINE</div>
+        <div class="nc-title">叙事引擎</div>
         <div class="nc-val"><span id="nc-mode">--</span> / <span id="nc-sim">--</span></div>
         <div style="font-size:12px; color:#666;">来源：<span id="nc-source">--</span></div>
-        <div class="nc-title">VERSION</div>
+        <div class="nc-title">版本</div>
         <div class="nc-val" id="nc-ver">--</div>
         <div class="nc-title">今日结论</div>
         <div style="font-size:12px; color:#333;" id="nc-oneline">--</div>
@@ -1439,7 +1439,7 @@ def render_park_dashboard() -> str:
                  <!-- Streak Stats -->
                  <div class="streak-container">
                     <span class="streak-num" id="streak-num">--</span>
-                    <span class="streak-text">Consecutive Safe Days</span>
+                    <span class="streak-text">连续安全天数</span>
                  </div>
                  
                  <div style="text-align: right;">
@@ -1513,7 +1513,7 @@ def render_park_dashboard() -> str:
                     </div>
                 </div>
                 
-                <div style="font-size:12px; color:#999; margin-bottom:8px;">扣分因子 TOP 4</div>
+                <div style="font-size:12px; color:#999; margin-bottom:8px;">扣分因子前四位</div>
                 <div id="re-factors" style="margin-bottom:16px;">
                     <!-- Factors injected -->
                 </div>
@@ -1530,7 +1530,7 @@ def render_park_dashboard() -> str:
                 <div class="resize-handle"></div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
                     <h3>快速决策区</h3>
-                    <span class="tag tag-blue">Action</span>
+                    <span class="tag tag-blue">行动</span>
                 </div>
                 <div id="action-container" class="action-grid">
                     <!-- Buttons injected here -->
@@ -1575,7 +1575,7 @@ def render_park_dashboard() -> str:
                 <div class="resize-handle"></div>
                 <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
                     <h3>时间压力</h3>
-                    <span id="tp-badge" class="tag tag-orange" style="display:none;">High</span>
+                    <span id="tp-badge" class="tag tag-orange" style="display:none;">高压</span>
                 </div>
                 <div style="text-align:center; margin-bottom:16px;">
                     <div style="font-size:12px; color:#999;">待处理任务</div>

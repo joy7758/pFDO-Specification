@@ -108,3 +108,34 @@
 - **RRM-1.0**: 基础静态模拟 + 简单扣分 (Deprecated)
 - **RRM-1.1**: 动态权重 + 可解释性归因 (Current Stable)
 - **RRM-1.2**: 计划加入外部威胁情报 (Threat Intel) 集成
+
+## 4. 概览与叙事协议补充
+
+### 4.1 概览接口口径
+`GET /api/v1/overview`
+
+`overview` 同时提供以下两个核心分值，且二者均为 `0-100`：
+
+- `risk_score`: 风险分数，越高表示风险越高（越危险）
+- `compliance_score`: 合规指数，越高表示合规状态越好
+
+当前默认映射为：
+`compliance_score = clamp(100 - risk_score, 0, 100)`  
+（允许在引擎内部使用等价单调映射，但必须保持“合规指数越高越好”的口径不变）
+
+### 4.2 叙事接口协议（NSE-1.0）
+
+以下接口统一采用 `NSE-1.0` 协议扩展字段：
+
+- `GET /api/v1/narrative/summary`
+- `GET /api/v1/narrative/status`
+
+响应需包含：
+
+- `schema_version`: 固定为 `"NSE-1.0"`
+- `generated_at`: ISO 8601 时间字符串
+- `inputs`: 输入上下文对象，包含：
+  - `data_mode`
+  - `source`
+  - `seed`（可选）
+  - `sim`（可选）

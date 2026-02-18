@@ -64,38 +64,62 @@ check_url "/api/v1/narrative/status" "叙事引擎状态" || FAILED=1
 check_url "/api/v1/narrative/series" "叙事趋势序列" || FAILED=1
 check_url "/api/v1/narrative/summary" "叙事摘要" || FAILED=1
 
-# 检查 Actions 返回
-echo -n "    检查 Actions 列表 ... "
+# 检查操作列表返回
+echo -n "    检查操作列表结构 ... "
 ACT_RES=$(curl -s "$BASE_URL/api/v1/actions")
 if [[ "$ACT_RES" == *"actions"* ]]; then
     echo "✅ 通过"
 else
-    echo "⚠️  警告 (Actions list missing)"
+    echo "⚠️  失败（操作列表缺失）"
     FAILED=1
 fi
 
-# 检查 Ticker 返回是否包含 items (python json validation)
-echo -n "    检查 Ticker 结构 (items) ... "
+# 检查公告总线返回是否包含 items
+echo -n "    检查公告总线结构 (items) ... "
 TICKER_RES=$(curl -s "$BASE_URL/api/v1/ticker")
 VALID_TICKER=$(echo "$TICKER_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); print('OK' if 'items' in data and isinstance(data['items'], list) else 'FAIL')")
 
 if [ "$VALID_TICKER" == "OK" ]; then
     echo "✅ 通过"
 else
-    echo "❌ 失败 (Ticker format invalid)"
-    echo "    Response: $TICKER_RES"
+    echo "❌ 失败（公告总线结构不合法）"
+    echo "    返回内容: $TICKER_RES"
     FAILED=1
 fi
 
-# 检查 Narrative Summary 结构
-echo -n "    检查叙事摘要结构 (title/summary/evidence/actions) ... "
+# 检查概览结构：risk_score / compliance_score 必须存在且在 0-100
+echo -n "    校验概览字段 (risk_score/compliance_score 范围) ... "
+OVERVIEW_RES=$(curl -s "$BASE_URL/api/v1/overview")
+VALID_OVERVIEW=$(echo "$OVERVIEW_RES" | python3 -c "import sys, json; d=json.load(sys.stdin); r=d.get('risk_score'); c=d.get('compliance_score'); ok=isinstance(r,(int,float)) and isinstance(c,(int,float)) and 0<=r<=100 and 0<=c<=100; print('OK' if ok else 'FAIL')")
+if [ "$VALID_OVERVIEW" == "OK" ]; then
+    echo "✅ 通过"
+else
+    echo "❌ 失败（概览字段缺失或越界）"
+    echo "    返回内容: $OVERVIEW_RES"
+    FAILED=1
+fi
+
+# 检查 Narrative Status 协议字段
+echo -n "    校验叙事状态协议 (schema_version/generated_at) ... "
+NAR_STATUS_RES=$(curl -s "$BASE_URL/api/v1/narrative/status")
+VALID_NAR_STATUS=$(echo "$NAR_STATUS_RES" | python3 -c "import sys, json; d=json.load(sys.stdin); ok=(d.get('schema_version')=='NSE-1.0' and isinstance(d.get('generated_at'), str)); print('OK' if ok else 'FAIL')")
+if [ "$VALID_NAR_STATUS" == "OK" ]; then
+    echo "✅ 通过"
+else
+    echo "❌ 失败（叙事状态协议字段不合法）"
+    echo "    返回内容: $NAR_STATUS_RES"
+    FAILED=1
+fi
+
+# 检查 Narrative Summary 结构与协议
+echo -n "    校验叙事摘要结构与协议 ... "
 NAR_SUMMARY_RES=$(curl -s "$BASE_URL/api/v1/narrative/summary")
-VALID_NAR_SUMMARY=$(echo "$NAR_SUMMARY_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); ok=(isinstance(data.get('title'), str) and isinstance(data.get('summary'), str) and isinstance(data.get('evidence'), list) and isinstance(data.get('actions'), list)); print('OK' if ok else 'FAIL')")
+VALID_NAR_SUMMARY=$(echo "$NAR_SUMMARY_RES" | python3 -c "import sys, json; d=json.load(sys.stdin); ok=(isinstance(d.get('title'), str) and isinstance(d.get('summary'), str) and isinstance(d.get('evidence'), list) and isinstance(d.get('actions'), list) and d.get('schema_version')=='NSE-1.0' and isinstance(d.get('generated_at'), str) and isinstance(d.get('inputs'), dict)); print('OK' if ok else 'FAIL')")
 if [ "$VALID_NAR_SUMMARY" == "OK" ]; then
     echo "✅ 通过"
 else
-    echo "❌ 失败 (叙事摘要结构不合法)"
-    echo "    Response: $NAR_SUMMARY_RES"
+    echo "❌ 失败（叙事摘要结构或协议不合法）"
+    echo "    返回内容: $NAR_SUMMARY_RES"
     FAILED=1
 fi
 
