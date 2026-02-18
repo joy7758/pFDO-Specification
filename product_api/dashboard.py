@@ -206,18 +206,104 @@ def get_calendar_data() -> Dict[str, Any]:
     # 构造展示行
     display_line = f"宜 {'·'.join(yi[:3])}  忌 {'·'.join(ji[:3])}"
 
-    return {
-        "solar_date": now.strftime("%Y年%m月%d日"),
-        "weekday": weekdays[now.weekday()],
-        "lunar": "农历丙午年正月十二", # 假定 2026年
-        "term": "雨水", # 假定
-        "auspicious": "祭祀, 祈福, 求嗣, 解除, 伐木", # 保留旧字段兼容
-        "inauspicious": "安床, 栽种, 作灶", # 保留旧字段兼容
-        "next_holiday": {
-            "name": next_holiday["name"],
-            "days_left": days_left,
-            "date": next_holiday["date"]
-        },
-        "almanac": almanac,
-        "display_line": display_line
-    }
+def get_ticker_items() -> List[Dict[str, Any]]:
+    """获取顶部公告栏 Ticker 数据"""
+    items = []
+    
+    # 1. 天气/环境 (Weather/Air)
+    weather = get_weather_data()
+    air = get_air_quality_data()
+    
+    # 体感提示
+    temp_feel = weather['current']['feels_like']
+    items.append({
+        "id": "ticker-weather",
+        "type": "weather",
+        "level": "INFO",
+        "priority": 40,
+        "title": "今日天气",
+        "summary": f"当前气温 {weather['current']['temp']}℃，体感 {temp_feel}℃，{weather['current']['condition']}，{air['health_tip']}",
+        "link": "/park",
+        "source": "气象中心"
+    })
+    
+    # 天气预警 (如果有)
+    if weather['warning'].get('active'):
+        items.append({
+            "id": "ticker-warning",
+            "type": "weather",
+            "level": weather['warning']['level'], # YELLOW/RED...
+            "priority": 90,
+            "title": "气象预警",
+            "summary": f"【{weather['warning']['type']}】{weather['warning']['msg']}",
+            "link": "/park",
+            "source": "气象局"
+        })
+
+    # 2. 实时最高优先级告警 (Alerts)
+    alerts = get_alerts_data()['alerts']
+    # 找一个 HIGH 级别的最新的
+    high_alerts = [a for a in alerts if a['level'] == 'HIGH']
+    if high_alerts:
+        top_alert = high_alerts[0]
+        items.append({
+            "id": f"ticker-alert-{top_alert['id']}",
+            "type": "alert",
+            "level": "RED",
+            "priority": 100,
+            "title": "紧急告警",
+            "summary": f"{top_alert['source']} 发现 {top_alert['type']}，请立即处置！",
+            "link": "/park",
+            "source": "安防中心"
+        })
+    
+    # 3. 黄历/日历 (Calendar)
+    cal = get_calendar_data()
+    items.append({
+        "id": "ticker-almanac",
+        "type": "almanac",
+        "level": "INFO",
+        "priority": 30,
+        "title": "今日黄历",
+        "summary": f"{cal['solar_date']} {cal['lunar']}，{cal['display_line']}",
+        "link": "/park",
+        "source": "历法服务"
+    })
+    
+    items.append({
+        "id": "ticker-holiday",
+        "type": "calendar",
+        "level": "INFO",
+        "priority": 20,
+        "title": "节日提醒",
+        "summary": f"距离 {cal['next_holiday']['name']} 还有 {cal['next_holiday']['days_left']} 天，{cal['term']}节气已过。",
+        "link": "/park",
+        "source": "行政中心"
+    })
+
+    # 4. 今日一句话战报 (Briefing)
+    overview = get_overview_stats()
+    # 组装战报文案
+    briefing_text = (
+        f"今日战报：合规评分 {overview['risk_score']}｜"
+        f"扫描 {overview['scans_today']:,}｜"
+        f"敏感命中 {overview['hits_today']}｜"
+        f"实时告警 {overview['alerts_active']}｜"
+        f"AQI {air['level']}｜"
+        f"体感 {temp_feel}℃"
+    )
+    
+    items.append({
+        "id": "ticker-briefing",
+        "type": "briefing",
+        "level": "INFO",
+        "priority": 95, # 仅次于紧急告警
+        "title": "园区日报",
+        "summary": briefing_text,
+        "link": "/park",
+        "source": "运营指挥部"
+    })
+    
+    # 按优先级降序排序
+    items.sort(key=lambda x: x['priority'], reverse=True)
+    return items

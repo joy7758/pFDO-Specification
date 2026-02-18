@@ -58,6 +58,27 @@
 - `GET /api/v1/air`: 空气质量数据 (模拟)
 - `GET /api/v1/calendar`: 农历、节气与假期、黄历宜忌与冲煞
   - 返回示例：`{"almanac": {"yi": ["理发",...], "chong": "冲马"}, "display_line": "宜 理发..."}`
+- `GET /api/v1/ticker`: 顶部公告栏 (Ticker) 数据
+  - 返回示例：
+    ```json
+    {
+      "items": [
+        {
+          "type": "briefing",
+          "priority": 95,
+          "title": "园区日报",
+          "summary": "今日战报：合规评分 92｜扫描 1,284｜敏感命中 23｜实时告警 2｜AQI 良｜体感 -1℃",
+          "link": "/park"
+        },
+        {
+          "type": "alert",
+          "level": "RED",
+          "title": "紧急告警",
+          "summary": "财务系统 发现 未脱敏手机号，请立即处置！"
+        }
+      ]
+    }
+    ```
 - `GET /api/v1/trends`: 7日风险趋势数据
 - `GET /api/v1/alerts`: 实时风险告警流
 - `GET /api/v1/integrations`: 系统接入状态与插件列表

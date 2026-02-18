@@ -32,6 +32,8 @@ check_url "/health" "基础健康" || FAILED=1
 check_url "/park" "园区大屏" || FAILED=1
 check_url "/docs-cn" "中文文档" || FAILED=1
 
+check_url "/api/v1/ticker" "公告数据" || FAILED=1
+
 if [ $FAILED -eq 0 ]; then
     echo ">>> 所有检查通过！服务运行正常。"
     exit 0

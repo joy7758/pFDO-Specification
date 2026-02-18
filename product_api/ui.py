@@ -140,6 +140,44 @@ def _base_css() -> str:
             border-bottom: 1px solid var(--border-light);
         }
         .list-item:last-child { border-bottom: none; }
+
+        /* Ticker 组件 */
+        .ticker-container {
+            width: 100%;
+            height: 48px;
+            background: #fff;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 14px;
+            overflow: hidden;
+            position: relative;
+        }
+        .ticker-item {
+            display: none;
+            align-items: center;
+            width: 100%;
+            animation: fadeIn 0.5s ease-in-out;
+            cursor: pointer;
+        }
+        .ticker-item.active { display: flex; }
+        .ticker-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 12px;
+            white-space: nowrap;
+        }
+        .ticker-title { font-weight: 600; margin-right: 8px; white-space: nowrap; }
+        .ticker-text { color: var(--text-dark); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ticker-arrow { color: var(--text-grey); margin-left: 12px; font-size: 12px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
     """
 
@@ -166,6 +204,9 @@ def _page_layout(title: str, content: str, active_tab: str = "") -> str:
         {_base_css()}
     </head>
     <body>
+        <div id="top-ticker" class="ticker-container" style="display:none;">
+            <!-- Ticker items injected here -->
+        </div>
         <header>
             <a href="/" class="logo">红岩 · 园区数字合规共建平台</a>
             <nav class="nav-links">
@@ -385,6 +426,64 @@ def render_park_dashboard() -> str:
     
     script = """
     <script>
+        // Ticker Logic
+        async function initTicker() {
+            try {
+                const res = await fetch('/api/v1/ticker');
+                const data = await res.json();
+                const items = data.items;
+                if (!items || items.length === 0) return;
+
+                const container = document.getElementById('top-ticker');
+                container.style.display = 'flex';
+                
+                let html = '';
+                items.forEach((item, index) => {
+                    let badgeClass = 'tag-grey';
+                    if (item.type === 'alert') badgeClass = 'tag-red';
+                    if (item.type === 'weather') badgeClass = 'tag-blue';
+                    if (item.type === 'briefing') badgeClass = 'tag-orange';
+                    if (item.type === 'almanac') badgeClass = 'tag-green';
+                    
+                    html += `
+                        <div class="ticker-item ${index === 0 ? 'active' : ''}" onclick="if('${item.link}') window.location.href='${item.link}'">
+                            <span class="ticker-badge ${badgeClass}">${item.title}</span>
+                            <span class="ticker-text">${item.summary}</span>
+                            <span class="ticker-arrow">查看详情 ›</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+
+                // Auto rotate
+                let currentIndex = 0;
+                const els = container.querySelectorAll('.ticker-item');
+                let interval = setInterval(() => {
+                    els[currentIndex].classList.remove('active');
+                    currentIndex = (currentIndex + 1) % els.length;
+                    els[currentIndex].classList.add('active');
+                }, 10000);
+
+                // Pause on hover
+                container.addEventListener('mouseenter', () => clearInterval(interval));
+                container.addEventListener('mouseleave', () => {
+                    interval = setInterval(() => {
+                        els[currentIndex].classList.remove('active');
+                        currentIndex = (currentIndex + 1) % els.length;
+                        els[currentIndex].classList.add('active');
+                    }, 10000);
+                });
+
+            } catch (e) {
+                console.error("Ticker init failed", e);
+            }
+        }
+        
+        // Init both
+        document.addEventListener('DOMContentLoaded', () => {
+            initTicker();
+        });
+
         // 简易 SVG 图表绘制函数
         function drawLineChart(id, data, color) {
             const svg = document.getElementById(id);

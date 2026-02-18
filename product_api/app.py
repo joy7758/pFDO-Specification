@@ -20,7 +20,8 @@ from .dashboard import (
     get_weather_data,
     get_air_quality_data,
     get_integrations_status,
-    get_calendar_data
+    get_calendar_data,
+    get_ticker_items
 )
 from .ui import (
     render_home,
@@ -88,6 +89,11 @@ def api_v1_air() -> Dict[str, Any]:
 def api_v1_calendar() -> Dict[str, Any]:
     """获取日历与节气数据 (包含黄历宜忌/冲煞等)"""
     return get_calendar_data()
+
+@app.get("/api/v1/ticker")
+def api_v1_ticker() -> Dict[str, Any]:
+    """获取顶部 Ticker 滚动条目 (战报/告警/天气等)"""
+    return {"items": get_ticker_items()}
 
 # 保留旧接口兼容 (Deprecated)
 @app.get("/api/park/dashboard")
