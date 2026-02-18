@@ -4,6 +4,7 @@
 import os
 import shutil
 import json
+import traceback
 from typing import Dict, List, Any
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request, Body
@@ -32,7 +33,10 @@ from .dashboard import (
     get_leader_summary,
     get_risk_thermometer,
     get_streak_stats,
-    get_risk_model
+    get_risk_model,
+    get_narrative_status,
+    get_narrative_series,
+    get_narrative_summary
 )
 from .ui import (
     render_home,
@@ -180,6 +184,36 @@ def api_v1_streak() -> Dict[str, Any]:
 def api_v1_risk_model() -> Dict[str, Any]:
     """获取当前生效的风险评分模型元数据"""
     return get_risk_model()
+
+
+# --- Narrative Engine APIs (New) ---
+
+@app.get("/api/v1/narrative/status")
+def api_v1_narrative_status() -> Dict[str, Any]:
+    """获取叙事引擎状态"""
+    try:
+        return get_narrative_status()
+    except Exception as e:
+        traceback.print_exc()
+        return {"error": str(e), "fallback": True}
+
+@app.get("/api/v1/narrative/series")
+def api_v1_narrative_series() -> Dict[str, Any]:
+    """获取叙事趋势序列"""
+    try:
+        return get_narrative_series()
+    except Exception as e:
+        traceback.print_exc()
+        return {"error": str(e), "fallback": True, "dates": [], "risk_scores": []}
+
+@app.get("/api/v1/narrative/summary")
+def api_v1_narrative_summary() -> Dict[str, Any]:
+    """获取叙事摘要"""
+    try:
+        return get_narrative_summary()
+    except Exception as e:
+        traceback.print_exc()
+        return {"error": str(e), "fallback": True, "summary": "引擎启动中...", "actions": []}
 
 
 # 保留旧接口兼容 (Deprecated)

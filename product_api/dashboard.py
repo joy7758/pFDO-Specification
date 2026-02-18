@@ -5,13 +5,41 @@
 import os
 import random
 import time
+import hashlib
 import traceback
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
+from .config import is_demo_mode, get_demo_seed, is_simulation_mode, get_simulation_mode, get_sim_start_date, get_data_mode
+from .narrative import (
+    generate_trend_series, 
+    today_snapshot, 
+    narrative_summary,
+    get_narrative_status_data
+)
+
 # 获取上传目录路径（与 app.py 保持一致）
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 ENGINE_VERSION = "RRM-1.0"
+NARRATIVE_VERSION = "NSE-2.0"
+
+def _rng(tag: str):
+    """
+    根据 DEMO_MODE 返回随机数生成器。
+    - True: 返回基于 (SEED + DATE + TAG) 的稳定 Random 实例
+    - False: 返回系统 random 模块
+    """
+    if is_demo_mode():
+        seed_val = get_demo_seed()
+        date_str = datetime.now().strftime("%Y%m%d")
+        # Mix seed, date, and tag for unique but stable randomness per day/module
+        raw = f"{seed_val}-{date_str}-{tag}"
+        # Use SHA256 to get a good distribution
+        h = hashlib.sha256(raw.encode('utf-8')).hexdigest()
+        # Take first 8 chars as int seed
+        s = int(h[:8], 16)
+        return random.Random(s)
+    return random
 
 def _get_file_count() -> int:
     """统计实际文件数"""
@@ -24,6 +52,17 @@ def _get_file_count() -> int:
 
 def calculate_dynamic_risk_score() -> Dict[str, Any]:
     """计算动态风险评分 (核心算法)"""
+    if is_simulation_mode():
+        # 叙事模拟模式托底
+        snap = today_snapshot()
+        return {
+            "score": snap["risk_score"],
+            "file_count": 120, # Mock
+            "hits_today": snap["hits_today"],
+            "alerts_active": snap["alerts_active"],
+            "factors": {}
+        }
+
     # 基础分
     base_score = 100
     
@@ -79,33 +118,41 @@ def get_overview_stats() -> Dict[str, Any]:
     # 模拟数据
     total_records = risk_data['file_count'] * 128 + 3456
     
+    ver = NARRATIVE_VERSION if is_simulation_mode() else ENGINE_VERSION
+
     return {
         "park_name": "红岩 · 数字化示范园区",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "engine_version": ENGINE_VERSION,
+        "engine_version": ver,
         "risk_score": risk_data['score'],
         "total_files": risk_data['file_count'],
         "total_records": total_records,
         "risk_events_today": 3 + (risk_data['file_count'] % 3),
         "handled_rate": "98.5%",
-        "scans_today": 128 + random.randint(0, 50),
+        "scans_today": risk_data.get('scans_today', 128 + random.randint(0, 50)),
         "hits_today": risk_data['hits_today'],
         "alerts_active": risk_data['alerts_active']
     }
 
 
 def get_trends_data() -> Dict[str, Any]:
-    """获取趋势数据 (Trends)"""
-    dates = [(datetime.now() - timedelta(days=i)).strftime("%m-%d") for i in range(6, -1, -1)]
+    """获取趋势数据 (Trends) - 升级为 30 天"""
+    if is_simulation_mode():
+        trends = generate_trend_series(30)
+        trends["engine_version"] = NARRATIVE_VERSION
+        return trends
+        
+    # Demo/Random Mode - generate 30 days mock
+    days = 30
+    dates = [(datetime.now() - timedelta(days=i)).strftime("%m-%d") for i in range(days-1, -1, -1)]
     
-    # 模拟近7天数据
     return {
         "engine_version": ENGINE_VERSION,
         "dates": dates,
-        "risk_scores": [random.randint(85, 95) for _ in range(7)],
-        "alerts_count": [random.randint(2, 10) for _ in range(7)],
-        "pii_hits": [random.randint(10, 50) for _ in range(7)],
-        "scan_volume": [random.randint(100, 300) for _ in range(7)]
+        "risk_scores": [random.randint(85, 95) for _ in range(days)],
+        "alerts_count": [random.randint(2, 10) for _ in range(days)],
+        "pii_hits": [random.randint(10, 50) for _ in range(days)],
+        "scan_volume": [random.randint(100, 300) for _ in range(days)]
     }
 
 
@@ -116,8 +163,21 @@ def get_alerts_data() -> Dict[str, Any]:
     levels = ["HIGH", "MEDIUM", "LOW"]
     sources = ["财务系统", "OA系统", "CRM客户管理", "园区门禁", "访客WIFI"]
     
+    count = 20
+    if is_simulation_mode():
+        snap = today_snapshot()
+        # Make alerts consistent with snapshot count if possible, but here we just mock list
+        # If crisis, more HIGH alerts
+        mode = get_simulation_mode()
+        if mode == "crisis":
+             levels = ["HIGH", "HIGH", "MEDIUM"]
+             count = 30
+        elif mode == "improving":
+             levels = ["LOW", "MEDIUM"]
+             count = 5
+    
     alerts = []
-    for i in range(20):
+    for i in range(count):
         t = datetime.now() - timedelta(minutes=i*15 + random.randint(0, 10))
         alerts.append({
             "id": f"ALT-{int(time.time())}-{i}",
@@ -294,6 +354,11 @@ def get_risk_map() -> List[Dict[str, Any]]:
 
 def get_actions_list() -> List[Dict[str, Any]]:
     """获取可执行操作列表"""
+    # 叙事模式下，动作由引擎决定
+    if is_simulation_mode():
+        nar = narrative_summary()
+        return nar.get("actions", [])
+
     return [
         {"id": "act_001", "name": "全园扫描", "description": "立即启动全量数据合规扫描", "status": "ready"},
         {"id": "act_002", "name": "一键阻断", "description": "阻断所有高风险外部连接", "status": "ready"},
@@ -328,6 +393,34 @@ def get_briefing_data() -> Dict[str, Any]:
     try:
         # 1. 获取基础数据
         overview = get_overview_stats()
+        
+        # 叙事模式
+        if is_simulation_mode():
+            nar = narrative_summary()
+            snap = today_snapshot()
+            
+            summary = nar["summary"]
+            # Generate suggestion from summary or add custom logic
+            suggestion = "请根据上方叙事指引执行对应操作。"
+            
+            return {
+                "title": "每日运营简报",
+                "date": datetime.now().strftime("%Y年%m月%d日"),
+                "engine_version": NARRATIVE_VERSION,
+                "summary": summary,
+                "suggestion": suggestion,
+                "status_level": nar["level"],
+                "kpis": [
+                    {"label": "今日扫描", "value": f"{overview.get('scans_today', 0):,}", "unit": "次", "color": "blue"},
+                    {"label": "敏感命中", "value": f"{overview.get('hits_today', 0):,}", "unit": "条", "color": "orange"},
+                    {"label": "实时告警", "value": overview.get('alerts_active', 0), "unit": "个", "color": "red"},
+                    {"label": "合规评分", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
+                ],
+                "links": [],
+                "must_focus_count": snap.get("must_focus_count", 0)
+            }
+        
+        # 原逻辑
         trends = get_trends_data()
         alerts_data = get_alerts_data()
         risk_map = get_risk_map()
@@ -383,6 +476,7 @@ def get_briefing_data() -> Dict[str, Any]:
         }
     except Exception as e:
         # Fallback
+        traceback.print_exc()
         return {
             "title": "每日运营简报",
             "date": datetime.now().strftime("%Y年%m月%d日"),
@@ -553,6 +647,24 @@ def get_ticker_items() -> List[Dict[str, Any]]:
 
 def get_must_focus() -> Dict[str, Any]:
     """获取必须关注事项 (Must Focus)"""
+    if is_simulation_mode():
+        snap = today_snapshot()
+        count = snap.get("must_focus_count", 0)
+        level = "high" if count > 0 else "low"
+        
+        # Mock some items if count > 0
+        items = []
+        if count > 0:
+            for i in range(min(count, 5)):
+                 items.append({"type": "risk", "desc": "模拟高风险项", "reason": "叙事引擎生成的风险事件"})
+                 
+        return {
+            "count": count,
+            "level": level,
+            "items": items,
+            "suggestion": "请根据叙事引擎指示处理风险。"
+        }
+
     # 聚合 High Risks 和 Alerts
     risk_map = get_risk_map()
     high_risks = [r for r in risk_map if r['level'] == 'high']
@@ -614,6 +726,16 @@ def get_leader_summary() -> Dict[str, Any]:
 
 def get_risk_thermometer() -> Dict[str, Any]:
     """获取风险温度计数据 (基于动态模型)"""
+    if is_simulation_mode():
+        snap = today_snapshot()
+        return {
+            "temperature": snap["temperature"],
+            "level": "high" if snap["temperature"] > 80 else ("medium" if snap["temperature"] > 50 else "low"),
+            "max": 100,
+            "source_score": snap["risk_score"],
+            "engine_version": NARRATIVE_VERSION
+        }
+
     # 使用动态评分模型计算
     risk_data = calculate_dynamic_risk_score()
     score = risk_data['score']
@@ -648,3 +770,17 @@ def get_streak_stats() -> Dict[str, Any]:
         "record_days": 365,
         "last_incident": (datetime.now() - timedelta(days=streak)).strftime("%Y-%m-%d")
     }
+
+# --- Narrative Extensions ---
+
+def get_narrative_status() -> Dict[str, Any]:
+    """获取叙事引擎状态"""
+    return get_narrative_status_data()
+
+def get_narrative_series() -> Dict[str, Any]:
+    """获取叙事趋势序列"""
+    return generate_trend_series(30)
+
+def get_narrative_summary() -> Dict[str, Any]:
+    """获取叙事摘要"""
+    return narrative_summary()

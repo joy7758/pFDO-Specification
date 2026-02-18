@@ -31,6 +31,27 @@
 ./scripts/run_park.sh
 ```
 
+### ✅ 发布前必跑清单 (3分钟)
+
+每次代码提交或演示前，请务必执行以下步骤确保质量：
+
+1. **进入仓库根目录**
+   ```bash
+   cd ~/pFDO-Specification
+   ```
+
+2. **执行健康检查 (Health Check)**
+   确保所有核心接口返回 200 OK，且无报错。
+   ```bash
+   ./scripts/healthcheck.sh
+   ```
+
+3. **执行冒烟测试 (Smoke Test)**
+   模拟冷启动流程，验证从环境激活到服务就绪的全链路。
+   ```bash
+   ./scripts/smoke.sh
+   ```
+
 ### 访问入口
 | 页面/接口 | 路径 | 说明 |
 | :--- | :--- | :--- |
@@ -39,6 +60,45 @@
 | **企业检测** | `http://127.0.0.1:8000/demo` | 隐私数据扫描交互式演示 |
 | **接口文档** | `http://127.0.0.1:8000/docs-cn` | 自定义中文 API 文档 |
 
+### 📖 叙事模拟引擎 (Narrative Simulation Engine)
+
+v2.0 引入了确定性叙事模拟引擎，用于生成一致的、可解释的趋势数据，支持演示与演练场景。
+
+#### 环境变量控制
+可以通过设置环境变量 `DATA_MODE` 和 `SIMULATION_MODE` 来切换不同的叙事剧本。
+
+**1. 危机叙事 (Crisis Mode)**
+风险急剧上升，告警激增，模拟严重的数据泄露事件。
+```bash
+DATA_MODE=simulation SIMULATION_MODE=crisis ./scripts/run_park.sh
+```
+
+**2. 改善叙事 (Improving Mode)**
+风险逐步下降，合规治理初见成效，模拟整改后的恢复期。
+```bash
+DATA_MODE=simulation SIMULATION_MODE=improving ./scripts/run_park.sh
+```
+
+**3. 稳定叙事 (Stable Mode - 默认)**
+系统平稳运行，偶发小波动。
+```bash
+DATA_MODE=simulation SIMULATION_MODE=stable ./scripts/run_park.sh
+```
+
+#### API 示例
+验证叙事引擎状态与输出：
+
+```bash
+# 获取当前引擎状态
+curl -s http://127.0.0.1:8000/api/v1/narrative/status
+
+# 获取生成的叙事摘要
+curl -s http://127.0.0.1:8000/api/v1/narrative/summary
+
+# 获取 30 天确定性趋势数据
+curl -s http://127.0.0.1:8000/api/v1/narrative/series
+```
+
 ### 📊 园区大屏模块说明 (/park)
 
 大屏旨在成为园区管理者“每天离不开的总控台”，集成以下核心模块：
@@ -46,51 +106,52 @@
 1.  **环境感知**: 实时天气、体感温度、风速、空气质量 (AQI) 及健康建议。
 2.  **时间服务**: 公历/农历双显，节气提醒，以及法定节假日倒计时。
 3.  **合规总览**: 实时 PII 扫描量、敏感信息命中数、实时告警流 (Alerts Stream)。
-4.  **趋势分析**: 7 日数据合规指数与风险事件趋势图 (SVG 渲染)。
+4.  **趋势分析**: **30 日**数据合规指数与风险事件趋势图 (SVG 渲染)，支持叙事标注。
 5.  **生态集成**: 展示已接入的子系统（OA/CRM/IoT）与可扩展插件（门禁/能耗/视频）。
 6.  **行为驱动引擎**: 包含必须关注事项、用户行为统计、时间压力指数，辅助即时决策。
 7.  **领导者视角**: 右上角 Leader Summary 面板，展示效率、团队状态与预算概况。
-8.  **风险温度计**: 左侧动态 Risk Thermometer，直观展示实时风险热度。
-9.  **安全连胜**: 底部展示连续安全天数 (Streak Stats)。
+8.  **叙事控制卡**: 实时显示当前数据模式与叙事剧本状态。
+9.  **风险温度计**: 左侧动态 Risk Thermometer，直观展示实时风险热度。
+10. **安全连胜**: 底部展示连续安全天数 (Streak Stats)。
 
-### 🆕 v1.2.0 新特性 (2026-02-18)
+### 🆕 v1.3.0 RedRock Risk Engine (RRM-1.0)
 
-1.  **Leader Summary Panel**: 右上角固定显示关键管理指标。
-2.  **Risk Thermometer**: 左侧纵向温度计，可视化风险等级。
-3.  **Streak Stats**: 底部展示“连续安全天数”，激励安全运营。
-4.  **Must Focus 优化**: 自动排序逻辑，确保高优先级事项置顶。
+引入全新的 **RedRock Risk Engine (RRM-1.0)** 动态风险评分模型，取代了原有的静态模拟算法。
+
+- **核心算法**: Weighted Decay (WD-26)
+- **评分逻辑**: 
+  - 基础分：100 分
+  - 扣分因子：
+    - **Data Volume (15%)**: 基于文件存储存量进行扣分。
+    - **PII Hits (35%)**: 基于敏感数据命中量进行动态扣分。
+    - **Active Alerts (50%)**: 基于未解决的高风险告警数量进行重度扣分。
+- **透明化**: 通过 API `GET /api/v1/risk-model` 可查看当前生效的模型权重与版本元数据。
+- **全局生效**: 该引擎版本号 (`RRM-1.0`) 已注入所有核心接口响应中，确保前端展示的一致性。
 
 ### 🔌 API 接口列表
 
 系统提供标准的 RESTful API 供前端与第三方系统调用：
 
+- `GET /api/v1/narrative/*`: 叙事引擎相关接口 (NEW)
+- `GET /api/v1/risk-model`: 获取当前风险评分模型元数据
 - `GET /api/v1/leader-summary`: 领导视角摘要
-- `GET /api/v1/risk-thermometer`: 风险温度计数据
+- `GET /api/v1/risk-thermometer`: 风险温度计数据 (Powered by RRM-1.0)
 - `GET /api/v1/streak`: 连续安全天数
 - `GET /api/v1/ticker`: 园区信息总线 (Ticker items)
-- `GET /api/v1/overview`: 核心合规指标与统计
+- `GET /api/v1/overview`: 核心合规指标与统计 (含 `engine_version`)
 - `GET /api/v1/briefing`: 每日运营简报
 - ... (其他原有接口)
 
 ### 🛠️ 常见问题 (Troubleshooting)
 
-**Q: 遇到 Connection Refused 或端口冲突怎么办？**
+- **8000 端口占用 (`Address already in use`)**
+  - **现象**: 启动时提示端口被占用。
+  - **解决**: 运行 `./scripts/run_park.sh` 或 `./scripts/smoke.sh`，脚本会自动清理旧进程。
 
-如果你发现服务无法启动，或提示 `Address already in use`，请按以下步骤操作：
+- **未激活虚拟环境 (`ModuleNotFoundError`)**
+  - **现象**: 提示找不到 `fastapi` 或 `uvicorn`。
+  - **解决**: 确保已创建虚拟环境 (`python3 -m venv .venv`) 并激活 (`source .venv/bin/activate`)。
 
-1. **检查端口占用**：查看是否有残留进程占用 8000 端口。
-   ```bash
-   lsof -i :8000
-   ```
-
-2. **强制清理**：杀掉占用进程。
-   ```bash
-   kill -9 <PID>
-   # 或者直接运行我们的清理脚本，它会自动处理
-   ./scripts/run_park.sh
-   ```
-
-3. **重新启动**：再次运行启动脚本。
-   ```bash
-   ./scripts/run_park.sh
-   ```
+- **ImportError (如 `cannot import name 'get_risk_model'`)**
+  - **现象**: 修改了代码但未同步导出。
+  - **解决**: 检查 `product_api/__init__.py` 或相关模块的导入路径，确保函数名拼写正确。

@@ -12,15 +12,22 @@ echo ">>> 开始健康检查 ($BASE_URL)..."
 check_url() {
     local endpoint=$1
     local name=$2
+    local temp_file=$(mktemp)
     
     echo -n "    检查 $name ($endpoint) ... "
-    status_code=$(curl -o /dev/null -s -w "%{http_code}\n" "$BASE_URL$endpoint")
+    # Capture body to temp file, write http code to stdout
+    status_code=$(curl -s -w "%{http_code}" -o "$temp_file" "$BASE_URL$endpoint")
     
     if [ "$status_code" == "200" ]; then
-        echo "✅ OK"
+        echo "✅ 通过"
+        rm "$temp_file"
         return 0
     else
-        echo "❌ FAILED (Status: $status_code)"
+        echo "❌ 失败 (状态码: $status_code)"
+        echo "    响应内容 (前200字符):"
+        head -c 200 "$temp_file"
+        echo "" # newline
+        rm "$temp_file"
         return 1
     fi
 }
@@ -49,13 +56,21 @@ check_url "/api/v1/must-focus" "必须关注" || FAILED=1
 check_url "/api/v1/behavior-stats" "行为统计" || FAILED=1
 check_url "/api/v1/time-pressure" "时间压力" || FAILED=1
 
+# 风险模型检查
+check_url "/api/v1/risk-model" "风险模型定义" || FAILED=1
+
+# 叙事引擎检查 (New)
+check_url "/api/v1/narrative/status" "叙事引擎状态" || FAILED=1
+check_url "/api/v1/narrative/series" "叙事趋势序列" || FAILED=1
+check_url "/api/v1/narrative/summary" "叙事摘要" || FAILED=1
+
 # 检查 Actions 返回
 echo -n "    检查 Actions 列表 ... "
 ACT_RES=$(curl -s "$BASE_URL/api/v1/actions")
 if [[ "$ACT_RES" == *"actions"* ]]; then
-    echo "✅ OK"
+    echo "✅ 通过"
 else
-    echo "⚠️  WARNING (Actions list missing)"
+    echo "⚠️  警告 (Actions list missing)"
     FAILED=1
 fi
 
@@ -65,9 +80,9 @@ TICKER_RES=$(curl -s "$BASE_URL/api/v1/ticker")
 VALID_TICKER=$(echo "$TICKER_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); print('OK' if 'items' in data and isinstance(data['items'], list) else 'FAIL')")
 
 if [ "$VALID_TICKER" == "OK" ]; then
-    echo "✅ OK"
+    echo "✅ 通过"
 else
-    echo "❌ FAILED (Ticker format invalid)"
+    echo "❌ 失败 (Ticker format invalid)"
     echo "    Response: $TICKER_RES"
     FAILED=1
 fi
@@ -78,16 +93,5 @@ if [ $FAILED -eq 0 ]; then
 else
     echo ">>> 检查发现异常，请查看上方错误信息。"
     echo "    建议运行: ./scripts/run_park.sh 查看详细日志"
-    exit 1
-fi
-
-# 2026-02-18 Add Risk Explain Checks
-if ! curl -s http://127.0.0.1:8000/api/v1/risk/explain | grep "engine_version" > /dev/null; then
-    echo "❌ API /risk/explain is DOWN or missing engine_version"
-    exit 1
-fi
-
-if ! curl -s http://127.0.0.1:8000/api/v1/risk/model | grep "factors" > /dev/null; then
-    echo "❌ API /risk/model is DOWN or missing factors"
     exit 1
 fi

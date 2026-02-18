@@ -329,6 +329,23 @@ def _base_css() -> str:
         .ls-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #333; display: flex; justify-content: space-between; }
         .ls-item { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 6px; }
         .ls-item span:last-child { font-weight: 500; color: #333; }
+
+        /* Narrative Control Card (Top Right - below leader) */
+        .narrative-control {
+            position: absolute;
+            right: 310px; /* Left of leader summary */
+            top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            width: 280px;
+            z-index: 900;
+        }
+        .nc-title { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; text-transform: uppercase; }
+        .nc-val { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; }
         
         /* Risk Thermometer (Left Side) */
         .risk-thermometer-container {
@@ -370,57 +387,23 @@ def _base_css() -> str:
         .streak-num { font-size: 18px; font-weight: 700; color: #4CAF50; }
         .streak-text { font-size: 12px; color: #666; }
 
+        /* Narrative Label */
+        .narrative-label {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+        .nl-improving { background: #E8F5E9; color: #2E7D32; }
+        .nl-stable { background: #E3F2FD; color: #1565C0; }
+        .nl-crisis { background: #FFEBEE; color: #C62828; }
+
     </style>
     """
 
-def _page_layout(title: str, content: str, active_tab: str = "") -> str:
-    """页面通用布局"""
-    nav_links = {
-        "/": "首页",
-        "/demo": "企业检测",
-        "/park": "园区大屏",
-        "/docs-cn": "接口文档"
-    }
-    nav_html = ""
-    for link, name in nav_links.items():
-        cls = "active" if link == active_tab else ""
-        nav_html += f'<a href="{link}" class="{cls}">{name}</a>'
-
-    return f"""
-    <!DOCTYPE html>
-    <html lang="zh-CN">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{title} - 红岩数字合规</title>
-        {_base_css()}
-    </head>
-    <body>
-        <div id="toast-container" class="toast-container"></div>
-        
-        <!-- Ticker -->
-        <div id="top-ticker" class="ticker-container">
-            <div class="ticker-wrapper" id="ticker-list">
-                <!-- Items injected here -->
-                <div style="display:flex; align-items:center; height:100%; color:#999; padding-left:20px;">
-                    正在获取实时信息...
-                </div>
-            </div>
-            <div style="border-left:1px solid #eee; padding-left:16px; margin-left:16px;">
-                <button class="ticker-btn" onclick="openTickerModal()">更多</button>
-            </div>
-        </div>
-
-        <!-- Ticker Modal -->
-        <div id="ticker-overlay" class="ticker-overlay" onclick="closeTickerModal()"></div>
-        <div id="ticker-modal" class="ticker-modal">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h3 style="margin:0;">实时信息总线</h3>
-                <span style="cursor:pointer; font-size:20px;" onclick="closeTickerModal()">×</span>
-            </div>
-            <div id="ticker-modal-list"></div>
-        </div>
-        
+_JS_TICKER = """
         <script>
             let tickerItems = [];
             let tickerIdx = 0;
@@ -487,8 +470,6 @@ def _page_layout(title: str, content: str, active_tab: str = "") -> str:
                 // Scroll to anchor if on same page
                 if(link.startsWith('/park#')) {
                     const id = link.split('#')[1];
-                    const el = document.getElementById(id); // Search by ID (section) or Card ID
-                    // Mapping simple IDs to our card IDs if needed, or we just add IDs to cards
                     const target = document.getElementById(id) || document.getElementById(`card-${id}`);
                     if(target) {
                         target.scrollIntoView({behavior: 'smooth', block: 'center'});
@@ -537,6 +518,57 @@ def _page_layout(title: str, content: str, active_tab: str = "") -> str:
             
             document.addEventListener('DOMContentLoaded', initTicker);
         </script>
+"""
+
+def _page_layout(title: str, content: str, active_tab: str = "") -> str:
+    """页面通用布局"""
+    nav_links = {
+        "/": "首页",
+        "/demo": "企业检测",
+        "/park": "园区大屏",
+        "/docs-cn": "接口文档"
+    }
+    nav_html = ""
+    for link, name in nav_links.items():
+        cls = "active" if link == active_tab else ""
+        nav_html += f'<a href="{link}" class="{cls}">{name}</a>'
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{title} - 红岩数字合规</title>
+        {_base_css()}
+    </head>
+    <body>
+        <div id="toast-container" class="toast-container"></div>
+        
+        <!-- Ticker -->
+        <div id="top-ticker" class="ticker-container">
+            <div class="ticker-wrapper" id="ticker-list">
+                <!-- Items injected here -->
+                <div style="display:flex; align-items:center; height:100%; color:#999; padding-left:20px;">
+                    正在获取实时信息...
+                </div>
+            </div>
+            <div style="border-left:1px solid #eee; padding-left:16px; margin-left:16px;">
+                <button class="ticker-btn" onclick="openTickerModal()">更多</button>
+            </div>
+        </div>
+
+        <!-- Ticker Modal -->
+        <div id="ticker-overlay" class="ticker-overlay" onclick="closeTickerModal()"></div>
+        <div id="ticker-modal" class="ticker-modal">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="margin:0;">实时信息总线</h3>
+                <span style="cursor:pointer; font-size:20px;" onclick="closeTickerModal()">×</span>
+            </div>
+            <div id="ticker-modal-list"></div>
+        </div>
+        
+        {_JS_TICKER}
         
         <header>
             <a href="/" class="logo">红岩 · 园区数字合规共建平台</a>
@@ -692,7 +724,6 @@ def render_park_dashboard() -> str:
             color: white;
             border: none;
         }
-        /* ... weather specific styles from previous version ... */
         .w-header { display: flex; justify-content: space-between; align-items: start; }
         .w-temp { font-size: 42px; font-weight: 200; line-height: 1; }
         .w-cond { font-size: 14px; font-weight: 500; margin-top: 4px; }
@@ -703,6 +734,15 @@ def render_park_dashboard() -> str:
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 12px;
         }
+        
+        /* SVG Charts */
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
     """
     
@@ -710,12 +750,13 @@ def render_park_dashboard() -> str:
     <script>
         // --- Layout Config ---
         const DEFAULT_LAYOUT = [
-            { id: 'card-briefing', x: 0, y: 0, w: 8, h: 4 },
+            { id: 'card-briefing', x: 0, y: 0, w: 4, h: 4 },
+            { id: 'card-narrative-summary', x: 4, y: 0, w: 4, h: 4 }, /* Narrative Summary */
             { id: 'card-stats', x: 8, y: 0, w: 4, h: 4 },
             
-            { id: 'card-explain', x: 0, y: 4, w: 6, h: 6 },  /* New Explain Card */
-            { id: 'card-actions', x: 6, y: 4, w: 6, h: 3 },  /* Adjusted */
-            { id: 'card-score', x: 6, y: 7, w: 6, h: 3 },    /* Adjusted */
+            { id: 'card-explain', x: 0, y: 4, w: 6, h: 6 },
+            { id: 'card-actions', x: 6, y: 4, w: 6, h: 3 },
+            { id: 'card-score', x: 6, y: 7, w: 6, h: 3 },
             
             { id: 'card-must-focus', x: 0, y: 10, w: 4, h: 5 },
             { id: 'card-behavior', x: 4, y: 10, w: 4, h: 5 },
@@ -900,6 +941,7 @@ def render_park_dashboard() -> str:
         // --- Data Fetching & Rendering ---
         
         async function initDashboardData() {
+             loadNarrativeStatus(); // Load narrative status first
              loadActions();
              loadRiskMap();
              loadBriefing();
@@ -908,14 +950,117 @@ def render_park_dashboard() -> str:
              loadMustFocus();
              loadBehavior();
              loadTimePressure();
-             
-             // New Features
-             loadRiskExplain(); // Load explain card
+             loadRiskExplain(); 
              loadLeaderSummary();
              loadRiskThermometer();
              loadStreakStats();
+             loadNarrativeSummary(); // New
+             loadTrends(); // Updated for charts
         }
         
+        async function loadNarrativeStatus() {
+            try {
+                const res = await fetch('/api/v1/narrative/status');
+                const data = await res.json();
+                if(data.error) return;
+                
+                document.getElementById('nc-mode').innerText = data.data_mode;
+                document.getElementById('nc-sim').innerText = data.simulation_mode;
+                document.getElementById('nc-ver').innerText = data.engine_version;
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadNarrativeSummary() {
+            try {
+                const res = await fetch('/api/v1/narrative/summary');
+                const data = await res.json();
+                
+                const card = document.getElementById('card-narrative-summary');
+                
+                // Set summary text
+                document.getElementById('ns-text').innerText = data.summary || "暂无叙事摘要";
+                
+                // Render suggested actions inside narrative card
+                const actDiv = document.getElementById('ns-actions');
+                actDiv.innerHTML = '';
+                if(data.actions && data.actions.length > 0) {
+                     data.actions.forEach(act => {
+                         const btn = document.createElement('div');
+                         btn.style.marginTop = '8px';
+                         btn.style.padding = '8px';
+                         btn.style.background = '#F9F9F9';
+                         btn.style.borderRadius = '8px';
+                         btn.style.fontSize = '12px';
+                         btn.style.cursor = 'pointer';
+                         btn.innerHTML = `<span style="font-weight:600;">${act.name}</span>: ${act.description}`;
+                         actDiv.appendChild(btn);
+                     });
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadTrends() {
+             try {
+                 const res = await fetch('/api/v1/trends');
+                 const data = await res.json();
+                 
+                 // Update narrative label
+                 const container = document.getElementById('chart-narrative-label');
+                 if(data.risk_scores) {
+                      // Determine trend roughly
+                      const scores = data.risk_scores;
+                      const first = scores[0];
+                      const last = scores[scores.length-1];
+                      let mode = 'stable';
+                      if (last > first + 10) mode = 'improving';
+                      if (last < first - 10) mode = 'crisis';
+                      
+                      let cls = 'nl-stable';
+                      let text = '平稳波动';
+                      if(mode === 'improving') { cls = 'nl-improving'; text = '持续改善'; }
+                      if(mode === 'crisis') { cls = 'nl-crisis'; text = '风险上升'; }
+                      
+                      container.innerHTML = `<span class="narrative-label ${cls}">${text}</span>`;
+                 }
+                 
+                 // Render simple SVG Chart
+                 renderChart(data.risk_scores);
+                 
+             } catch(e) { console.error(e); }
+        }
+        
+        function renderChart(data) {
+             const svgEl = document.getElementById('chart-svg');
+             if(!svgEl || !data || data.length === 0) return;
+             
+             // Normalize data to 0-100 range for Y (Chart height)
+             const width = 500;
+             const height = 150;
+             const padding = 10;
+             
+             const maxVal = 100;
+             const minVal = 0;
+             const xStep = (width - padding*2) / (data.length - 1);
+             
+             // Points
+             let points = "";
+             data.forEach((val, idx) => {
+                 const x = padding + idx * xStep;
+                 const y = height - padding - ((val - minVal) / (maxVal - minVal)) * (height - padding*2);
+                 points += `${x},${y} `;
+             });
+             
+             const polyline = `<polyline points="${points}" fill="none" stroke="#C62828" stroke-width="2" vector-effect="non-scaling-stroke" />`;
+             
+             // Area
+             const areaPoints = `${padding},${height - padding} ` + points + `${width - padding},${height - padding}`;
+             const polygon = `<polygon points="${areaPoints}" fill="rgba(198, 40, 40, 0.1)" stroke="none" />`;
+             
+             svgEl.innerHTML = polygon + polyline;
+             // Update ViewBox
+             svgEl.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        }
+
         async function loadActions() {
             try {
                 const res = await fetch('/api/v1/actions');
@@ -1042,10 +1187,6 @@ def render_park_dashboard() -> str:
                 const list = document.getElementById('mf-list');
                 list.innerHTML = '';
                 
-                // Sort Logic: High Risk > Alert
-                // The API might return mixed, but let's ensure visuals
-                // Assuming API returns already somewhat sorted, but we can enforce High priority first
-                
                 if (data.items.length === 0) {
                     list.innerHTML = `<div style="color:#999; text-align:center; padding:20px;">暂无必须关注事项</div>`;
                 } else {
@@ -1167,8 +1308,7 @@ def render_park_dashboard() -> str:
                 factors.slice(0, 4).forEach(f => {
                     const row = document.createElement('div');
                     row.style.marginBottom = '8px';
-                    // Calculate bar width (relative to max possible penalty, say 30?)
-                    // Or relative to max contribution in this set
+                    
                     const maxC = factors[0].contribution || 1;
                     const w = Math.min(100, (f.contribution / maxC) * 100);
                     
@@ -1225,6 +1365,14 @@ def render_park_dashboard() -> str:
         <div class="ls-item"><span>Budget Usage</span><span id="ls-budget">--</span></div>
     </div>
     
+    <!-- Narrative Mode Control Card -->
+    <div class="narrative-control">
+        <div class="nc-title">NARRATIVE ENGINE</div>
+        <div class="nc-val"><span id="nc-mode">--</span> / <span id="nc-sim">--</span></div>
+        <div class="nc-title">VERSION</div>
+        <div class="nc-val" id="nc-ver">--</div>
+    </div>
+    
     <!-- Risk Thermometer -->
     <div class="risk-thermometer-container">
         <div class="rt-bar-bg">
@@ -1270,6 +1418,17 @@ def render_park_dashboard() -> str:
                 <p id="br-summary" style="margin-bottom: 12px;">正在加载...</p>
                 <div id="must-focus-area" style="display:none;"></div>
             </div>
+            
+            <!-- Narrative Summary (New) -->
+            <div id="card-narrative-summary" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3>叙事摘要</h3>
+                <p id="ns-text" style="font-size:14px; margin-bottom:12px; color:#555;">...</p>
+                <div id="ns-actions" style="flex:1; overflow-y:auto;">
+                    <!-- Actions -->
+                </div>
+            </div>
 
             <!-- Stats -->
             <div id="card-stats" class="card" style="background:#333; color:white;">
@@ -1281,6 +1440,39 @@ def render_park_dashboard() -> str:
                         <div style="font-size:12px; opacity:0.7;">今日扫描</div>
                         <div id="scan-count" style="font-size:36px; font-weight:600;">--</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Risk Explain (New) -->
+            <div id="card-explain" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="margin:0;">风险归因</h3>
+                    <span id="re-level-badge" class="tag" style="background:#2E7D32; color:white;">
+                        <span id="re-level">--</span>风险
+                    </span>
+                </div>
+                
+                <div style="display:flex; gap:16px; margin-bottom:16px;">
+                    <div style="text-align:center;">
+                        <div id="re-score" style="font-size:36px; font-weight:700; line-height:1;">--</div>
+                        <div style="font-size:12px; color:#999;">当前总分</div>
+                    </div>
+                    <div style="flex:1; border-left:1px solid #eee; padding-left:16px; display:flex; flex-direction:column; justify-content:center;">
+                        <div style="font-size:12px; color:#999;">核心主因</div>
+                        <div id="re-driver" style="font-weight:600; font-size:15px; color:var(--text-dark);">--</div>
+                    </div>
+                </div>
+                
+                <div style="font-size:12px; color:#999; margin-bottom:8px;">扣分因子 TOP 4</div>
+                <div id="re-factors" style="margin-bottom:16px;">
+                    <!-- Factors injected -->
+                </div>
+                
+                <div style="font-size:12px; color:#999; margin-bottom:4px;">建议行动</div>
+                <div id="re-suggestions" style="flex:1; overflow-y:auto;">
+                    <!-- Suggestions injected -->
                 </div>
             </div>
 
@@ -1376,9 +1568,12 @@ def render_park_dashboard() -> str:
             <div id="card-charts" class="card">
                 <div class="drag-handle">拖拽移动</div>
                 <div class="resize-handle"></div>
-                <h3>趋势分析</h3>
-                <div style="flex:1; display:flex; align-items:center; justify-content:center; background:#f9f9f9; border-radius:8px; color:#999;">
-                    图表组件加载中... (Mock)
+                <div style="display:flex; align-items:center;">
+                    <h3>趋势分析</h3>
+                    <div id="chart-narrative-label"></div>
+                </div>
+                <div class="chart-container">
+                    <svg id="chart-svg" width="100%" height="100%" preserveAspectRatio="none"></svg>
                 </div>
             </div>
 
