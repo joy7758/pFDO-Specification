@@ -410,6 +410,29 @@ def _base_css() -> str:
         .nl-improving { background: #E8F5E9; color: #2E7D32; }
         .nl-stable { background: #E3F2FD; color: #1565C0; }
         .nl-crisis { background: #FFEBEE; color: #C62828; }
+        .ingest-level-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #eeeeee;
+            color: #424242;
+        }
+        .ingest-health-bar {
+            width: 100%;
+            height: 8px;
+            background: #eeeeee;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .ingest-health-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ef6c00, #2e7d32);
+            transition: width 0.5s ease;
+        }
 
     </style>
     """
@@ -1399,12 +1422,17 @@ def render_park_dashboard() -> str:
                 const cfg = data.config || {};
                 const rt = data.runtime || {};
                 const ct = data.counters || {};
+                const lv = data.ingest_level || {};
 
                 document.getElementById('ing-watch-dir').innerText = cfg.watch_dir || '--';
                 document.getElementById('ing-poll').innerText = (cfg.poll_seconds || '--') + ' 秒';
                 document.getElementById('ing-last-scan').innerText = fmtTimeOrDash(rt.last_scan_at);
                 document.getElementById('ing-running').innerText = rt.running ? '运行中' : '空闲';
                 document.getElementById('ing-running').style.color = rt.running ? '#2E7D32' : '#666';
+                document.getElementById('ing-level').innerText = lv.level || 'Lite';
+                document.getElementById('ing-health').innerText = (lv.health_score ?? 0) + ' 分';
+                const fill = document.getElementById('ing-health-fill');
+                if (fill) fill.style.width = `${Math.max(0, Math.min(100, lv.health_score ?? 0))}%`;
 
                 document.getElementById('ing-today-seen').innerText = ct.today_seen ?? 0;
                 document.getElementById('ing-processed').innerText = ct.processed ?? 0;
@@ -1754,6 +1782,13 @@ def render_park_dashboard() -> str:
                 <div class="resize-handle"></div>
                 <h3>数据接入状态</h3>
                 <div style="font-size:12px; color:#999; margin-bottom:8px;">旁路抄送运行信息</div>
+                <div class="list-item"><span>接入等级</span><span id="ing-level" class="ingest-level-badge">--</span></div>
+                <div class="list-item" style="display:block;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>健康分</span><span id="ing-health" style="font-weight:600;">--</span>
+                    </div>
+                    <div class="ingest-health-bar"><div id="ing-health-fill" class="ingest-health-fill"></div></div>
+                </div>
                 <div class="list-item"><span>接入目录</span><span id="ing-watch-dir" style="font-size:12px; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span></div>
                 <div class="list-item"><span>轮询周期</span><span id="ing-poll">--</span></div>
                 <div class="list-item"><span>上次扫描</span><span id="ing-last-scan">--</span></div>

@@ -33,6 +33,15 @@ def _iso_now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime())
 
 
+def _parse_iso(ts: str) -> float:
+    if not ts:
+        return 0.0
+    try:
+        return time.mktime(time.strptime(ts, "%Y-%m-%dT%H:%M:%S"))
+    except Exception:
+        return 0.0
+
+
 def _file_id(path: str, stat_obj: os.stat_result) -> str:
     raw = f"{path}|{int(stat_obj.st_mtime)}|{stat_obj.st_size}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
@@ -147,17 +156,59 @@ def scan_watch_dir(state: Dict[str, Any]) -> Dict[str, Any]:
     return state
 
 
+def _calc_ingest_level(state: Dict[str, Any]) -> Dict[str, Any]:
+    counters = state.get("counters", {})
+    runtime = state.get("runtime", {})
+    processed = int(counters.get("processed", 0))
+    failed = int(counters.get("failed", 0))
+    total_finished = processed + failed
+    success_rate = 100.0 if total_finished == 0 else (processed / total_finished) * 100.0
+
+    health_score = 100.0
+    if total_finished > 0:
+        health_score -= (100.0 - success_rate) * 0.6
+    health_score -= min(20.0, float(counters.get("today_failed", 0)) * 4.0)
+
+    last_ok_ts = _parse_iso(str(runtime.get("last_ok_at", "")))
+    if last_ok_ts <= 0:
+        health_score -= 20.0
+    else:
+        age = max(0.0, time.time() - last_ok_ts)
+        if age > 3600:
+            health_score -= 20.0
+        elif age > 600:
+            health_score -= 8.0
+
+    health_score = max(0.0, min(100.0, health_score))
+
+    level = "Lite"
+    if processed >= 100 and health_score >= 85.0:
+        level = "Enterprise"
+    elif processed >= 20 and health_score >= 65.0:
+        level = "Pro"
+
+    return {
+        "level": level,
+        "health_score": int(round(health_score)),
+        "success_rate": round(success_rate, 1),
+        "processed": processed,
+        "failed": failed,
+    }
+
+
 def get_status() -> Dict[str, Any]:
     with _state_lock:
         state = load_state()
         state["config"]["poll_seconds"] = _poll_seconds()
         save_state(state)
+        level_info = _calc_ingest_level(state)
         return {
             "config": state["config"],
             "runtime": state["runtime"],
             "counters": state["counters"],
             "watch_dir": state["config"].get("watch_dir", ""),
             "recent_count": len(state.get("recent", [])),
+            "ingest_level": level_info,
         }
 
 
@@ -234,3 +285,9 @@ def start_background_poller() -> Dict[str, Any]:
         _poller_thread.start()
         _poller_started = True
         return {"started": True, "already_running": False}
+
+
+def get_ingest_level() -> Dict[str, Any]:
+    with _state_lock:
+        state = load_state()
+        return _calc_ingest_level(state)
