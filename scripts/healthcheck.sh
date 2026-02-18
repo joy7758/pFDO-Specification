@@ -33,6 +33,13 @@ check_url "/park" "园区大屏" || FAILED=1
 check_url "/docs-cn" "中文文档" || FAILED=1
 
 check_url "/api/v1/ticker" "公告数据" || FAILED=1
+check_url "/api/v1/overview" "概览数据" || FAILED=1
+check_url "/api/v1/trends" "趋势数据" || FAILED=1
+check_url "/api/v1/alerts" "告警数据" || FAILED=1
+check_url "/api/v1/integrations" "集成状态" || FAILED=1
+check_url "/api/v1/weather" "天气数据" || FAILED=1
+check_url "/api/v1/air" "空气质量" || FAILED=1
+check_url "/api/v1/calendar" "日历黄历" || FAILED=1
 
 # 检查 Ticker 返回是否正常
 echo -n "    检查 Ticker 完整性 ... "
@@ -41,6 +48,27 @@ if [[ "$TICKER_RES" == *"items"* ]]; then
     echo "✅ OK"
 else
     echo "⚠️  WARNING (Ticker invalid)"
+    FAILED=1
+fi
+
+# 检查 Weather 返回是否包含 Apple 风格字段
+echo -n "    检查 Weather 字段 (hourly/daily) ... "
+WEATHER_RES=$(curl -s "$BASE_URL/api/v1/weather")
+if [[ "$WEATHER_RES" == *"hourly"* ]] && [[ "$WEATHER_RES" == *"daily"* ]]; then
+    echo "✅ OK"
+else
+    echo "⚠️  WARNING (Weather missing fields)"
+    FAILED=1
+fi
+
+# 检查 Air 返回是否包含趋势
+echo -n "    检查 Air 趋势 (trend) ... "
+AIR_RES=$(curl -s "$BASE_URL/api/v1/air")
+if [[ "$AIR_RES" == *"trend"* ]]; then
+    echo "✅ OK"
+else
+    echo "⚠️  WARNING (Air trend missing)"
+    FAILED=1
 fi
 
 if [ $FAILED -eq 0 ]; then

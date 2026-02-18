@@ -116,20 +116,23 @@ def get_weather_data() -> Dict[str, Any]:
             "pressure": "1012 hPa",
             "visibility": "10 km",
             "uv": "中等",
-            "precip_prob": "10%"
+            "precip_prob": "10%",
+            "icon": "cloud"
         },
         "hourly": [
             {"time": f"{(datetime.now() + timedelta(hours=i)).hour}:00", 
              "temp": 24 - (i if i < 5 else 10-i), 
              "icon": random.choice(["sun", "cloud", "rain"]), 
              "precip": f"{random.randint(0, 30)}%"} 
-            for i in range(12)
+            for i in range(24)
         ],
         "daily": [
             {"date": (datetime.now() + timedelta(days=i)).strftime("%m/%d"),
+             "day_name": (datetime.now() + timedelta(days=i)).strftime("%A"),
              "high": 28 - random.randint(0, 5),
              "low": 18 + random.randint(0, 3),
              "cond": random.choice(["晴", "多云", "小雨", "雷阵雨"]),
+             "icon": random.choice(["sun", "cloud", "rain", "bolt"]),
              "precip": f"{random.randint(0, 60)}%"}
             for i in range(7)
         ],
@@ -149,6 +152,7 @@ def get_air_quality_data() -> Dict[str, Any]:
         "aqi": aqi,
         "level": "优",
         "primary": "-",
+        "trend": "stable", # stable, rising, falling
         "pollutants": {
             "pm25": 12,
             "pm10": 28,
@@ -165,6 +169,7 @@ def get_calendar_data() -> Dict[str, Any]:
     # 简单模拟农历和节气，实际项目应引入 lunardate 库
     now = datetime.now()
     weekdays = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+    weekday_str = weekdays[now.weekday()]
     
     # 模拟下一个节日倒计时
     holidays = [
@@ -176,6 +181,10 @@ def get_calendar_data() -> Dict[str, Any]:
     next_holiday = holidays[0]
     days_left = (datetime.strptime(next_holiday["date"], "%Y-%m-%d") - now).days
     
+    # 园区自定义倒计时
+    custom_event = {"name": "园区周年庆", "date": "2026-10-01"}
+    custom_days_left = (datetime.strptime(custom_event["date"], "%Y-%m-%d") - now).days
+
     # 模拟黄历数据 (基于日期hash确保当天固定，隔天变化)
     seed = int(now.strftime("%Y%m%d"))
     random.seed(seed)
@@ -203,8 +212,18 @@ def get_calendar_data() -> Dict[str, Any]:
     # 恢复随机种子以免影响其他随机逻辑
     random.seed()
     
-    # 构造展示行
     display_line = f"宜 {'·'.join(yi[:3])}  忌 {'·'.join(ji[:3])}"
+
+    return {
+        "solar_date": now.strftime("%Y年%m月%d日"),
+        "weekday": weekday_str,
+        "lunar": "丙午年 二月 初一", # 模拟
+        "term": "惊蛰", # 模拟
+        "next_holiday": {"name": next_holiday["name"], "days_left": days_left},
+        "custom_countdown": {"name": custom_event["name"], "days_left": custom_days_left},
+        "almanac": almanac,
+        "display_line": display_line
+    }
 
 def get_ticker_items() -> List[Dict[str, Any]]:
     """获取顶部公告栏 Ticker 数据"""

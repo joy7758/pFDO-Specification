@@ -504,6 +504,7 @@ def render_park_dashboard() -> str:
                     if (item.type === 'weather') badgeClass = 'tag-blue';
                     if (item.type === 'briefing') badgeClass = 'tag-orange';
                     if (item.type === 'almanac') badgeClass = 'tag-green';
+                    if (item.type === 'system') badgeClass = 'tag-purple';
                     
                     // On click: open modal
                     html += `
@@ -546,7 +547,7 @@ def render_park_dashboard() -> str:
             
             document.getElementById('ticker-modal-title').innerText = item.title;
             document.getElementById('ticker-modal-body').innerText = item.summary; // Or item.content if available
-            document.getElementById('ticker-modal-meta').innerText = `来源：${item.source || '系统'} · ID: ${item.id}`;
+            document.getElementById('ticker-modal-meta').innerText = `来源：${item.source || '系统'} · ID: ${item.id} · 优先级: ${item.priority}`;
             
             document.getElementById('ticker-overlay').style.display = 'block';
             document.getElementById('ticker-modal').style.display = 'block';
@@ -596,6 +597,13 @@ def render_park_dashboard() -> str:
             polygon.setAttribute("opacity", "0.1");
             svg.appendChild(polygon);
         }
+        
+        function getWeatherIcon(code) {
+             const map = {
+                 'sun': '☀️', 'cloud': '☁️', 'rain': '🌧️', 'bolt': '⚡️', 'snow': '❄️'
+             };
+             return map[code] || '🌥️';
+        }
 
         async function initDashboard() {
             try {
@@ -610,41 +618,97 @@ def render_park_dashboard() -> str:
                 // 2. 获取 Calendar
                 const calRes = await fetch('/api/v1/calendar');
                 const calendar = await calRes.json();
+                
+                // 头部日期
                 document.getElementById('cal-solar').innerText = calendar.solar_date + ' ' + calendar.weekday;
                 document.getElementById('cal-lunar').innerText = calendar.lunar + ' · ' + calendar.term;
-                document.getElementById('cal-holiday').innerText = `距${calendar.next_holiday.name} ${calendar.next_holiday.days_left} 天`;
                 
-                // Almanac
+                // 自定义倒计时
+                const custom = calendar.custom_countdown;
+                document.getElementById('custom-countdown-name').innerText = custom.name;
+                document.getElementById('custom-countdown-days').innerText = custom.days_left;
+                
+                // 下个节日
+                const nextH = calendar.next_holiday;
+                document.getElementById('next-holiday-name').innerText = nextH.name;
+                document.getElementById('next-holiday-days').innerText = nextH.days_left;
+                
+                // Almanac Detail
                 const alm = calendar.almanac;
                 document.getElementById('alm-summary').innerText = calendar.display_line;
                 
-                // Fill details
+                // Fill details table
                 const detailHTML = `
-                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; font-size:13px; color:#555;">
-                        <div><span class="tag tag-red">宜</span> ${alm.yi.join('·')}</div>
-                        <div><span class="tag tag-grey">忌</span> ${alm.ji.join('·')}</div>
-                        <div><span class="tag tag-blue">吉神</span> ${alm.jishen.join('·')}</div>
-                        <div><span class="tag tag-orange">凶煞</span> ${alm.xiongsha.join('·')}</div>
-                        <div><span class="tag tag-grey">冲煞</span> ${alm.chong} ${alm.sha}</div>
-                        <div><span class="tag tag-grey">值神</span> ${alm.zhishen}</div>
-                        <div style="grid-column:span 3;"><span class="tag tag-grey">胎神</span> ${alm.taishen}</div>
+                    <div class="almanac-grid">
+                        <div class="alm-cell"><span class="tag tag-red">宜</span> <div class="alm-text">${alm.yi.join(' ')}</div></div>
+                        <div class="alm-cell"><span class="tag tag-grey">忌</span> <div class="alm-text">${alm.ji.join(' ')}</div></div>
+                        <div class="alm-cell"><span class="tag tag-blue">吉神</span> <div class="alm-text">${alm.jishen.join(' ')}</div></div>
+                        <div class="alm-cell"><span class="tag tag-orange">凶煞</span> <div class="alm-text">${alm.xiongsha.join(' ')}</div></div>
+                        <div class="alm-cell"><span class="tag tag-purple">冲煞</span> <div class="alm-text">${alm.chong} ${alm.sha}</div></div>
+                        <div class="alm-cell"><span class="tag tag-purple">值神</span> <div class="alm-text">${alm.zhishen}</div></div>
+                        <div class="alm-cell col-span-2"><span class="tag tag-grey">胎神</span> <div class="alm-text">${alm.taishen}</div></div>
                     </div>
                 `;
                 document.getElementById('alm-detail-content').innerHTML = detailHTML;
                 
-                // 3. 获取 Weather
+                // 3. 获取 Weather (Apple Style)
                 const weatherRes = await fetch('/api/v1/weather');
                 const weather = await weatherRes.json();
                 const cur = weather.current;
-                document.getElementById('w-temp').innerText = cur.temp + '°';
+                
+                // Current
+                document.getElementById('w-temp').innerText = cur.temp;
                 document.getElementById('w-cond').innerText = cur.condition;
-                document.getElementById('w-detail').innerText = `体感 ${cur.feels_like}° · 湿度 ${cur.humidity} · ${cur.wind}`;
+                document.getElementById('w-hl').innerText = `H:${weather.daily[0].high}° L:${weather.daily[0].low}°`;
+                document.getElementById('w-icon').innerText = getWeatherIcon(cur.icon || 'cloud');
+                
+                // Hourly
+                const hourlyContainer = document.getElementById('w-hourly');
+                hourlyContainer.innerHTML = '';
+                weather.hourly.forEach(h => {
+                    const div = document.createElement('div');
+                    div.className = 'w-hourly-item';
+                    div.innerHTML = `
+                        <div class="time">${h.time}</div>
+                        <div class="icon">${getWeatherIcon(h.icon)}</div>
+                        <div class="temp">${h.temp}°</div>
+                        ${parseInt(h.precip) > 0 ? `<div class="precip">${h.precip}</div>` : ''}
+                    `;
+                    hourlyContainer.appendChild(div);
+                });
+                
+                // Daily
+                const dailyContainer = document.getElementById('w-daily');
+                dailyContainer.innerHTML = '';
+                weather.daily.forEach(d => {
+                    const div = document.createElement('div');
+                    div.className = 'w-daily-item';
+                    div.innerHTML = `
+                        <div class="day">${d.day_name}</div>
+                        <div class="icon">${getWeatherIcon(d.icon)}</div>
+                        <div class="temp-bar">
+                             <span class="low">${d.low}°</span>
+                             <div class="bar-bg"><div class="bar-fill" style="left: 10%; width: 80%;"></div></div>
+                             <span class="high">${d.high}°</span>
+                        </div>
+                    `;
+                    dailyContainer.appendChild(div);
+                });
+                
+                // Grid details
+                document.getElementById('w-uv').innerText = cur.uv;
+                document.getElementById('w-humidity').innerText = cur.humidity;
+                document.getElementById('w-wind').innerText = cur.wind;
+                document.getElementById('w-feel').innerText = cur.feels_like + '°';
+                document.getElementById('w-precip').innerText = cur.precip_prob;
+                document.getElementById('w-vis').innerText = cur.visibility;
                 
                 // 4. 获取 Air
                 const airRes = await fetch('/api/v1/air');
                 const air = await airRes.json();
                 document.getElementById('air-aqi').innerText = air.aqi;
                 document.getElementById('air-level').innerText = air.level;
+                document.getElementById('air-trend').innerText = air.trend === 'rising' ? '↗' : (air.trend === 'falling' ? '↘' : '→');
                 document.getElementById('air-tip').innerText = air.health_tip;
                 
                 // 5. 获取 Trends
@@ -715,7 +779,61 @@ def render_park_dashboard() -> str:
     </script>
     """
     
+    style = """
+    <style>
+        /* Weather Module Styles (Apple-like) */
+        .weather-card {
+            background: linear-gradient(135deg, #4A90E2, #002F6C);
+            color: white;
+            border: none;
+        }
+        .w-header { display: flex; justify-content: space-between; align-items: start; }
+        .w-temp { font-size: 52px; font-weight: 200; line-height: 1; }
+        .w-cond { font-size: 16px; font-weight: 500; margin-top: 4px; }
+        .w-hl { font-size: 13px; opacity: 0.8; }
+        
+        .w-hourly { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 20px; 
+            padding: 16px 0; 
+            border-top: 1px solid rgba(255,255,255,0.2); 
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin: 16px 0;
+            scrollbar-width: none;
+        }
+        .w-hourly::-webkit-scrollbar { display: none; }
+        .w-hourly-item { text-align: center; flex: 0 0 auto; }
+        .w-hourly-item .time { font-size: 12px; opacity: 0.8; margin-bottom: 4px; }
+        .w-hourly-item .icon { font-size: 20px; margin-bottom: 4px; }
+        .w-hourly-item .temp { font-size: 14px; font-weight: 600; }
+        .w-hourly-item .precip { font-size: 10px; color: #81D4FA; }
+        
+        .w-daily-item { display: flex; align-items: center; padding: 6px 0; font-size: 14px; }
+        .w-daily-item .day { width: 40px; opacity: 0.9; }
+        .w-daily-item .icon { width: 30px; text-align: center; }
+        .w-daily-item .temp-bar { flex: 1; display: flex; align-items: center; gap: 8px; }
+        .w-daily-item .bar-bg { flex: 1; height: 4px; background: rgba(0,0,0,0.2); border-radius: 2px; position: relative; }
+        .w-daily-item .bar-fill { height: 4px; background: rgba(255,255,255,0.8); border-radius: 2px; position: absolute; }
+        .w-daily-item .low { width: 24px; text-align: right; opacity: 0.7; }
+        .w-daily-item .high { width: 24px; text-align: right; font-weight: 600; }
+        
+        .w-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+        .w-grid-item { background: rgba(0,0,0,0.1); border-radius: 8px; padding: 8px 12px; }
+        .w-grid-label { font-size: 11px; opacity: 0.7; text-transform: uppercase; margin-bottom: 2px; }
+        .w-grid-val { font-size: 18px; font-weight: 600; }
+
+        /* Almanac Grid */
+        .almanac-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+        .alm-cell { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #555; }
+        .alm-text { line-height: 1.4; flex: 1; }
+        .col-span-2 { grid-column: span 2; }
+        .tag-purple { background: #F3E5F5; color: #7B1FA2; }
+    </style>
+    """
+    
     content = f"""
+    {style}
     <div class="container" style="max-width: 1400px; padding-top: 20px;">
         <!-- Row 0: Header -->
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
@@ -732,9 +850,9 @@ def render_park_dashboard() -> str:
                             <span class="tag tag-red" style="margin-right: 8px;">今日黄历</span>
                             <span id="alm-summary">加载中...</span>
                         </div>
-                        <div style="font-size: 12px; color: var(--text-grey);">▼</div>
+                        <div style="font-size: 12px; color: var(--text-grey);">▼ 展开详情</div>
                     </div>
-                    <div id="alm-detail" style="display: none;">
+                    <div id="alm-detail" style="display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid #eee;">
                         <div id="alm-detail-content"></div>
                     </div>
                 </div>
@@ -748,32 +866,94 @@ def render_park_dashboard() -> str:
 
         <!-- Row 1: Weather & Environment -->
         <div class="grid-12" style="margin-bottom: 20px;">
-            <!-- Weather Card -->
-            <div class="col-5 card" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 4px;">当前天气</div>
-                    <div style="display: flex; align-items: baseline; gap: 12px;">
-                        <span id="w-temp" style="font-size: 48px; font-weight: 600;">--</span>
-                        <span id="w-cond" style="font-size: 20px;">--</span>
+            <!-- Weather Card (Apple Style) -->
+            <div class="col-5 card weather-card">
+                <div class="w-header">
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9;">我的园区</div>
+                        <div class="w-temp"><span id="w-temp">--</span>°</div>
+                        <div class="w-cond" id="w-cond">--</div>
+                        <div class="w-hl" id="w-hl">H:-- L:--</div>
                     </div>
-                    <div id="w-detail" style="font-size: 14px; color: var(--text-grey);">--</div>
+                    <div style="font-size: 40px;" id="w-icon">⛅</div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 14px; color: var(--text-grey);">下个假期</div>
-                    <div id="cal-holiday" style="font-size: 24px; font-weight: 600; color: var(--primary-red); margin-top: 8px;">--</div>
+                
+                <div class="w-hourly" id="w-hourly">
+                    <!-- Hourly items -->
+                </div>
+                
+                <div class="grid-12">
+                    <div class="col-6">
+                        <div id="w-daily">
+                            <!-- Daily items -->
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="w-grid">
+                            <div class="w-grid-item">
+                                <div class="w-grid-label">紫外线指数</div>
+                                <div class="w-grid-val" id="w-uv">--</div>
+                            </div>
+                            <div class="w-grid-item">
+                                <div class="w-grid-label">体感温度</div>
+                                <div class="w-grid-val" id="w-feel">--</div>
+                            </div>
+                            <div class="w-grid-item">
+                                <div class="w-grid-label">湿度</div>
+                                <div class="w-grid-val" id="w-humidity">--</div>
+                            </div>
+                            <div class="w-grid-item">
+                                <div class="w-grid-label">风向</div>
+                                <div class="w-grid-val" id="w-wind" style="font-size: 14px;">--</div>
+                            </div>
+                             <div class="w-grid-item">
+                                <div class="w-grid-label">降水概率</div>
+                                <div class="w-grid-val" id="w-precip">--</div>
+                            </div>
+                            <div class="w-grid-item">
+                                <div class="w-grid-label">能见度</div>
+                                <div class="w-grid-val" id="w-vis">--</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <!-- Air Quality Card -->
-            <div class="col-3 card">
-                <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 8px;">空气质量</div>
-                <div style="display: flex; align-items: baseline; justify-content: space-between;">
-                    <div>
-                        <span id="air-aqi" style="font-size: 32px; font-weight: 700;">--</span>
-                        <span id="air-level" class="tag tag-green" style="vertical-align: text-bottom;">--</span>
+            <!-- Countdowns & Air Quality -->
+            <div class="col-3" style="display:flex; flex-direction:column; gap:20px;">
+                <!-- Air Quality Card -->
+                <div class="card" style="flex: 1;">
+                    <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 8px;">空气质量</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div>
+                            <span id="air-aqi" style="font-size: 36px; font-weight: 700;">--</span>
+                            <span id="air-level" class="tag tag-green" style="vertical-align: top; margin-left: 4px;">--</span>
+                        </div>
+                        <div style="text-align: right;">
+                             <div style="font-size: 12px; color: var(--text-grey);">趋势</div>
+                             <div style="font-size: 24px; font-weight: 600; color: var(--text-dark);" id="air-trend">→</div>
+                        </div>
+                    </div>
+                    <div id="air-tip" style="font-size: 13px; color: var(--text-grey); background: #f9f9f9; padding: 8px; border-radius: 8px;">--</div>
+                </div>
+                
+                <!-- Countdowns -->
+                 <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: space-around;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 10px;">
+                        <div style="font-size: 13px; color: var(--text-grey);">下一个节日</div>
+                        <div style="text-align: right;">
+                            <div id="next-holiday-name" style="font-weight: 600; font-size: 14px;">--</div>
+                            <div style="font-size: 12px; color: var(--primary-red);"><span id="next-holiday-days" style="font-weight: 700; font-size: 16px;">--</span> 天后</div>
+                        </div>
+                    </div>
+                     <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 13px; color: var(--text-grey);">园区倒计时</div>
+                         <div style="text-align: right;">
+                            <div id="custom-countdown-name" style="font-weight: 600; font-size: 14px;">--</div>
+                            <div style="font-size: 12px; color: var(--primary-red);"><span id="custom-countdown-days" style="font-weight: 700; font-size: 16px;">--</span> 天后</div>
+                        </div>
                     </div>
                 </div>
-                <div id="air-tip" style="font-size: 12px; color: var(--text-grey); margin-top: 8px;">--</div>
             </div>
             
             <!-- Quick Stats -->
