@@ -1,5 +1,5 @@
 # product_api/app.py
-# FastAPI 服务入口：health + 上传解析 + PII 统计占位
+# FastAPI 服务入口：health + 上传解析 + PII 统计 + 园区大屏接口
 
 import os
 import shutil
@@ -12,15 +12,28 @@ from fastapi.responses import HTMLResponse
 from .parser import parse_csv, parse_json, parse_txt
 from .record_model import Record
 from .pii import scan_records
+from .dashboard import get_dashboard_stats
 
 app = FastAPI(
-    title="pFDO 实时合规审计与敏感信息扫描平台（演示版）",
-    description="上传/粘贴数据 → 自动扫描手机号/邮箱/身份证 → 输出可审计结果",
-    version="0.1.0-demo"
+    title="红岩 · 园区数字合规共建平台",
+    description="园区级数字合规基础设施｜实时审计｜数据治理中枢｜风险控制枢纽",
+    version="1.0.0"
 )
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@app.get("/health")
+def health() -> Dict[str, str]:
+    # 健康检查接口：用于部署验收
+    return {"status": "ok"}
+
+
+@app.get("/api/park/dashboard")
+def api_park_dashboard() -> Dict[str, Any]:
+    """获取园区大屏统计数据"""
+    return get_dashboard_stats()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -31,14 +44,15 @@ def index():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>pFDO 合规审计平台</title>
+        <title>红岩 · 园区数字合规共建平台</title>
         <style>
             :root {
-                --primary-color: #007bff;
-                --hover-color: #0056b3;
+                --primary-color: #C62828;
+                --hover-color: #B71C1C;
                 --bg-color: #f4f6f9;
                 --text-color: #333;
                 --secondary-text-color: #666;
+                --header-bg: #2E2E2E;
             }
             body { 
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
@@ -59,6 +73,7 @@ def index():
                 text-align: center; 
                 max-width: 600px; 
                 width: 100%; 
+                border-top: 5px solid var(--primary-color);
             }
             header {
                 margin-bottom: 40px;
@@ -67,6 +82,7 @@ def index():
                 color: var(--text-color); 
                 margin: 0 0 10px 0;
                 font-size: 24px;
+                font-weight: 700;
             }
             .version {
                 display: inline-block;
@@ -101,12 +117,12 @@ def index():
             .btn-primary { 
                 background-color: var(--primary-color); 
                 color: white; 
-                box-shadow: 0 4px 6px rgba(0,123,255,0.2);
+                box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2);
             }
             .btn-primary:hover { 
                 background-color: var(--hover-color); 
                 transform: translateY(-1px);
-                box-shadow: 0 6px 8px rgba(0,123,255,0.25);
+                box-shadow: 0 6px 8px rgba(198, 40, 40, 0.25);
             }
             .btn-secondary { 
                 background-color: white; 
@@ -134,15 +150,15 @@ def index():
     <body>
         <div class="container">
             <header>
-                <h1>pFDO 实时合规审计平台</h1>
-                <span class="version">v0.1.0-demo</span>
-                <p class="description">上传/粘贴数据 → 自动扫描手机号/邮箱/身份证 → 输出可审计结果</p>
+                <h1>红岩 · 园区数字合规共建平台</h1>
+                <span class="version">v1.0.0</span>
+                <p class="description">园区级数字合规共建基础设施<br>支持企业数据接入、实时审计与风险治理</p>
             </header>
             
             <div class="actions">
-                <a href="/demo" class="btn btn-primary">立即体验 (Demo)</a>
-                <a href="/docs" class="btn btn-secondary" target="_blank">接口文档 (Swagger UI)</a>
-                <a href="/health" class="btn btn-outline" target="_blank">系统健康检查</a>
+                <a href="/demo" class="btn btn-primary">立即体验</a>
+                <a href="/api/park/dashboard" class="btn btn-secondary" target="_blank">查看园区大屏数据 (JSON)</a>
+                <a href="/docs" class="btn btn-outline" target="_blank">接口文档 (Swagger UI)</a>
             </div>
         </div>
     </body>
@@ -157,18 +173,18 @@ def demo_page():
     <html lang="zh-CN">
     <head>
         <meta charset="UTF-8">
-        <title>隐私扫描演示 - pFDO</title>
+        <title>红岩 · 企业数据实时合规检测</title>
         <style>
             body { font-family: "Microsoft YaHei", sans-serif; background-color: #f4f6f9; padding: 40px; }
-            .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+            .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-top: 5px solid #C62828; }
             h2 { border-bottom: 2px solid #eee; padding-bottom: 15px; color: #333; }
             textarea { width: 100%; height: 200px; border: 1px solid #ddd; border-radius: 6px; padding: 15px; font-size: 14px; font-family: monospace; resize: vertical; box-sizing: border-box; margin-bottom: 10px; }
-            textarea:focus { outline: none; border-color: #007bff; }
+            textarea:focus { outline: none; border-color: #C62828; }
             .actions { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
-            button { background-color: #28a745; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-            button:hover { background-color: #218838; }
-            .btn-secondary { background-color: #6c757d; }
-            .btn-secondary:hover { background-color: #5a6268; }
+            button { background-color: #C62828; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+            button:hover { background-color: #B71C1C; }
+            .btn-secondary { background-color: #2E2E2E; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; cursor: pointer; }
+            .btn-secondary:hover { background-color: #444; }
             .back-link { color: #666; text-decoration: none; }
             .back-link:hover { text-decoration: underline; }
         </style>
@@ -185,15 +201,15 @@ def demo_page():
     </head>
     <body>
         <div class="container">
-            <h2>隐私数据扫描演示</h2>
+            <h2>红岩 · 企业数据实时合规检测</h2>
             <form action="/demo/scan" method="post">
                 <p>请粘贴包含敏感信息（手机号/邮箱/身份证）的文本内容：</p>
                 <textarea id="text-input" name="text" placeholder="在此粘贴文本..."></textarea>
                 <div class="actions">
                     <a href="/" class="back-link">← 返回首页</a>
                     <div>
-                        <button type="button" class="btn-secondary" onclick="fillExample()" style="margin-right: 10px;">填充示例</button>
-                        <button type="submit">开始扫描</button>
+                        <button type="button" class="btn-secondary" onclick="fillExample()" style="margin-right: 10px;">加载测试样本</button>
+                        <button type="submit">启动合规检测</button>
                     </div>
                 </div>
             </form>
@@ -237,18 +253,18 @@ def demo_scan(text: str = Form(...)):
     <html lang="zh-CN">
     <head>
         <meta charset="UTF-8">
-        <title>扫描结果 - pFDO</title>
+        <title>扫描结果 - 红岩</title>
         <style>
             body {{ font-family: "Microsoft YaHei", sans-serif; background-color: #f4f6f9; padding: 40px; }}
-            .container {{ max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }}
+            .container {{ max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-top: 5px solid #C62828; }}
             h2 {{ color: #333; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-top: 0; }}
             .summary-box {{ background: #f8f9fa; padding: 25px; border-radius: 8px; margin-bottom: 30px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }}
             .stat-item {{ text-align: center; border-right: 1px solid #e9ecef; }}
             .stat-item:last-child {{ border-right: none; }}
-            .stat-num {{ display: block; font-size: 28px; font-weight: bold; color: #007bff; margin-bottom: 5px; }}
+            .stat-num {{ display: block; font-size: 28px; font-weight: bold; color: #C62828; margin-bottom: 5px; }}
             .stat-label {{ color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }}
             
-            .section-title {{ font-size: 18px; font-weight: bold; margin: 30px 0 15px; color: #444; border-left: 4px solid #007bff; padding-left: 10px; }}
+            .section-title {{ font-size: 18px; font-weight: bold; margin: 30px 0 15px; color: #444; border-left: 4px solid #C62828; padding-left: 10px; }}
             
             mark {{ border-radius: 3px; padding: 0 2px; }}
             mark.phone {{ background-color: #bbdefb; color: #000; }}
@@ -262,8 +278,8 @@ def demo_scan(text: str = Form(...)):
             .copy-btn:hover {{ background: rgba(255,255,255,0.3); }}
 
             .actions {{ margin-top: 40px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }}
-            .btn {{ display: inline-block; padding: 12px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.2s; }}
-            .btn:hover {{ background: #0056b3; transform: translateY(-1px); }}
+            .btn {{ display: inline-block; padding: 12px 30px; background: #C62828; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.2s; }}
+            .btn:hover {{ background: #B71C1C; transform: translateY(-1px); }}
         </style>
         <script>
             function copyJson() {{
@@ -319,13 +335,6 @@ def demo_scan(text: str = Form(...)):
     </body>
     </html>
     """
-
-
-
-@app.get("/health")
-def health() -> Dict[str, str]:
-    # 健康检查接口：用于部署验收
-    return {"status": "ok"}
 
 
 @app.post("/upload")
