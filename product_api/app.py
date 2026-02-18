@@ -41,6 +41,7 @@ from .ui import (
     render_park_dashboard,
     render_docs_cn
 )
+from .risk_api import router as risk_router
 
 # 禁用默认文档
 app = FastAPI(
@@ -50,6 +51,8 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None
 )
+
+app.include_router(risk_router)
 
 # 挂载模板目录 (虽然我们主要用内联 HTML，但为了兼容性保留)
 templates = Jinja2Templates(directory="templates")
