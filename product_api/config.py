@@ -1,5 +1,6 @@
 import os
 import datetime
+from .context import get_simulation_mode_context
 
 def get_data_mode() -> str:
     """
@@ -8,16 +9,33 @@ def get_data_mode() -> str:
     - demo: 演示模式 (基于 seed 的确定性随机)
     - simulation: 叙事模拟模式 (基于 narrative engine)
     """
+    # Context override if set (e.g., from sim query param, implies simulation mode)
+    if get_simulation_mode_context():
+        return "simulation"
     return os.getenv("DATA_MODE", "demo").lower()
 
 def get_simulation_mode() -> str:
     """
     获取叙事模拟模式 (仅在 DATA_MODE=simulation 时生效)
-    - improving: 改善叙事 (风险下降)
-    - stable: 稳定叙事 (平稳波动)
-    - crisis: 危机叙事 (风险上升)
+    - improving: 持续改善
+    - stable: 平稳运行
+    - crisis: 风险上升
     """
+    # Context override
+    ctx_mode = get_simulation_mode_context()
+    if ctx_mode and ctx_mode in ("improving", "stable", "crisis"):
+        return ctx_mode
+
     return os.getenv("SIMULATION_MODE", "stable").lower()
+
+def get_simulation_label(mode: str) -> str:
+    """获取中文标签"""
+    labels = {
+        "improving": "持续改善",
+        "stable": "平稳运行",
+        "crisis": "风险上升"
+    }
+    return labels.get(mode, "未知模式")
 
 def get_demo_seed() -> int:
     """获取演示模式种子"""

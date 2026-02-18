@@ -7,8 +7,10 @@ from typing import Dict, Any, List
 from .config import (
     get_simulation_mode, 
     get_demo_seed, 
-    get_sim_start_date
+    get_sim_start_date,
+    get_simulation_label
 )
+from .context import get_simulation_mode_context
 
 def _get_sim_seed() -> int:
     """基于 DATA_MODE 配置生成确定性种子"""
@@ -185,42 +187,77 @@ def today_snapshot() -> Dict[str, Any]:
 def narrative_summary() -> Dict[str, Any]:
     """生成叙事摘要"""
     mode = get_simulation_mode()
-    seed = _get_sim_seed()
-    random.seed(seed)
+    label = get_simulation_label(mode)
     
+    # 确定性数据源
+    series = generate_trend_series(30)
+    score_trend = series["risk_scores"]
+    hits_trend = series["pii_hits"]
+    alerts_trend = series["alerts_count"]
+    
+    start_score = score_trend[0]
+    end_score = score_trend[-1]
+    score_diff = end_score - start_score
+    
+    avg_hits = sum(hits_trend) / len(hits_trend)
+    end_hits = hits_trend[-1]
+    
+    max_alerts = max(alerts_trend)
+    end_alerts = alerts_trend[-1]
+    
+    evidence = []
+    title = ""
+    summary_text = ""
+    actions = []
+    level = "medium"
+
     if mode == "improving":
-        summary = "得益于持续的合规治理行动，园区整体风险指数在过去 30 天内显著改善。敏感数据命中率下降 85%，高风险告警已全部清零。建议继续保持当前的自动化拦截策略，并逐步开展历史数据清洗工作。"
-        actions = [
-            {"id": "act_imp_1", "name": "固化策略", "description": "将当前临时规则转为永久策略"},
-            {"id": "act_imp_2", "name": "归档报告", "description": "生成月度合规改善报告"},
-            {"id": "act_imp_3", "name": "表彰通报", "description": "通报合规表现优秀的子系统"}
+        title = f"合规指数显著提升 {score_diff} 点"
+        summary_text = "得益于持续的合规治理行动，园区整体风险指数在过去 30 天内显著改善。敏感数据命中率大幅下降，高风险告警已全部清零。建议继续保持当前的自动化拦截策略，并逐步开展历史数据清洗工作。"
+        evidence = [
+            f"合规指数由 {start_score} 升至 {end_score}",
+            f"敏感数据命中率下降 {(1 - end_hits/avg_hits)*100:.0f}%",
+            "高风险活跃告警清零"
         ]
-        label = "持续改善"
+        actions = [
+            {"id": "act_imp_1", "label": "固化当前策略"},
+            {"id": "act_imp_2", "label": "归档月度报告"}
+        ]
         level = "low"
         
     elif mode == "crisis":
-        summary = "🚨 紧急状态：园区正面临严重的数据安全威胁！过去 72 小时内，API 接口遭到持续的异常爬取，敏感数据泄露风险激增。核心数据库检测到多起未授权访问尝试，风险评分已跌至历史低点。请立即启动一级响应预案。"
-        actions = [
-            {"id": "act_cri_1", "name": "熔断保护", "description": "立即切断所有外部 API 调用"},
-            {"id": "act_cri_2", "name": "全量封禁", "description": "封禁最近 24h 所有异常 IP"},
-            {"id": "act_cri_3", "name": "取证溯源", "description": "导出审计日志进行取证"}
+        title = "检测到严重的数据泄露威胁"
+        summary_text = "紧急状态：园区正面临严重的数据安全威胁！过去 72 小时内，API 接口遭到持续的异常爬取，敏感数据泄露风险激增。核心数据库检测到多起未授权访问尝试，合规指数已跌至历史低点。"
+        evidence = [
+            f"合规指数暴跌至 {end_score} 分",
+            f"单日敏感命中激增至 {end_hits} 条",
+            f"实时高风险告警 {end_alerts} 起"
         ]
-        label = "危机爆发"
+        actions = [
+            {"id": "act_cri_1", "label": "立即熔断保护"},
+            {"id": "act_cri_2", "label": "全量封禁异常IP"}
+        ]
         level = "critical"
         
     else: # stable
-        summary = "园区数据合规态势整体平稳，各项指标在预期范围内波动。偶发性敏感词命中主要集中在非结构化文档上传，未发现系统性风险。建议维持常态化监控，并关注即将到来的节假日流量高峰。"
-        actions = [
-            {"id": "act_sta_1", "name": "例行巡检", "description": "执行每日自动化巡检"},
-            {"id": "act_sta_2", "name": "规则优化", "description": "微调误报率较高的规则"},
-            {"id": "act_sta_3", "name": "系统备份", "description": "执行关键配置备份"}
+        title = "系统整体运行平稳无异常"
+        summary_text = "园区数据合规态势整体平稳，各项指标在预期范围内波动。偶发性敏感词命中主要集中在非结构化文档上传，未发现系统性风险。建议维持常态化监控，并关注即将到来的节假日流量高峰。"
+        evidence = [
+            f"合规指数维持在 {end_score} 分左右",
+            f"日均敏感命中 {int(avg_hits)} 条",
+            "无未处理的高风险告警"
         ]
-        label = "平稳运行"
+        actions = [
+            {"id": "act_sta_1", "label": "执行例行巡检"},
+            {"id": "act_sta_2", "label": "优化误报规则"}
+        ]
         level = "medium"
         
     return {
         "mode": mode,
-        "summary": summary,
+        "title": title,
+        "summary": summary_text,
+        "evidence": evidence,
         "actions": actions,
         "label": label,
         "level": level,
@@ -228,9 +265,10 @@ def narrative_summary() -> Dict[str, Any]:
     }
 
 def get_narrative_status_data() -> Dict[str, Any]:
+    ctx_source = "query_param" if get_simulation_mode_context() else "env_var"
     return {
-        "data_mode": get_simulation_mode(), # Should probably be config.get_data_mode() but the prompt asks for status
-        "simulation_mode": get_simulation_mode(),
+        "effective_mode": get_simulation_mode(),
+        "source": ctx_source,
         "start_date": get_sim_start_date(),
         "engine_version": "NSE-2.0"
     }

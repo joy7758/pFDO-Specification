@@ -207,3 +207,17 @@ def explain_risk() -> Dict[str, Any]:
         "suggestions": suggestions,
         "trend": trend
     }
+
+def get_risk_model() -> Dict[str, Any]:
+    """返回风险模型定义元数据"""
+    return {
+        "version": ENGINE_VERSION,
+        "name": "Dynamic Risk Explanation Model",
+        "factors": [
+            {"key": "pii_hit_rate", "name": "敏感信息命中", "weight": 0.35},
+            {"key": "alerts_24h", "name": "实时告警强度", "weight": 0.25},
+            {"key": "data_volume", "name": "数据存量风险", "weight": 0.15},
+            {"key": "integrations_gap", "name": "系统接入缺口", "weight": 0.10},
+            {"key": "time_pressure", "name": "运维时间压力", "weight": 0.15}
+        ]
+    }

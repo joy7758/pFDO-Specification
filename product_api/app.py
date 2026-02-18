@@ -5,15 +5,16 @@ import os
 import shutil
 import json
 import traceback
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request, Body
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request, Body, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from .parser import parse_csv, parse_json, parse_txt
 from .record_model import Record
 from .pii import scan_records
+from .context import set_simulation_mode_context
 from .dashboard import (
     get_overview_stats,
     get_trends_data,
@@ -63,6 +64,28 @@ templates = Jinja2Templates(directory="templates")
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+# --- Middleware / Dependency ---
+
+async def set_sim_context(request: Request):
+    """
+    Middleware-like dependency to set simulation mode from query param.
+    Priority: query param 'sim' > env var (handled in config.py)
+    """
+    sim_mode = request.query_params.get("sim")
+    # Only allow valid modes
+    if sim_mode and sim_mode in ("improving", "stable", "crisis"):
+        set_simulation_mode_context(sim_mode)
+    else:
+        set_simulation_mode_context(None)
+
+# Apply dependency to all routes that use dashboard logic
+# But standard FastAPI Depends only works on path operations.
+# We will use a global dependency or decorate specific routes.
+# Global dependency is easiest for this use case.
+# Note: This will run for all requests.
+app.router.dependencies.append(Depends(set_sim_context))
 
 
 @app.get("/health")
@@ -213,7 +236,7 @@ def api_v1_narrative_summary() -> Dict[str, Any]:
         return get_narrative_summary()
     except Exception as e:
         traceback.print_exc()
-        return {"error": str(e), "fallback": True, "summary": "引擎启动中...", "actions": []}
+        return {"error": str(e), "fallback": True, "title": "Error", "summary": "Engine Error", "actions": []}
 
 
 # 保留旧接口兼容 (Deprecated)

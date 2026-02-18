@@ -10,7 +10,15 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
-from .config import is_demo_mode, get_demo_seed, is_simulation_mode, get_simulation_mode, get_sim_start_date, get_data_mode
+from .config import (
+    is_demo_mode, 
+    get_demo_seed, 
+    is_simulation_mode, 
+    get_simulation_mode, 
+    get_sim_start_date, 
+    get_data_mode,
+    get_simulation_label
+)
 from .narrative import (
     generate_trend_series, 
     today_snapshot, 
@@ -51,7 +59,7 @@ def _get_file_count() -> int:
     return 0
 
 def calculate_dynamic_risk_score() -> Dict[str, Any]:
-    """计算动态风险评分 (核心算法)"""
+    """计算动态合规指数 (核心算法)"""
     if is_simulation_mode():
         # 叙事模拟模式托底
         snap = today_snapshot()
@@ -357,7 +365,18 @@ def get_actions_list() -> List[Dict[str, Any]]:
     # 叙事模式下，动作由引擎决定
     if is_simulation_mode():
         nar = narrative_summary()
-        return nar.get("actions", [])
+        # Transform simple label to name/description if needed or use as is
+        # The prompt says: buttons reuse existing actions/run.
+        # narrative.py returns actions with id/label. We map it to id/name/desc.
+        res = []
+        for a in nar.get("actions", []):
+            res.append({
+                "id": a["id"],
+                "name": a["label"],
+                "description": "建议立即执行该操作",
+                "status": "ready"
+            })
+        return res
 
     return [
         {"id": "act_001", "name": "全园扫描", "description": "立即启动全量数据合规扫描", "status": "ready"},
@@ -414,7 +433,7 @@ def get_briefing_data() -> Dict[str, Any]:
                     {"label": "今日扫描", "value": f"{overview.get('scans_today', 0):,}", "unit": "次", "color": "blue"},
                     {"label": "敏感命中", "value": f"{overview.get('hits_today', 0):,}", "unit": "条", "color": "orange"},
                     {"label": "实时告警", "value": overview.get('alerts_active', 0), "unit": "个", "color": "red"},
-                    {"label": "合规评分", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
+                    {"label": "合规指数", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
                 ],
                 "links": [],
                 "must_focus_count": snap.get("must_focus_count", 0)
@@ -433,7 +452,7 @@ def get_briefing_data() -> Dict[str, Any]:
             {"label": "今日扫描", "value": f"{overview.get('scans_today', 0):,}", "unit": "次", "color": "blue"},
             {"label": "敏感命中", "value": f"{overview.get('hits_today', 0):,}", "unit": "条", "color": "orange"},
             {"label": "实时告警", "value": overview.get('alerts_active', 0), "unit": "个", "color": "red"},
-            {"label": "合规评分", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
+            {"label": "合规指数", "value": overview.get('risk_score', 0), "unit": "分", "color": "green"},
             {"label": "自动处理", "value": overview.get('handled_rate', '0%'), "unit": "", "color": "grey"}
         ]
         
@@ -443,7 +462,7 @@ def get_briefing_data() -> Dict[str, Any]:
         hits = overview.get('hits_today', 0)
         active_alerts = overview.get('alerts_active', 0)
         
-        summary = f"今日合规评分 {score}，累计扫描 {scan_vol} 次。发现 {hits} 条敏感数据，当前 {active_alerts} 个待处理告警，系统整体运行平稳。"
+        summary = f"今日合规指数 {score}，累计扫描 {scan_vol} 次。发现 {hits} 条敏感数据，当前 {active_alerts} 个待处理告警，系统整体运行平稳。"
         
         # 4. 生成 Suggestion
         if score >= 90:
@@ -611,7 +630,7 @@ def get_ticker_items() -> List[Dict[str, Any]]:
         briefing_text = (
             f"扫描 {overview.get('scans_today', 0):,} 次｜"
             f"敏感命中 {overview.get('hits_today', 0)}｜"
-            f"风险评分 {overview.get('risk_score', 0)}"
+            f"合规指数 {overview.get('risk_score', 0)}"
         )
         items.append(make_item(
             4, "灰", "运营简报",
@@ -775,7 +794,10 @@ def get_streak_stats() -> Dict[str, Any]:
 
 def get_narrative_status() -> Dict[str, Any]:
     """获取叙事引擎状态"""
-    return get_narrative_status_data()
+    status = get_narrative_status_data()
+    # Add label for display
+    status["effective_mode_label"] = get_simulation_label(status["effective_mode"])
+    return status
 
 def get_narrative_series() -> Dict[str, Any]:
     """获取叙事趋势序列"""
