@@ -98,12 +98,13 @@ def api_v1_calendar() -> Dict[str, Any]:
 def api_v1_ticker() -> Dict[str, Any]:
     """获取顶部 Ticker 滚动条目 (战报/告警/天气等)"""
     try:
-        return {"items": get_ticker_items()}
-    except Exception:
+        # 防御式编程：确保 always 200 OK + items
+        items = get_ticker_items()
+        return {"items": items}
+    except Exception as e:
         # Fallback to prevent 500
-        return {"items": [
-            {"id": "fb-err", "type": "system", "level": "INFO", "priority": 100, "title": "系统提示", "summary": "部分数据正在同步中，系统正常运行。", "link": "/park", "source": "fallback"}
-        ]}
+        print(f"[Error] Ticker failed: {e}")
+        return {"items": [], "warning": "Ticker 数据暂不可用，请稍后重试"}
 
 @app.get("/api/v1/briefing")
 def api_v1_briefing() -> Dict[str, Any]:

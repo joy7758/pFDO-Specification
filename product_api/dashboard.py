@@ -5,6 +5,7 @@
 import os
 import random
 import time
+import traceback
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
@@ -338,136 +339,158 @@ def get_briefing_data() -> Dict[str, Any]:
         }
 
 def get_ticker_items() -> List[Dict[str, Any]]:
-    """获取顶部公告栏 Ticker 数据"""
+    """获取顶部公告栏 Ticker 数据 (多源聚合/异常容错)"""
     items = []
     
+    # 辅助函数：构造标准 Item
+    def make_item(priority, level, tag, title, summary, link, source="红岩"):
+        return {
+            "id": f"tick-{int(time.time()*1000)}-{random.randint(100,999)}",
+            "priority": priority, # 0=Red, 1=Orange, 2=Blue, 3=Green, 4=Grey
+            "level": level,       # "红", "橙", "蓝", "绿", "灰"
+            "tag": tag,
+            "title": title,
+            "summary": summary,
+            "time": datetime.now().strftime("%H:%M"),
+            "link": link,
+            "source": source
+        }
+
+    # 1. 天气/环境 (Weather/Air)
     try:
-        # 1. 天气/环境 (Weather/Air)
         weather = get_weather_data()
         air = get_air_quality_data()
         
-        # 体感提示
-        temp_feel = weather['current']['feels_like']
-        items.append({
-            "id": "ticker-weather",
-            "type": "weather",
-            "level": "INFO",
-            "priority": 40,
-            "title": "今日天气",
-            "summary": f"当前气温 {weather['current']['temp']}℃，体感 {temp_feel}℃，{weather['current']['condition']}，{air['health_tip']}",
-            "link": "/park",
-            "source": "气象中心"
-        })
+        # 气象预警 (Priority 1 - Orange/Red)
+        warning = weather.get('warning', {})
+        if warning.get('active'):
+            w_level = "红" if "RED" in warning.get('level', '') else "橙"
+            prio = 0 if w_level == "红" else 1
+            items.append(make_item(
+                prio, w_level, "天气预警", 
+                f"{warning.get('type')}预警", 
+                warning.get('msg', ''), 
+                "/park#weather", "气象局"
+            ))
+            
+        # 正常天气 (Priority 2 - Blue)
+        cur = weather.get('current', {})
+        items.append(make_item(
+            2, "蓝", "今日天气", 
+            f"{cur.get('condition')} {cur.get('temp')}℃",
+            f"体感 {cur.get('feels_like')}℃，{air.get('health_tip', '')}",
+            "/park#weather", "气象中心"
+        ))
         
-        # 天气预警 (如果有)
-        if weather['warning'].get('active'):
-            items.append({
-                "id": "ticker-warning",
-                "type": "weather",
-                "level": weather['warning']['level'], # YELLOW/RED...
-                "priority": 90,
-                "title": "气象预警",
-                "summary": f"【{weather['warning']['type']}】{weather['warning']['msg']}",
-                "link": "/park",
-                "source": "气象局"
-            })
+        # 空气质量 (Priority 2 or 1 if bad)
+        aqi = air.get('aqi', 0)
+        aqi_level = "橙" if aqi > 100 else "绿" # 简单判断
+        prio_aqi = 1 if aqi > 100 else 3
+        items.append(make_item(
+            prio_aqi, aqi_level, "空气质量",
+            f"AQI {aqi} {air.get('level')}",
+            air.get('health_tip'),
+            "/park#air", "环保局"
+        ))
 
-        # 2. 实时最高优先级告警 (Alerts)
-        alerts = get_alerts_data()['alerts']
-        # 找一个 HIGH 级别的最新的
-        high_alerts = [a for a in alerts if a['level'] == 'HIGH']
-        if high_alerts:
-            top_alert = high_alerts[0]
-            items.append({
-                "id": f"ticker-alert-{top_alert['id']}",
-                "type": "alert",
-                "level": "RED",
-                "priority": 100,
-                "title": "紧急告警",
-                "summary": f"{top_alert['source']} 发现 {top_alert['type']}，请立即处置！",
-                "link": "/park",
-                "source": "安防中心"
-            })
-        
-        # 3. 黄历/日历 (Calendar)
-        cal = get_calendar_data() or {}
-        solar = cal.get("solar_date", "")
-        lunar = cal.get("lunar", "")
-        display = cal.get("display_line", "")
-        
-        items.append({
-            "id": "ticker-almanac",
-            "type": "almanac",
-            "level": "INFO",
-            "priority": 30,
-            "title": "今日黄历",
-            "summary": f"{solar} {lunar}，{display}",
-            "link": "/park",
-            "source": "历法服务"
-        })
-        
-        # next_holiday
-        next_h = cal.get('next_holiday', {})
-        term = cal.get('term', '')
-        if next_h:
-            items.append({
-                "id": "ticker-holiday",
-                "type": "calendar",
-                "level": "INFO",
-                "priority": 20,
-                "title": "节日提醒",
-                "summary": f"距离 {next_h.get('name', '')} 还有 {next_h.get('days_left', 0)} 天，{term}节气已过。",
-                "link": "/park",
-                "source": "行政中心"
-            })
-
-        # 4. 今日一句话战报 (Briefing)
-        overview = get_overview_stats()
-        # 组装战报文案
-        briefing_text = (
-            f"今日战报：合规评分 {overview['risk_score']}｜"
-            f"扫描 {overview['scans_today']:,}｜"
-            f"敏感命中 {overview['hits_today']}｜"
-            f"实时告警 {overview['alerts_active']}｜"
-            f"AQI {air['level']}｜"
-            f"体感 {temp_feel}℃"
-        )
-        
-        items.append({
-            "id": "ticker-briefing",
-            "type": "briefing",
-            "level": "INFO",
-            "priority": 95, # 仅次于紧急告警
-            "title": "园区日报",
-            "summary": briefing_text,
-            "link": "/park",
-            "source": "运营指挥部"
-        })
-        
-        # 5. 系统状态 (模拟变化)
-        systems = get_integrations_status()['systems']
-        if systems:
-            # 找一个最近更新的
-            sys = systems[0]
-            items.append({
-                "id": f"ticker-sys-{sys['name']}",
-                "type": "system",
-                "level": "INFO" if sys['status'] == 'ONLINE' else 'WARNING',
-                "priority": 10,
-                "title": "系统状态",
-                "summary": f"{sys['name']} 当前状态：{sys['status']} (更新于 {sys['last_sync']})",
-                "link": "/park",
-                "source": "系统监控"
-            })
-
-        # 按优先级降序排序
-        items.sort(key=lambda x: x['priority'], reverse=True)
     except Exception:
-        # Fallback items if anything fails
-        items = [
-            {"id": "fb-1", "type": "system", "level": "INFO", "priority": 100, "title": "系统运行", "summary": "系统正常运行中", "link": "/park", "source": "fallback"},
-            {"id": "fb-2", "type": "weather", "level": "INFO", "priority": 50, "title": "天气", "summary": "暂无法获取天气数据", "link": "/park", "source": "fallback"},
-            {"id": "fb-3", "type": "calendar", "level": "INFO", "priority": 10, "title": "日历", "summary": datetime.now().strftime("%Y-%m-%d"), "link": "/park", "source": "fallback"},
-        ]
+        # Fallback for weather
+        items.append(make_item(4, "灰", "天气提示", "天气数据暂不可用", "请稍后重试", "/park#weather"))
+
+    # 2. 实时告警 (Alerts)
+    try:
+        alerts_data = get_alerts_data()
+        alerts = alerts_data.get('alerts', [])
+        # 筛选 High/Medium
+        high_alerts = [a for a in alerts if a['level'] == 'HIGH']
         
+        # 只取最新的1条 HIGH 告警作为 ticker (避免刷屏)
+        if high_alerts:
+            top = high_alerts[0]
+            items.append(make_item(
+                0, "红", "系统告警",
+                "发现高风险异常",
+                f"{top.get('source')}：{top.get('msg')}",
+                "/park#alerts", "安防中心"
+            ))
+        else:
+            # 如果没有 High，看看 Medium
+            med_alerts = [a for a in alerts if a['level'] == 'MEDIUM']
+            if med_alerts:
+                top = med_alerts[0]
+                items.append(make_item(
+                    1, "橙", "风险提示",
+                    "发现潜在风险",
+                    f"{top.get('source')}：{top.get('msg')}",
+                    "/park#alerts", "安防中心"
+                ))
+    except Exception:
+        pass
+
+    # 3. 黄历/日历 (Calendar)
+    try:
+        cal = get_calendar_data()
+        
+        # 节日倒计时 (Priority 3 - Green)
+        next_h = cal.get('next_holiday', {})
+        if next_h:
+            days = next_h.get('days_left', 0)
+            items.append(make_item(
+                3, "绿", "节日提醒",
+                f"距离 {next_h.get('name')} 还有 {days} 天",
+                f"今日节气：{cal.get('term')}",
+                "/park#calendar", "行政中心"
+            ))
+            
+        # 黄历 (Priority 3 - Green)
+        display = cal.get('display_line', '')
+        items.append(make_item(
+            3, "绿", "今日黄历",
+            f"{cal.get('lunar')}",
+            display,
+            "/park#calendar", "历法服务"
+        ))
+    except Exception:
+        pass
+
+    # 4. 运营简报 (Briefing)
+    try:
+        # 简报摘要 (Priority 4 - Gray)
+        # 复用 get_briefing_data 可能会递归调用导致慢，这里直接取 overview
+        overview = get_overview_stats()
+        briefing_text = (
+            f"扫描 {overview.get('scans_today', 0):,} 次｜"
+            f"敏感命中 {overview.get('hits_today', 0)}｜"
+            f"风险评分 {overview.get('risk_score', 0)}"
+        )
+        items.append(make_item(
+            4, "灰", "运营简报",
+            "今日合规日报",
+            briefing_text,
+            "/park#briefing", "运营指挥部"
+        ))
+    except Exception:
+        pass
+
+    # 5. 系统接入 (Integrations)
+    try:
+        integ = get_integrations_status()
+        systems = integ.get('systems', [])
+        sys_names = [s['name'] for s in systems[:3]]
+        items.append(make_item(
+            4, "灰", "系统接入",
+            "已接入子系统",
+            f"{' / '.join(sys_names)} 运行正常",
+            "/park#integrations", "系统监控"
+        ))
+    except Exception:
+        pass
+
+    # 排序：priority ASC (0最重要)
+    items.sort(key=lambda x: x['priority'])
+    
+    # 兜底：如果items为空
+    if not items:
+        items.append(make_item(4, "灰", "系统提示", "系统运行正常", "暂无更多通知", "/park"))
+
     return items

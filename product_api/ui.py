@@ -252,13 +252,52 @@ def _base_css() -> str:
         .risk-item.expanded .risk-reason { display: block; }
         .badge-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
-        /* Ticker - Keep existing */
+        /* Ticker - Updated */
         .ticker-container {
             width: 100%; height: 48px; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);
             display: flex; align-items: center; padding: 0 20px; font-size: 14px;
             overflow: hidden; position: relative; z-index: 2000;
         }
-        /* ... existing ticker styles ... */
+        .ticker-wrapper { flex: 1; height: 100%; position: relative; overflow: hidden; }
+        .ticker-item {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center;
+            opacity: 0; transform: translateY(10px); transition: all 0.5s ease;
+            pointer-events: none;
+        }
+        .ticker-item.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        
+        .ticker-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 12px; }
+        .dot-red { background: #D32F2F; box-shadow: 0 0 6px rgba(211, 47, 47, 0.4); }
+        .dot-orange { background: #EF6C00; box-shadow: 0 0 6px rgba(239, 108, 0, 0.4); }
+        .dot-blue { background: #2196F3; }
+        .dot-green { background: #4CAF50; }
+        .dot-grey { background: #9E9E9E; }
+        
+        .ticker-tag { font-weight: 600; margin-right: 12px; color: var(--text-dark); }
+        .ticker-text { color: #555; margin-right: 12px; }
+        .ticker-meta { font-size: 12px; color: #999; margin-left: auto; display: flex; align-items: center; gap: 12px; }
+        
+        .ticker-btn { 
+            padding: 4px 12px; border-radius: 99px; font-size: 12px; 
+            background: #f5f5f7; color: #333; cursor: pointer; border: 1px solid transparent; 
+        }
+        .ticker-btn:hover { background: #e5e5e5; }
+        
+        /* Ticker Modal */
+        .ticker-modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 600px; max-height: 80vh; background: #fff; z-index: 5002;
+            border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); padding: 24px;
+            overflow-y: auto;
+        }
+        .ticker-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); z-index: 5001;
+        }
+        
+        .t-modal-item { display: flex; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .t-modal-item:last-child { border-bottom: none; }
     </style>
     """
 
@@ -287,6 +326,146 @@ def _page_layout(title: str, content: str, active_tab: str = "") -> str:
     <body>
         <div id="toast-container" class="toast-container"></div>
         
+        <!-- Ticker -->
+        <div id="top-ticker" class="ticker-container">
+            <div class="ticker-wrapper" id="ticker-list">
+                <!-- Items injected here -->
+                <div style="display:flex; align-items:center; height:100%; color:#999; padding-left:20px;">
+                    正在获取实时信息...
+                </div>
+            </div>
+            <div style="border-left:1px solid #eee; padding-left:16px; margin-left:16px;">
+                <button class="ticker-btn" onclick="openTickerModal()">更多</button>
+            </div>
+        </div>
+
+        <!-- Ticker Modal -->
+        <div id="ticker-overlay" class="ticker-overlay" onclick="closeTickerModal()"></div>
+        <div id="ticker-modal" class="ticker-modal">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="margin:0;">实时信息总线</h3>
+                <span style="cursor:pointer; font-size:20px;" onclick="closeTickerModal()">×</span>
+            </div>
+            <div id="ticker-modal-list"></div>
+        </div>
+        
+        <script>
+            let tickerItems = [];
+            let tickerIdx = 0;
+            let tickerTimer = null;
+            let isPaused = false;
+            
+            async function initTicker() {
+                try {
+                    const res = await fetch('/api/v1/ticker');
+                    const data = await res.json();
+                    if(data.items && data.items.length > 0) {
+                        tickerItems = data.items;
+                        renderTicker();
+                        startTicker();
+                    }
+                } catch(e) { console.error("Ticker load error", e); }
+            }
+            
+            function renderTicker() {
+                const container = document.getElementById('ticker-list');
+                let html = '';
+                tickerItems.forEach((item, idx) => {
+                    let dotClass = 'dot-grey';
+                    if(item.level === '红') dotClass = 'dot-red';
+                    if(item.level === '橙') dotClass = 'dot-orange';
+                    if(item.level === '蓝') dotClass = 'dot-blue';
+                    if(item.level === '绿') dotClass = 'dot-green';
+                    
+                    html += `
+                        <div class="ticker-item ${idx===0?'active':''}" onclick="handleTickerClick('${item.link}')">
+                            <span class="ticker-dot ${dotClass}"></span>
+                            <span class="ticker-tag">${item.tag}</span>
+                            <span class="ticker-text" style="font-weight:500;">${item.title}</span>
+                            <span class="ticker-text" style="color:#666; font-size:13px;">${item.summary || ''}</span>
+                            <div class="ticker-meta">
+                                <span>${item.source} ${item.time}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                
+                // Pause on hover
+                container.addEventListener('mouseenter', () => { isPaused = true; });
+                container.addEventListener('mouseleave', () => { isPaused = false; });
+            }
+            
+            function startTicker() {
+                if(tickerTimer) clearInterval(tickerTimer);
+                tickerTimer = setInterval(() => {
+                    if(isPaused) return;
+                    
+                    const els = document.querySelectorAll('.ticker-item');
+                    if(els.length === 0) return;
+                    
+                    els[tickerIdx].classList.remove('active');
+                    tickerIdx = (tickerIdx + 1) % els.length;
+                    els[tickerIdx].classList.add('active');
+                }, 5000); // 5s rotate
+            }
+            
+            function handleTickerClick(link) {
+                if(!link) return;
+                // Scroll to anchor if on same page
+                if(link.startsWith('/park#')) {
+                    const id = link.split('#')[1];
+                    const el = document.getElementById(id); // Search by ID (section) or Card ID
+                    // Mapping simple IDs to our card IDs if needed, or we just add IDs to cards
+                    const target = document.getElementById(id) || document.getElementById(`card-${id}`);
+                    if(target) {
+                        target.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        target.style.boxShadow = "0 0 0 2px var(--primary-red)";
+                        setTimeout(() => target.style.boxShadow = "", 2000);
+                    } else {
+                        window.location.href = link;
+                    }
+                } else {
+                    window.location.href = link;
+                }
+            }
+            
+            function openTickerModal() {
+                const list = document.getElementById('ticker-modal-list');
+                let html = '';
+                tickerItems.forEach(item => {
+                     let dotColor = '#999';
+                     if(item.level === '红') dotColor = '#D32F2F';
+                     if(item.level === '橙') dotColor = '#EF6C00';
+                     if(item.level === '蓝') dotColor = '#2196F3';
+                     if(item.level === '绿') dotColor = '#4CAF50';
+                     
+                     html += `
+                        <div class="t-modal-item" onclick="handleTickerClick('${item.link}'); closeTickerModal();" style="cursor:pointer;">
+                            <div style="margin-top:6px; width:8px; height:8px; border-radius:50%; background:${dotColor}; margin-right:12px; flex-shrink:0;"></div>
+                            <div style="flex:1;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <span style="font-weight:600;">${item.tag} · ${item.title}</span>
+                                    <span style="font-size:12px; color:#999;">${item.time}</span>
+                                </div>
+                                <div style="font-size:13px; color:#555;">${item.summary || '暂无详情'}</div>
+                            </div>
+                        </div>
+                     `;
+                });
+                list.innerHTML = html;
+                document.getElementById('ticker-overlay').style.display = 'block';
+                document.getElementById('ticker-modal').style.display = 'block';
+            }
+            
+            function closeTickerModal() {
+                document.getElementById('ticker-overlay').style.display = 'none';
+                document.getElementById('ticker-modal').style.display = 'none';
+            }
+            
+            document.addEventListener('DOMContentLoaded', initTicker);
+        </script>
+        
         <header>
             <a href="/" class="logo">红岩 · 园区数字合规共建平台</a>
             <nav class="nav-links">
@@ -299,7 +478,7 @@ def _page_layout(title: str, content: str, active_tab: str = "") -> str:
     """
 
 def render_home() -> str:
-    # 与之前一致，略微简化
+    # 保持原样
     content = """
     <div style="text-align: center; padding: 80px 20px 60px;">
         <h1 style="font-size: 56px; line-height: 1.1; margin-bottom: 24px;">
@@ -406,7 +585,7 @@ def render_demo_result(text: str, result: Dict[str, Any]) -> str:
     return _page_layout("检测结果", content, "/demo")
 
 def render_docs_cn() -> str:
-    # 保持原样，略去内容
+    # 保持原样
     content = """
     <div class="container" style="max-width: 900px; padding-top: 40px;">
         <h1>API 接口文档</h1>
@@ -538,11 +717,6 @@ def render_park_dashboard() -> str:
         }
 
         // --- Interaction Logic (Drag & Resize) ---
-        // Simplified implementation: We rely on native drag events or pointer events
-        // Since implementing full grid drag/drop from scratch in vanilla JS is complex,
-        // we will implement a "Properties" editor or simple key controls if complex,
-        // BUT the prompt asks for "Drag Handle". Let's try a pointer-event based approach.
-
         function initDragAndResize() {
             const cards = document.querySelectorAll('.card');
             cards.forEach(card => {
@@ -594,10 +768,6 @@ def render_park_dashboard() -> str:
                 // Bounds
                 newX = Math.max(0, Math.min(COL_COUNT - layoutItem.w, newX));
                 newY = Math.max(0, newY); // No bottom limit
-                
-                // Collision check (simple: push down others is hard, we just allow overlap or snap back)
-                // For this version, we update live but don't resolve collisions aggressively until drop?
-                // Actually, let's just update styles live.
                 
                 layoutItem.x = newX;
                 layoutItem.y = newY;
@@ -656,7 +826,6 @@ def render_park_dashboard() -> str:
              loadActions();
              loadRiskMap();
              loadBriefing();
-             // ... others (legacy simulated loading)
              loadStats();
              loadWeather();
         }
@@ -734,7 +903,6 @@ def render_park_dashboard() -> str:
                 const res = await fetch('/api/v1/briefing');
                 const data = await res.json();
                 
-                // existing logic
                 document.getElementById('br-title').innerText = data.title;
                 document.getElementById('br-date').innerText = data.date;
                 document.getElementById('br-summary').innerText = data.summary;
@@ -759,7 +927,6 @@ def render_park_dashboard() -> str:
         }
 
         async function loadStats() {
-            // Mock calls for other widgets
             fetch('/api/v1/overview').then(r=>r.json()).then(d => {
                 document.getElementById('risk-score').innerText = d.risk_score;
                 document.getElementById('scan-count').innerText = d.scans_today;
@@ -808,6 +975,8 @@ def render_park_dashboard() -> str:
             <div id="card-briefing" class="card">
                 <div class="drag-handle">拖拽移动</div>
                 <div class="resize-handle"></div>
+                <!-- Anchor -->
+                <div id="briefing" style="position:absolute; top:-100px;"></div> 
                 <h3><span id="br-title">每日简报</span> <span class="tag tag-grey" id="br-date">--</span></h3>
                 <p id="br-summary" style="margin-bottom: 12px;">正在加载...</p>
                 <div id="must-focus-area" style="display:none;"></div>
@@ -857,10 +1026,13 @@ def render_park_dashboard() -> str:
                 </div>
             </div>
 
-            <!-- Weather -->
+            <!-- Weather (With ID for anchor) -->
             <div id="card-weather" class="card weather-card">
                 <div class="drag-handle">拖拽移动</div>
                 <div class="resize-handle"></div>
+                <!-- Anchor -->
+                <div id="weather" style="position:absolute; top:-100px;"></div>
+                <div id="air" style="position:absolute; top:-100px;"></div>
                 <div class="w-header">
                      <div>
                         <div style="font-size: 14px; opacity: 0.9;">园区气象</div>
@@ -885,6 +1057,8 @@ def render_park_dashboard() -> str:
             <div id="card-alerts" class="card">
                 <div class="drag-handle">拖拽移动</div>
                 <div class="resize-handle"></div>
+                <!-- Anchor -->
+                <div id="alerts" style="position:absolute; top:-100px;"></div>
                 <h3>实时告警</h3>
                 <div style="font-size:13px; color:#888;">暂无严重告警</div>
             </div>
@@ -893,15 +1067,19 @@ def render_park_dashboard() -> str:
             <div id="card-systems" class="card">
                 <div class="drag-handle">拖拽移动</div>
                 <div class="resize-handle"></div>
+                <!-- Anchor -->
+                <div id="integrations" style="position:absolute; top:-100px;"></div>
                 <h3>系统接入</h3>
                 <div class="list-item"><span>OA系统</span><span style="color:green;">●</span></div>
                 <div class="list-item"><span>安防监控</span><span style="color:green;">●</span></div>
             </div>
             
-            <!-- Plugins -->
+            <!-- Plugins / Calendar -->
             <div id="card-plugins" class="card">
                 <div class="drag-handle">拖拽移动</div>
                 <div class="resize-handle"></div>
+                <!-- Anchor -->
+                <div id="calendar" style="position:absolute; top:-100px;"></div>
                 <h3>扩展插件</h3>
                 <div>
                     <span class="tag tag-grey">+ 门禁</span>

@@ -56,12 +56,13 @@
 3.  **可编辑大屏 (Editable Layout)**: 
     - 支持拖拽 (Drag) 与缩放 (Resize) 布局。
     - 本地持久化存储 (LocalStorage)，支持一键恢复默认布局。
-4.  **每日必须关注 (Must Focus)**: 每日简报智能聚合高风险项，点击一键跳转处理。
+4.  **园区信息总线 (Ticker)**: 智能聚合天气、告警、黄历与系统简报，按优先级实时轮播。
 
 ### 🔌 API 接口列表
 
 系统提供标准的 RESTful API 供前端与第三方系统调用：
 
+- `GET /api/v1/ticker`: 园区信息总线 (Ticker items)
 - `GET /api/v1/overview`: 核心合规指标与统计
 - `GET /api/v1/weather`: 天气实况与预报 (模拟)
 - `GET /api/v1/air`: 空气质量数据 (模拟)

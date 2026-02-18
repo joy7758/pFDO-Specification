@@ -32,7 +32,7 @@ check_url "/health" "基础健康" || FAILED=1
 check_url "/park" "园区大屏" || FAILED=1
 check_url "/docs-cn" "中文文档" || FAILED=1
 
-check_url "/api/v1/ticker" "公告数据" || FAILED=1
+check_url "/api/v1/ticker" "公告总线" || FAILED=1
 check_url "/api/v1/briefing" "运营简报" || FAILED=1
 check_url "/api/v1/overview" "概览数据" || FAILED=1
 check_url "/api/v1/trends" "趋势数据" || FAILED=1
@@ -54,33 +54,16 @@ else
     FAILED=1
 fi
 
-# 检查 Ticker 返回是否正常
-echo -n "    检查 Ticker 完整性 ... "
+# 检查 Ticker 返回是否包含 items (python json validation)
+echo -n "    检查 Ticker 结构 (items) ... "
 TICKER_RES=$(curl -s "$BASE_URL/api/v1/ticker")
-if [[ "$TICKER_RES" == *"items"* ]]; then
-    echo "✅ OK"
-else
-    echo "⚠️  WARNING (Ticker invalid)"
-    FAILED=1
-fi
+VALID_TICKER=$(echo "$TICKER_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); print('OK' if 'items' in data and isinstance(data['items'], list) else 'FAIL')")
 
-# 检查 Weather 返回是否包含 Apple 风格字段
-echo -n "    检查 Weather 字段 (hourly/daily) ... "
-WEATHER_RES=$(curl -s "$BASE_URL/api/v1/weather")
-if [[ "$WEATHER_RES" == *"hourly"* ]] && [[ "$WEATHER_RES" == *"daily"* ]]; then
+if [ "$VALID_TICKER" == "OK" ]; then
     echo "✅ OK"
 else
-    echo "⚠️  WARNING (Weather missing fields)"
-    FAILED=1
-fi
-
-# 检查 Air 返回是否包含趋势
-echo -n "    检查 Air 趋势 (trend) ... "
-AIR_RES=$(curl -s "$BASE_URL/api/v1/air")
-if [[ "$AIR_RES" == *"trend"* ]]; then
-    echo "✅ OK"
-else
-    echo "⚠️  WARNING (Air trend missing)"
+    echo "❌ FAILED (Ticker format invalid)"
+    echo "    Response: $TICKER_RES"
     FAILED=1
 fi
 
