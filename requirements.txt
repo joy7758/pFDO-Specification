@@ -1,3 +1,6 @@
+fastapi
+uvicorn
+python-multipart
 jinja2
 numpy
 matplotlib

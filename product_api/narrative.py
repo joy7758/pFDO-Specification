@@ -1,7 +1,7 @@
 import random
 import hashlib
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Any
 
 from .config import (
     get_simulation_mode, 
@@ -111,7 +111,7 @@ def _generate_value(day_idx: int, mode: str, metric: str, seed: int) -> float:
         
     return 0
 
-def generate_trend_series(days: int = 30) -> Dict[str, List[Any]]:
+def generate_trend_series(days: int = 30) -> dict[str, list[Any]]:
     """生成 30 天趋势数据"""
     seed = _get_sim_seed()
     mode = get_simulation_mode()
@@ -142,7 +142,7 @@ def generate_trend_series(days: int = 30) -> Dict[str, List[Any]]:
         "scan_volume": scans
     }
 
-def today_snapshot() -> Dict[str, Any]:
+def today_snapshot() -> dict[str, Any]:
     """生成今日快照数据"""
     series = generate_trend_series(30)
     
@@ -183,7 +183,7 @@ def today_snapshot() -> Dict[str, Any]:
         "top_drivers": top_drivers
     }
 
-def narrative_summary() -> Dict[str, Any]:
+def narrative_summary() -> dict[str, Any]:
     """生成叙事摘要"""
     mode = get_simulation_mode()
     label = get_simulation_label(mode)
@@ -277,7 +277,7 @@ def narrative_summary() -> Dict[str, Any]:
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
-def get_narrative_status_data() -> Dict[str, Any]:
+def get_narrative_status_data() -> dict[str, Any]:
     ctx_source = "query_param" if get_simulation_mode_context() else "env_var"
     return {
         "effective_mode": get_simulation_mode(),

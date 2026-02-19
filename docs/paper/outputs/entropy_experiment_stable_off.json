@@ -1,0 +1,302 @@
+[
+  {
+    "day": 0,
+    "compliance": 85.3661234976835,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 12.240272083669105,
+    "h_access": 30,
+    "h_total": 20.67208162510073,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 1,
+    "compliance": 84.6280380550327,
+    "alerts": 5,
+    "h_state": 20,
+    "h_drift": 12.680844729275535,
+    "h_access": 30,
+    "h_total": 20.80425341878266,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 2,
+    "compliance": 86.55756526615252,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 11.118741665413232,
+    "h_access": 30,
+    "h_total": 20.33562249962397,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 3,
+    "compliance": 83.35067098352265,
+    "alerts": 6,
+    "h_state": 20,
+    "h_drift": 10.765137666544103,
+    "h_access": 30,
+    "h_total": 20.22954129996323,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 4,
+    "compliance": 86.63537363767674,
+    "alerts": 3,
+    "h_state": 20,
+    "h_drift": 12.881185856283288,
+    "h_access": 30,
+    "h_total": 20.864355756884986,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 5,
+    "compliance": 85.75521267930822,
+    "alerts": 3,
+    "h_state": 20,
+    "h_drift": 11.949325609063509,
+    "h_access": 30,
+    "h_total": 20.584797682719053,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 6,
+    "compliance": 85.92237726799699,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 11.980037135113148,
+    "h_access": 30,
+    "h_total": 20.594011140533944,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 7,
+    "compliance": 84.1979023836295,
+    "alerts": 5,
+    "h_state": 20,
+    "h_drift": 10.68995163169525,
+    "h_access": 30,
+    "h_total": 20.206985489508575,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 8,
+    "compliance": 83.82420353950896,
+    "alerts": 5,
+    "h_state": 20,
+    "h_drift": 11.522532564865315,
+    "h_access": 30,
+    "h_total": 20.456759769459595,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 9,
+    "compliance": 83.5633989063414,
+    "alerts": 3,
+    "h_state": 20,
+    "h_drift": 12.341138895518952,
+    "h_access": 30,
+    "h_total": 20.702341668655684,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 10,
+    "compliance": 83.69070641538887,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 14.014649021627575,
+    "h_access": 30,
+    "h_total": 21.204394706488273,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 11,
+    "compliance": 84.00353938659977,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 12.281281286074808,
+    "h_access": 30,
+    "h_total": 20.68438438582244,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 12,
+    "compliance": 84.29901753915206,
+    "alerts": 7,
+    "h_state": 20,
+    "h_drift": 13.089346877681248,
+    "h_access": 30,
+    "h_total": 20.926804063304374,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 13,
+    "compliance": 84.12975945483892,
+    "alerts": 7,
+    "h_state": 20,
+    "h_drift": 13.206573596819027,
+    "h_access": 30,
+    "h_total": 20.961972079045708,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 14,
+    "compliance": 85.96192599244651,
+    "alerts": 7,
+    "h_state": 20,
+    "h_drift": 12.114542418823131,
+    "h_access": 30,
+    "h_total": 20.634362725646938,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 15,
+    "compliance": 86.5530776171544,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 13.494095490360252,
+    "h_access": 30,
+    "h_total": 21.048228647108076,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 16,
+    "compliance": 86.50188195529812,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 14.880954434617545,
+    "h_access": 30,
+    "h_total": 21.464286330385264,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 17,
+    "compliance": 83.20712311717402,
+    "alerts": 7,
+    "h_state": 20,
+    "h_drift": 12.312127669974721,
+    "h_access": 30,
+    "h_total": 20.69363830099242,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 18,
+    "compliance": 83.03027688369434,
+    "alerts": 6,
+    "h_state": 20,
+    "h_drift": 11.381020337229263,
+    "h_access": 30,
+    "h_total": 20.414306101168776,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 19,
+    "compliance": 83.5934241794931,
+    "alerts": 3,
+    "h_state": 20,
+    "h_drift": 11.323207320465418,
+    "h_access": 30,
+    "h_total": 20.396962196139626,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 20,
+    "compliance": 84.76407382806359,
+    "alerts": 3,
+    "h_state": 20,
+    "h_drift": 10.362294276705118,
+    "h_access": 30,
+    "h_total": 20.108688283011535,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 21,
+    "compliance": 85.97697903060677,
+    "alerts": 6,
+    "h_state": 20,
+    "h_drift": 10.132143552654272,
+    "h_access": 30,
+    "h_total": 20.039643065796284,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 22,
+    "compliance": 86.09045643092321,
+    "alerts": 4,
+    "h_state": 20,
+    "h_drift": 12.414707913490224,
+    "h_access": 30,
+    "h_total": 20.724412374047066,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 23,
+    "compliance": 83.72998718784609,
+    "alerts": 7,
+    "h_state": 20,
+    "h_drift": 11.600408398978264,
+    "h_access": 30,
+    "h_total": 20.48012251969348,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 24,
+    "compliance": 84.73875012534629,
+    "alerts": 3,
+    "h_state": 20,
+    "h_drift": 12.051890507176596,
+    "h_access": 30,
+    "h_total": 20.615567152152977,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 25,
+    "compliance": 83.53085283664171,
+    "alerts": 6,
+    "h_state": 20,
+    "h_drift": 10.82178720604634,
+    "h_access": 30,
+    "h_total": 20.2465361618139,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 26,
+    "compliance": 84.50621327531084,
+    "alerts": 7,
+    "h_state": 20,
+    "h_drift": 13.440180662788082,
+    "h_access": 30,
+    "h_total": 21.032054198836423,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 27,
+    "compliance": 86.82410538029863,
+    "alerts": 6,
+    "h_state": 20,
+    "h_drift": 13.865461785095794,
+    "h_access": 30,
+    "h_total": 21.15963853552874,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 28,
+    "compliance": 85.4501362645231,
+    "alerts": 7,
+    "h_state": 20,
+    "h_drift": 14.575140413855095,
+    "h_access": 30,
+    "h_total": 21.372542124156528,
+    "metabolism_actions": 0
+  },
+  {
+    "day": 29,
+    "compliance": 86.53357188538217,
+    "alerts": 5,
+    "h_state": 20,
+    "h_drift": 14.135086481868875,
+    "h_access": 30,
+    "h_total": 21.240525944560662,
+    "metabolism_actions": 0
+  }
+]

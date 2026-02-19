@@ -5,7 +5,7 @@
 import time
 import random
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any
 
 # 复用 dashboard 数据源
 from .dashboard import (
@@ -18,7 +18,7 @@ from .dashboard import (
 
 ENGINE_VERSION = "RRM-1.1"
 
-def explain_risk() -> Dict[str, Any]:
+def explain_risk() -> dict[str, Any]:
     """生成风险解释报告"""
     
     # 1. 获取各项指标
@@ -208,7 +208,7 @@ def explain_risk() -> Dict[str, Any]:
         "trend": trend
     }
 
-def get_risk_model() -> Dict[str, Any]:
+def get_risk_model() -> dict[str, Any]:
     """返回风险模型定义元数据"""
     return {
         "version": ENGINE_VERSION,

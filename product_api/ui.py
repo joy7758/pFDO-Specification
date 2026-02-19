@@ -2,7 +2,7 @@
 # 前端极简高级风 UI 渲染逻辑 (Apple/Microsoft 极简风格)
 
 import json
-from typing import Dict, Any, List
+from typing import Any
 
 def _base_css() -> str:
     """返回极简风格 CSS (深灰/白/深红)"""
@@ -648,7 +648,7 @@ def render_demo_page() -> str:
     """
     return _page_layout("企业检测", content, "/demo")
 
-def render_demo_result(text: str, result: Dict[str, Any]) -> str:
+def render_demo_result(text: str, result: dict[str, Any]) -> str:
     # 保持原样
     summary = result.get("summary", {})
     hits = result.get("per_record", [{}])[0].get("hits", {})
@@ -778,9 +778,10 @@ def render_park_dashboard() -> str:
             { id: 'card-narrative-summary', x: 4, y: 0, w: 4, h: 4 }, /* Narrative Summary */
             { id: 'card-stats', x: 8, y: 0, w: 4, h: 4 },
             
-            { id: 'card-explain', x: 0, y: 4, w: 6, h: 6 },
-            { id: 'card-actions', x: 6, y: 4, w: 6, h: 3 },
-            { id: 'card-score', x: 6, y: 7, w: 6, h: 3 },
+            { id: 'card-explain', x: 0, y: 4, w: 4, h: 6 },
+            { id: 'card-entropy', x: 4, y: 4, w: 4, h: 6 },
+            { id: 'card-actions', x: 8, y: 4, w: 4, h: 3 },
+            { id: 'card-score', x: 8, y: 7, w: 4, h: 3 },
             
             { id: 'card-must-focus', x: 0, y: 10, w: 4, h: 5 },
             { id: 'card-behavior', x: 4, y: 10, w: 4, h: 5 },
@@ -979,6 +980,7 @@ def render_park_dashboard() -> str:
              loadRiskThermometer();
              loadStreakStats();
              loadNarrativeSummary(); // New
+             loadEntropyStatus(); // New
              loadTrends(); // Updated for charts
         }
         
@@ -1035,6 +1037,33 @@ def render_park_dashboard() -> str:
                     });
                 }
             } catch(e) { console.error(e); }
+        }
+
+        async function loadEntropyStatus() {
+            try {
+                const res = await fetch(apiPath('/api/v1/entropy/status'));
+                const data = await res.json();
+                
+                document.getElementById('ent-today').innerText = data.today_entropy;
+                document.getElementById('ent-avg').innerText = data.avg_7d;
+                document.getElementById('ent-mode').innerText = data.metabolism_mode === 'ON' ? '开启' : '关闭';
+                
+                // Bars
+                const d = data.drivers;
+                setEntropyBar('ent-bar-state', d.state_entropy.value);
+                setEntropyBar('ent-bar-drift', d.drift_entropy.value);
+                setEntropyBar('ent-bar-access', d.access_entropy.value);
+                
+                // Narrative
+                const desc = data.description || '--';
+                document.getElementById('ent-desc').innerText = desc;
+                
+            } catch(e) { console.error(e); }
+        }
+        
+        function setEntropyBar(id, val) {
+            const el = document.getElementById(id);
+            if(el) el.style.width = `${Math.min(100, val)}%`;
         }
 
         async function loadTrends() {
@@ -1521,6 +1550,55 @@ def render_park_dashboard() -> str:
                 <div style="font-size:12px; color:#999; margin-bottom:4px;">建议行动</div>
                 <div id="re-suggestions" style="flex:1; overflow-y:auto;">
                     <!-- Suggestions injected -->
+                </div>
+            </div>
+
+            <!-- Entropy Card -->
+            <div id="card-entropy" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3>系统熵与代谢</h3>
+                
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px;">
+                    <div>
+                        <div style="font-size:12px; color:#999;">今日熵值 H(t)</div>
+                        <div id="ent-today" style="font-size:36px; font-weight:700; color:var(--text-dark);">--</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px; color:#999;">7日均值</div>
+                        <div id="ent-avg" style="font-size:20px; font-weight:600; color:#666;">--</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>状态熵 (State)</span>
+                        <span style="font-size:10px; color:#999;">Alerts Dist.</span>
+                    </div>
+                    <div style="height:6px; background:#eee; border-radius:3px; margin-bottom:8px;">
+                        <div id="ent-bar-state" style="height:100%; width:0%; background:#4CAF50; border-radius:3px;"></div>
+                    </div>
+                    
+                    <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>漂移熵 (Drift)</span>
+                        <span style="font-size:10px; color:#999;">Compliance Vol.</span>
+                    </div>
+                    <div style="height:6px; background:#eee; border-radius:3px; margin-bottom:8px;">
+                        <div id="ent-bar-drift" style="height:100%; width:0%; background:#FFC107; border-radius:3px;"></div>
+                    </div>
+                    
+                    <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>访问熵 (Access)</span>
+                        <span style="font-size:10px; color:#999;">PII & Risks</span>
+                    </div>
+                    <div style="height:6px; background:#eee; border-radius:3px; margin-bottom:8px;">
+                        <div id="ent-bar-access" style="height:100%; width:0%; background:#F44336; border-radius:3px;"></div>
+                    </div>
+                </div>
+                
+                <div style="margin-top:auto; font-size:12px; color:#666; background:#f9f9f9; padding:8px; border-radius:8px;">
+                    代谢模式: <span id="ent-mode" style="font-weight:600;">--</span><br>
+                    <span id="ent-desc">--</span>
                 </div>
             </div>
 

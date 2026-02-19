@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+
 
 class RiskOverviewDetail(BaseModel):
     name: str
@@ -7,7 +7,7 @@ class RiskOverviewDetail(BaseModel):
 
 class RiskOverviewResponse(BaseModel):
     total_risk_score: float
-    details: List[RiskOverviewDetail]
+    details: list[RiskOverviewDetail]
     generated_at: str
 
 class TrendRecord(BaseModel):
@@ -15,4 +15,4 @@ class TrendRecord(BaseModel):
     score: float
 
 class RiskTrendResponse(BaseModel):
-    trend: List[TrendRecord]
+    trend: list[TrendRecord]
