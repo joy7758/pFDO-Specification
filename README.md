@@ -2,6 +2,13 @@
 # pFDO-Specification: 1.6Tbps 时代的物理层 FAIR 数字对象
 
 ## Bilingual Governance Notice
+
+## Standard Domain Entry / 标准域入口
+
+- Standard ID / 标准编号：`RR-pFDO`
+- Registry Row / 注册表定位：https://github.com/joy7758/RedRock-Constitution/blob/main/docs/registry/STANDARDS_REGISTRY.md#rr-pfdo
+- Hub / 总入口：https://github.com/joy7758/RedRock-Constitution
+
 中文说明：所有标准以中文与英文双语发布，英文必须为完整翻译版本。  
 English: All standards are published in Chinese and English, and the English content must be a full translation.
 
