@@ -1,6 +1,10 @@
 # pFDO-Specification: Physical FAIR Digital Objects for the 1.6Tbps Era
 # pFDO-Specification: 1.6Tbps 时代的物理层 FAIR 数字对象
 
+## Bilingual Governance Notice
+中文说明：所有标准以中文与英文双语发布，英文必须为完整翻译版本。  
+English: All standards are published in Chinese and English, and the English content must be a full translation.
+
 ## 🌐 Vision: Fait Accompli of Physical Layer Governance
 ## 愿景：物理层治理的既成事实
 
