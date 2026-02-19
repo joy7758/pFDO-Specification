@@ -8,9 +8,9 @@
 
 **English (for reviewers)**: We provide a reproducible governance evidence path: entropy H(t) + metabolism operators, aligned with a compliance score (higher is better).
 
-- 发布说明 / Release notes: `docs/paper/entropy_control_release_notes.md`
-- 复现实验 / Reproducible experiment: `bash scripts/run_entropy_experiment.sh`
-- 代表图 / Representative figures: `docs/paper/figures/entropy_evolution.png`, `docs/paper/figures/compliance_vs_entropy.png`
+- 标准入口 / Standard: `docs/standards/NSE-EC-1.0.md`
+- 评审一页纸 / One-pager: `docs/paper/onepager_entropy_control_CN.md`
+- 实验复现 / Reproducible experiment: `scripts/run_entropy_experiment.sh`
 ---
 
 ## 🌐 Vision: Fait Accompli of Physical Layer Governance

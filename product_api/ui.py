@@ -700,11 +700,36 @@ def render_demo_result(text: str, result: dict[str, Any]) -> str:
     return _page_layout("检测结果", content, "/demo")
 
 def render_docs_cn() -> str:
-    # 保持原样
     content = """
     <div class="container" style="max-width: 900px; padding-top: 40px;">
         <h1>API 接口文档</h1>
-        <p>（此处省略详情，与之前保持一致）</p>
+        <p>面向园区治理与标准化评审的中文入口页。</p>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h3>标准入口</h3>
+            <div class="list-item">
+                <span>NSE-EC-1.0 标准草案</span>
+                <code>docs/standards/NSE-EC-1.0.md</code>
+            </div>
+            <div class="list-item">
+                <span>评审一页纸（中文）</span>
+                <code>docs/paper/onepager_entropy_control_CN.md</code>
+            </div>
+            <div class="list-item">
+                <span>实验复现脚本</span>
+                <code>bash scripts/run_entropy_experiment.sh</code>
+            </div>
+            <p style="margin-top:10px; margin-bottom:0;">说明：标准草案、评审材料与实验脚本形成同一证据链，便于评审会现场复核。</p>
+        </div>
+
+        <div class="card">
+            <h3>熵控制 API 入口</h3>
+            <ul style="padding-left: 18px; color:#555;">
+                <li><code>/api/v1/entropy/status</code>：当前熵状态、schema_version、解释口径</li>
+                <li><code>/api/v1/entropy/series</code>：熵序列、代谢动作与趋势解释</li>
+                <li><code>/api/v1/entropy/report</code>：领导口径与工程口径的双层解释</li>
+            </ul>
+        </div>
     </div>
     """
     return _page_layout("接口文档", content, "/docs-cn")
@@ -794,7 +819,8 @@ def render_park_dashboard() -> str:
             { id: 'card-alerts', x: 8, y: 20, w: 4, h: 5 },
 
             { id: 'card-systems', x: 0, y: 25, w: 6, h: 4 },
-            { id: 'card-plugins', x: 6, y: 25, w: 6, h: 4 }
+            { id: 'card-plugins', x: 6, y: 25, w: 6, h: 4 },
+            { id: 'card-standard-status', x: 8, y: 29, w: 4, h: 3 }
         ];
 
         let currentLayout = [];
@@ -1057,6 +1083,13 @@ def render_park_dashboard() -> str:
                 // Narrative
                 const desc = data.description || '--';
                 document.getElementById('ent-desc').innerText = desc;
+
+                const schemaEl = document.getElementById('std-schema');
+                const generatedEl = document.getElementById('std-generated');
+                const modeEl = document.getElementById('std-mode');
+                if (schemaEl) schemaEl.innerText = data.schema_version || 'NSE-EC-1.0';
+                if (generatedEl) generatedEl.innerText = data.generated_at || '--';
+                if (modeEl) modeEl.innerText = data.effective_mode || '--';
                 
             } catch(e) { console.error(e); }
         }
@@ -1735,6 +1768,15 @@ def render_park_dashboard() -> str:
                     <span class="tag tag-grey">+ 门禁</span>
                     <span class="tag tag-grey">+ 财务</span>
                 </div>
+            </div>
+
+            <div id="card-standard-status" class="card">
+                <div class="drag-handle">拖拽移动</div>
+                <div class="resize-handle"></div>
+                <h3>标准状态</h3>
+                <div class="list-item"><span>标准版本</span><span id="std-schema">--</span></div>
+                <div class="list-item"><span>最近生成</span><span id="std-generated" style="font-size:12px;">--</span></div>
+                <div class="list-item"><span>当前模式</span><span id="std-mode">--</span></div>
             </div>
 
         </div>

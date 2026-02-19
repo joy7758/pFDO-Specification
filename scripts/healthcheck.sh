@@ -104,15 +104,25 @@ check_url "/api/v1/entropy/status" "系统熵状态" || FAILED=1
 check_url "/api/v1/entropy/series" "熵值趋势" || FAILED=1
 check_url "/api/v1/entropy/report" "熵控制报告" || FAILED=1
 
-# 检查 Entropy Status 结构与数值范围
-echo -n "    检查熵值范围 (0-100) ... "
+# 检查 Entropy Status 结构、版本与数值范围
+echo -n "    检查熵值范围与标准版本 (0-100 + schema_version) ... "
 ENT_RES=$(curl -s "$BASE_URL/api/v1/entropy/status")
-VALID_ENT=$(echo "$ENT_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); val=data.get('today_entropy', -1); print('OK' if 0 <= val <= 100 else 'FAIL')")
+VALID_ENT=$(echo "$ENT_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); val=data.get('today_entropy', -1); ver=data.get('schema_version',''); ok=(0 <= val <= 100 and isinstance(ver,str) and len(ver)>0); print('OK' if ok else 'FAIL')")
 
 if [ "$VALID_ENT" == "OK" ]; then
     echo "✅ 通过"
 else
-    echo "❌ 失败 (熵值超出范围或字段缺失)"
+    echo "❌ 失败 (熵值超出范围、schema_version 缺失或结构不合法)"
+    echo "    Response: $ENT_RES"
+    FAILED=1
+fi
+
+echo -n "    检查 schema_version 是否为 NSE-EC-1.0 ... "
+VALID_SCHEMA=$(echo "$ENT_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); print('OK' if data.get('schema_version')=='NSE-EC-1.0' else 'FAIL')")
+if [ "$VALID_SCHEMA" == "OK" ]; then
+    echo "✅ 通过"
+else
+    echo "❌ 失败 (schema_version 非 NSE-EC-1.0)"
     echo "    Response: $ENT_RES"
     FAILED=1
 fi
