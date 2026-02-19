@@ -99,6 +99,24 @@ else
     FAILED=1
 fi
 
+# 熵控制与代谢引擎检查 (New)
+check_url "/api/v1/entropy/status" "系统熵状态" || FAILED=1
+check_url "/api/v1/entropy/series" "熵值趋势" || FAILED=1
+check_url "/api/v1/entropy/report" "熵控制报告" || FAILED=1
+
+# 检查 Entropy Status 结构与数值范围
+echo -n "    检查熵值范围 (0-100) ... "
+ENT_RES=$(curl -s "$BASE_URL/api/v1/entropy/status")
+VALID_ENT=$(echo "$ENT_RES" | python3 -c "import sys, json; data=json.load(sys.stdin); val=data.get('today_entropy', -1); print('OK' if 0 <= val <= 100 else 'FAIL')")
+
+if [ "$VALID_ENT" == "OK" ]; then
+    echo "✅ 通过"
+else
+    echo "❌ 失败 (熵值超出范围或字段缺失)"
+    echo "    Response: $ENT_RES"
+    FAILED=1
+fi
+
 if [ $FAILED -eq 0 ]; then
     echo ">>> 所有检查通过！服务运行正常。"
     exit 0

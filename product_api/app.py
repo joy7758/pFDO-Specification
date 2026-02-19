@@ -5,7 +5,7 @@ import os
 import shutil
 import json
 import traceback
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request, Body, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -47,6 +47,7 @@ from .ui import (
     render_docs_cn
 )
 from .risk_api import router as risk_router
+from .metabolism.api import router as entropy_router
 
 # 禁用默认文档
 app = FastAPI(
@@ -58,6 +59,7 @@ app = FastAPI(
 )
 
 app.include_router(risk_router)
+app.include_router(entropy_router)
 
 # 挂载模板目录 (虽然我们主要用内联 HTML，但为了兼容性保留)
 templates = Jinja2Templates(directory="templates")
@@ -89,7 +91,7 @@ app.router.dependencies.append(Depends(set_sim_context))
 
 
 @app.get("/health")
-def health() -> Dict[str, str]:
+def health() -> dict[str, str]:
     # 健康检查接口：用于部署验收
     return {"status": "ok"}
 
@@ -97,42 +99,42 @@ def health() -> Dict[str, str]:
 # --- V1 Dashboard APIs ---
 
 @app.get("/api/v1/overview")
-def api_v1_overview() -> Dict[str, Any]:
+def api_v1_overview() -> dict[str, Any]:
     """获取大屏概览数据"""
     return get_overview_stats()
 
 @app.get("/api/v1/trends")
-def api_v1_trends() -> Dict[str, Any]:
+def api_v1_trends() -> dict[str, Any]:
     """获取趋势分析数据"""
     return get_trends_data()
 
 @app.get("/api/v1/alerts")
-def api_v1_alerts() -> Dict[str, Any]:
+def api_v1_alerts() -> dict[str, Any]:
     """获取实时告警数据"""
     return get_alerts_data()
 
 @app.get("/api/v1/integrations")
-def api_v1_integrations() -> Dict[str, Any]:
+def api_v1_integrations() -> dict[str, Any]:
     """获取系统集成状态"""
     return get_integrations_status()
 
 @app.get("/api/v1/weather")
-def api_v1_weather() -> Dict[str, Any]:
+def api_v1_weather() -> dict[str, Any]:
     """获取天气数据 (模拟)"""
     return get_weather_data()
 
 @app.get("/api/v1/air")
-def api_v1_air() -> Dict[str, Any]:
+def api_v1_air() -> dict[str, Any]:
     """获取空气质量数据 (模拟)"""
     return get_air_quality_data()
 
 @app.get("/api/v1/calendar")
-def api_v1_calendar() -> Dict[str, Any]:
+def api_v1_calendar() -> dict[str, Any]:
     """获取日历与节气数据 (包含黄历宜忌/冲煞等)"""
     return get_calendar_data()
 
 @app.get("/api/v1/ticker")
-def api_v1_ticker() -> Dict[str, Any]:
+def api_v1_ticker() -> dict[str, Any]:
     """获取顶部 Ticker 滚动条目 (战报/告警/天气等)"""
     try:
         # 防御式编程：确保 always 200 OK + items
@@ -144,22 +146,22 @@ def api_v1_ticker() -> Dict[str, Any]:
         return {"items": [], "warning": "Ticker 数据暂不可用，请稍后重试"}
 
 @app.get("/api/v1/briefing")
-def api_v1_briefing() -> Dict[str, Any]:
+def api_v1_briefing() -> dict[str, Any]:
     """获取每日运营简报"""
     return get_briefing_data()
 
 @app.get("/api/v1/actions")
-def api_v1_actions() -> Dict[str, Any]:
+def api_v1_actions() -> dict[str, Any]:
     """获取可执行操作列表"""
     return {"actions": get_actions_list()}
 
 @app.post("/api/v1/actions/{action_id}/run")
-def api_v1_run_action(action_id: str) -> Dict[str, Any]:
+def api_v1_run_action(action_id: str) -> dict[str, Any]:
     """执行操作"""
     return simulate_action_run(action_id)
 
 @app.get("/api/v1/risk-map")
-def api_v1_risk_map() -> Dict[str, Any]:
+def api_v1_risk_map() -> dict[str, Any]:
     """获取企业风险地图"""
     return {"risks": get_risk_map()}
 
@@ -169,42 +171,42 @@ def api_v1_get_layout():
     return {"layout": "default", "msg": "Layout persistence is client-side only for now."}
 
 @app.post("/api/v1/layout")
-def api_v1_save_layout(layout: Dict[str, Any] = Body(...)):
+def api_v1_save_layout(layout: dict[str, Any] = Body(...)):
     """保存用户布局 (TODO: 暂未启用后端存储)"""
     return {"success": True, "msg": "Layout saved (mock)."}
 
 @app.get("/api/v1/must-focus")
-def api_v1_must_focus() -> Dict[str, Any]:
+def api_v1_must_focus() -> dict[str, Any]:
     """获取必须关注事项"""
     return get_must_focus()
 
 @app.get("/api/v1/behavior-stats")
-def api_v1_behavior_stats() -> Dict[str, Any]:
+def api_v1_behavior_stats() -> dict[str, Any]:
     """获取行为数据统计"""
     return get_behavior_stats()
 
 @app.get("/api/v1/time-pressure")
-def api_v1_time_pressure() -> Dict[str, Any]:
+def api_v1_time_pressure() -> dict[str, Any]:
     """获取时间压力数据"""
     return get_time_pressure()
 
 @app.get("/api/v1/leader-summary")
-def api_v1_leader_summary() -> Dict[str, Any]:
+def api_v1_leader_summary() -> dict[str, Any]:
     """获取领导视角的摘要信息"""
     return get_leader_summary()
 
 @app.get("/api/v1/risk-thermometer")
-def api_v1_risk_thermometer() -> Dict[str, Any]:
+def api_v1_risk_thermometer() -> dict[str, Any]:
     """获取风险温度计数据"""
     return get_risk_thermometer()
 
 @app.get("/api/v1/streak")
-def api_v1_streak() -> Dict[str, Any]:
+def api_v1_streak() -> dict[str, Any]:
     """获取连续安全天数统计"""
     return get_streak_stats()
 
 @app.get("/api/v1/risk-model")
-def api_v1_risk_model() -> Dict[str, Any]:
+def api_v1_risk_model() -> dict[str, Any]:
     """获取当前生效的风险评分模型元数据"""
     return get_risk_model()
 
@@ -212,7 +214,7 @@ def api_v1_risk_model() -> Dict[str, Any]:
 # --- Narrative Engine APIs (New) ---
 
 @app.get("/api/v1/narrative/status")
-def api_v1_narrative_status() -> Dict[str, Any]:
+def api_v1_narrative_status() -> dict[str, Any]:
     """获取叙事引擎状态"""
     try:
         return get_narrative_status()
@@ -221,7 +223,7 @@ def api_v1_narrative_status() -> Dict[str, Any]:
         return {"error": str(e), "fallback": True}
 
 @app.get("/api/v1/narrative/series")
-def api_v1_narrative_series() -> Dict[str, Any]:
+def api_v1_narrative_series() -> dict[str, Any]:
     """获取叙事趋势序列"""
     try:
         return get_narrative_series()
@@ -230,7 +232,7 @@ def api_v1_narrative_series() -> Dict[str, Any]:
         return {"error": str(e), "fallback": True, "dates": [], "risk_scores": []}
 
 @app.get("/api/v1/narrative/summary")
-def api_v1_narrative_summary() -> Dict[str, Any]:
+def api_v1_narrative_summary() -> dict[str, Any]:
     """获取叙事摘要"""
     try:
         return get_narrative_summary()
@@ -241,7 +243,7 @@ def api_v1_narrative_summary() -> Dict[str, Any]:
 
 # 保留旧接口兼容 (Deprecated)
 @app.get("/api/park/dashboard")
-def api_park_dashboard_legacy() -> Dict[str, Any]:
+def api_park_dashboard_legacy() -> dict[str, Any]:
     """(已废弃) 请使用 /api/v1/overview"""
     return get_overview_stats()
 
@@ -297,7 +299,7 @@ async def get_open_api_endpoint():
 
 
 @app.post("/upload")
-async def upload(file: UploadFile = File(...)) -> Dict:
+async def upload(file: UploadFile = File(...)) -> dict:
     # 1) 保存上传文件
     filename = file.filename or "uploaded"
     ext = (filename.split(".")[-1] or "").lower()
@@ -332,7 +334,7 @@ async def upload(file: UploadFile = File(...)) -> Dict:
 
 
 @app.post("/scan/pii")
-def scan_pii(records: List[Record]) -> Dict:
+def scan_pii(records: list[Record]) -> dict:
     # Use real PII scanning implementation
     payload = [r.model_dump() for r in records]
     return scan_records(payload)

@@ -1,7 +1,7 @@
 # product_api/record_model.py
 # 统一 Record 数据结构：所有输入（csv/json/txt）最终都变成它
 
-from typing import Any, Dict
+from typing import Any
 from pydantic import BaseModel
 
 
@@ -16,4 +16,4 @@ class Record(BaseModel):
     content: Any
 
     # 额外元信息：行号、文件名、时间等
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}

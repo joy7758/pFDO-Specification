@@ -8,7 +8,7 @@ import time
 import hashlib
 import traceback
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Any
 
 from .config import (
     is_demo_mode, 
@@ -58,7 +58,7 @@ def _get_file_count() -> int:
             pass
     return 0
 
-def calculate_dynamic_risk_score() -> Dict[str, Any]:
+def calculate_dynamic_risk_score() -> dict[str, Any]:
     """计算动态合规指数 (核心算法)"""
     if is_simulation_mode():
         # 叙事模拟模式托底
@@ -105,7 +105,7 @@ def calculate_dynamic_risk_score() -> Dict[str, Any]:
         }
     }
 
-def get_risk_model() -> Dict[str, Any]:
+def get_risk_model() -> dict[str, Any]:
     """获取风险模型元数据"""
     return {
         "engine": "RedRock Risk Engine",
@@ -119,7 +119,7 @@ def get_risk_model() -> Dict[str, Any]:
         ]
     }
 
-def get_overview_stats() -> Dict[str, Any]:
+def get_overview_stats() -> dict[str, Any]:
     """获取概览数据 (Overview)"""
     risk_data = calculate_dynamic_risk_score()
     
@@ -143,7 +143,7 @@ def get_overview_stats() -> Dict[str, Any]:
     }
 
 
-def get_trends_data() -> Dict[str, Any]:
+def get_trends_data() -> dict[str, Any]:
     """获取趋势数据 (Trends) - 升级为 30 天"""
     if is_simulation_mode():
         trends = generate_trend_series(30)
@@ -164,7 +164,7 @@ def get_trends_data() -> Dict[str, Any]:
     }
 
 
-def get_alerts_data() -> Dict[str, Any]:
+def get_alerts_data() -> dict[str, Any]:
     """获取实时告警数据 (Alerts)"""
     # 模拟告警库
     alert_types = ["未脱敏手机号", "明文身份证", "高密级文件传输", "异常IP访问", "API滥用", "敏感词命中"]
@@ -202,7 +202,7 @@ def get_alerts_data() -> Dict[str, Any]:
     }
 
 
-def get_integrations_status() -> Dict[str, Any]:
+def get_integrations_status() -> dict[str, Any]:
     """获取系统接入状态"""
     # 模拟已有和可接入系统
     active_systems = [
@@ -227,7 +227,7 @@ def get_integrations_status() -> Dict[str, Any]:
     }
 
 
-def get_weather_data() -> Dict[str, Any]:
+def get_weather_data() -> dict[str, Any]:
     """获取天气数据 (模拟)"""
     # 更加丰富的天气数据
     return {
@@ -269,7 +269,7 @@ def get_weather_data() -> Dict[str, Any]:
     }
 
 
-def get_air_quality_data() -> Dict[str, Any]:
+def get_air_quality_data() -> dict[str, Any]:
     """获取空气质量数据 (模拟)"""
     aqi = 45
     return {
@@ -288,7 +288,7 @@ def get_air_quality_data() -> Dict[str, Any]:
         "health_tip": "空气很好，可以外出活动，适宜开窗通风。"
     }
 
-def get_calendar_data() -> Dict[str, Any]:
+def get_calendar_data() -> dict[str, Any]:
     """获取日历数据 (模拟)"""
     # 简单模拟农历和节气，实际项目应引入 lunardate 库
     now = datetime.now()
@@ -349,7 +349,7 @@ def get_calendar_data() -> Dict[str, Any]:
         "display_line": display_line
     }
 
-def get_risk_map() -> List[Dict[str, Any]]:
+def get_risk_map() -> list[dict[str, Any]]:
     """获取企业风险地图"""
     risks = [
         {"name": "供应链数据泄露风险", "level": "high", "reason": "监测到上游供应商接口存在明文传输"},
@@ -360,7 +360,7 @@ def get_risk_map() -> List[Dict[str, Any]]:
     ]
     return risks
 
-def get_actions_list() -> List[Dict[str, Any]]:
+def get_actions_list() -> list[dict[str, Any]]:
     """获取可执行操作列表"""
     # 叙事模式下，动作由引擎决定
     if is_simulation_mode():
@@ -385,7 +385,7 @@ def get_actions_list() -> List[Dict[str, Any]]:
         {"id": "act_004", "name": "清除缓存", "description": "清理系统临时文件与缓存", "status": "ready"}
     ]
 
-def simulate_action_run(action_id: str) -> Dict[str, Any]:
+def simulate_action_run(action_id: str) -> dict[str, Any]:
     """模拟执行操作"""
     # 模拟耗时
     time.sleep(0.5) 
@@ -407,7 +407,7 @@ def simulate_action_run(action_id: str) -> Dict[str, Any]:
         "message": f"操作「{action['name']}」已成功加入执行队列"
     }
 
-def get_briefing_data() -> Dict[str, Any]:
+def get_briefing_data() -> dict[str, Any]:
     """获取每日运营简报 (Briefing)"""
     try:
         # 1. 获取基础数据
@@ -507,7 +507,7 @@ def get_briefing_data() -> Dict[str, Any]:
             "must_focus_count": 0
         }
 
-def get_ticker_items() -> List[Dict[str, Any]]:
+def get_ticker_items() -> list[dict[str, Any]]:
     """获取顶部公告栏 Ticker 数据 (多源聚合/异常容错)"""
     items = []
     
@@ -664,7 +664,7 @@ def get_ticker_items() -> List[Dict[str, Any]]:
 
     return items
 
-def get_must_focus() -> Dict[str, Any]:
+def get_must_focus() -> dict[str, Any]:
     """获取必须关注事项 (Must Focus)"""
     if is_simulation_mode():
         snap = today_snapshot()
@@ -707,7 +707,7 @@ def get_must_focus() -> Dict[str, Any]:
         "suggestion": "请立即处理以上高风险项，避免合规事故扩散。" if total > 0 else "当前无必须关注的高风险项。"
     }
 
-def get_behavior_stats() -> Dict[str, Any]:
+def get_behavior_stats() -> dict[str, Any]:
     """获取行为数据统计 (Behavior Stats)"""
     # 模拟用户行为数据
     return {
@@ -718,7 +718,7 @@ def get_behavior_stats() -> Dict[str, Any]:
         "compliance_trend": "rising" # rising, falling, flat
     }
 
-def get_time_pressure() -> Dict[str, Any]:
+def get_time_pressure() -> dict[str, Any]:
     """获取时间压力数据 (Time Pressure)"""
     # 模拟任务截止压力
     pending_tasks = random.randint(3, 15)
@@ -734,7 +734,7 @@ def get_time_pressure() -> Dict[str, Any]:
         "pressure_score": random.randint(40, 90) # 0-100
     }
 
-def get_leader_summary() -> Dict[str, Any]:
+def get_leader_summary() -> dict[str, Any]:
     """获取领导视角的摘要信息"""
     return {
         "efficiency": f"{random.randint(85, 98)}%",
@@ -743,7 +743,7 @@ def get_leader_summary() -> Dict[str, Any]:
         "core_metric": "Stable"
     }
 
-def get_risk_thermometer() -> Dict[str, Any]:
+def get_risk_thermometer() -> dict[str, Any]:
     """获取风险温度计数据 (基于动态模型)"""
     if is_simulation_mode():
         snap = today_snapshot()
@@ -781,7 +781,7 @@ def get_risk_thermometer() -> Dict[str, Any]:
         "engine_version": ENGINE_VERSION
     }
 
-def get_streak_stats() -> Dict[str, Any]:
+def get_streak_stats() -> dict[str, Any]:
     """获取连续安全天数统计"""
     streak = random.randint(5, 120)
     return {
@@ -792,17 +792,17 @@ def get_streak_stats() -> Dict[str, Any]:
 
 # --- Narrative Extensions ---
 
-def get_narrative_status() -> Dict[str, Any]:
+def get_narrative_status() -> dict[str, Any]:
     """获取叙事引擎状态"""
     status = get_narrative_status_data()
     # Add label for display
     status["effective_mode_label"] = get_simulation_label(status["effective_mode"])
     return status
 
-def get_narrative_series() -> Dict[str, Any]:
+def get_narrative_series() -> dict[str, Any]:
     """获取叙事趋势序列"""
     return generate_trend_series(30)
 
-def get_narrative_summary() -> Dict[str, Any]:
+def get_narrative_summary() -> dict[str, Any]:
     """获取叙事摘要"""
     return narrative_summary()

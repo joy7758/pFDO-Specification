@@ -49,3 +49,7 @@ target/
 product_api/uploads/
 *.log
 
+
+# --- reproducible experiment artifacts (do not commit) ---
+docs/paper/outputs/entropy_experiment_*.json
+docs/paper/figures/metabolism_activity.png

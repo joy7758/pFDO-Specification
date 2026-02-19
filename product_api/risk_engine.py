@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Any
 from datetime import datetime
 
 # 默认权重配置
@@ -15,7 +15,7 @@ def normalize(val: float, min_val: float, max_val: float) -> float:
         return 0
     return max(0.0, min(1.0, (val - min_val) / (max_val - min_val)))
 
-def calc_risk_score(metrics: Dict[str, float], weights: Dict[str, float] = DEFAULT_WEIGHTS) -> float:
+def calc_risk_score(metrics: dict[str, float], weights: dict[str, float] = DEFAULT_WEIGHTS) -> float:
     score = 0.0
     # compliance_rate: higher is better? Usually yes. 
     # But risk score: higher usually means higher risk OR higher safety?
@@ -41,7 +41,7 @@ def calc_risk_score(metrics: Dict[str, float], weights: Dict[str, float] = DEFAU
     score += normalize(metrics.get("external_risk", 0), 0, 1) * weights["external_risk"]
     return round(score * 100, 2)
 
-def generate_mock_metrics() -> Dict[str, float]:
+def generate_mock_metrics() -> dict[str, float]:
     return {
         "compliance_rate": 0.22,
         "alert_volume": 28,
@@ -50,7 +50,7 @@ def generate_mock_metrics() -> Dict[str, float]:
         "external_risk": 0.15
     }
 
-def get_risk_overview() -> Dict[str, Any]:
+def get_risk_overview() -> dict[str, Any]:
     metrics = generate_mock_metrics()
     total_score = calc_risk_score(metrics)
     detail_list = [
