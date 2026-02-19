@@ -1,6 +1,18 @@
 # pFDO-Specification: Physical FAIR Digital Objects for the 1.6Tbps Era
 # pFDO-Specification: 1.6Tbps 时代的物理层 FAIR 数字对象
 
+---
+## 标准入口：数字代谢熵控制 / Standard Entry: Digital Metabolism Entropy Control
+
+**中文（给决策者）**：我们把“合规（越高越好）”变成可量化、可解释、可复现的治理证据（熵 H(t) + 代谢算子）。
+
+**English (for reviewers)**: We provide a reproducible governance evidence path: entropy H(t) + metabolism operators, aligned with a compliance score (higher is better).
+
+- 发布说明 / Release notes: `docs/paper/entropy_control_release_notes.md`
+- 复现实验 / Reproducible experiment: `bash scripts/run_entropy_experiment.sh`
+- 代表图 / Representative figures: `docs/paper/figures/entropy_evolution.png`, `docs/paper/figures/compliance_vs_entropy.png`
+---
+
 ## 🌐 Vision: Fait Accompli of Physical Layer Governance
 ## 愿景：物理层治理的既成事实
 
