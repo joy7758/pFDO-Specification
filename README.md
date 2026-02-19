@@ -194,3 +194,17 @@ The system provides standard RESTful APIs for frontend and third-party system ca
 - **ImportError (e.g., `cannot import name 'get_risk_model'`)**
   - **Phenomenon**: Code modified but not exported.
   - **Solution**: Check import paths in `product_api/__init__.py` or related modules, ensure function names are spelled correctly.
+
+---
+
+## Belongs to RedRock Constitution / 隶属于红岩宪章体系
+
+This repository is part of the RedRock Constitution architecture framework.
+
+Please start from the central governance hub:
+
+https://github.com/joy7758/RedRock-Constitution
+
+本仓库属于红岩宪章体系，请从总入口开始阅读与理解：
+
+https://github.com/joy7758/RedRock-Constitution
