@@ -70,3 +70,78 @@ $$H(t) = w_s H_{state} + w_d H_{drift} + w_a H_{access}$$
 ## 6. 结论
 
 实验表明，开启数字代谢机制 (Metabolism ON) 能显著抑制 $H(t)$ 的增长，特别是在 Crisis 模式下，能有效防止系统进入混沌状态，维持合规基线的稳定性。
+
+---
+
+# Digital Metabolism Entropy Control
+
+## 1. Overview
+
+This study proposes a digital-metabolism-based entropy control method to address disorder growth in long-running information systems caused by data accumulation and rule erosion. By introducing metabolism entropy $H(t)$ as the core metric and defining four operators (Ingest/Verify/Bind/Decay), the system can maintain adaptive health over time.
+
+## 2. Entropy Definition and Measurement Framework
+
+We define total system entropy as the weighted sum of three sub-entropies:
+
+$$H(t) = w_s H_{state} + w_d H_{drift} + w_a H_{access}$$
+
+with weights set to $w_s=0.4, w_d=0.3, w_a=0.3$.
+
+### 2.1 State Entropy ($H_{state}$)
+Based on Shannon entropy of alert category distribution, reflecting the dispersion of abnormal system states.
+- Computation: calculate $-\sum P(x) \log_2 P(x)$ from alert distribution $P(x)$.
+- Normalization: map to the 0-100 interval.
+
+### 2.2 Drift Entropy ($H_{drift}$)
+Based on day-to-day differential volatility of Compliance Score and abnormal jump counts, reflecting compliance baseline stability.
+- Computation: $Volatility = \text{avg}(|\Delta Score|) + 5 \times \text{Jumps}$.
+
+### 2.3 Access Entropy ($H_{access}$)
+Based on weighted risk exposure of sensitive-data hits (PII Hits), unaudited file counts, and high-risk alert counts.
+- Computation: $Raw = 1.0 \times \text{PII} + 0.5 \times \text{Unaudited} + 2.0 \times \text{HighRisk}$.
+
+## 3. Metabolism Operators
+
+The system introduces four metabolism operators to resist entropy growth:
+
+1. **Ingest**: normalize data ingestion pipelines and mark source and initial metadata.
+2. **Verify**: execute schema validation and content hash verification (SHA256) to filter low-quality data.
+3. **Bind**: bind policy tags (e.g., Internal/Public) and TTL to data objects.
+4. **Decay**: automatically identify and mark rotten data by TTL, then block access or archive it.
+
+## 4. Experiment Design and Reproduction
+
+### 4.1 Experiment Scenarios
+We simulate three typical system evolution narratives and compare metabolism ON/OFF behavior for each:
+1. **Improving**: compliance gradually improves and alerts decrease.
+2. **Stable**: all indicators fluctuate slightly around baseline.
+3. **Crisis**: compliance deteriorates and alerts surge, approaching entropy escalation.
+
+### 4.2 Reproduction Steps
+
+Run the following command to execute the experiment and generate figures:
+
+```bash
+./scripts/run_entropy_experiment.sh
+```
+
+### 4.3 Experiment Outputs
+- **Data files**: `docs/paper/outputs/entropy_experiment_*.json`
+- **Figure files**:
+    - `docs/paper/figures/entropy_evolution.png`: 30-day H(t) evolution comparison
+    - `docs/paper/figures/metabolism_activity.png`: metabolism operator activity
+    - `docs/paper/figures/compliance_vs_entropy.png`: compliance vs entropy relationship
+
+## 5. API Interfaces
+
+The system adds a set of APIs for real-time entropy monitoring:
+
+- `GET /api/v1/entropy/status`: current entropy state and metabolism mode.
+- `GET /api/v1/entropy/series`: 30-day entropy trend series.
+- `GET /api/v1/entropy/report`: natural-language analysis report.
+
+All APIs support Chinese outputs for dashboard presentation.
+
+## 6. Conclusion
+
+Experimental results show that enabling digital metabolism (Metabolism ON) significantly suppresses H(t) growth. This is especially evident in Crisis mode, where the mechanism prevents system transition into chaotic conditions and stabilizes the compliance baseline.
