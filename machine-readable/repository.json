@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-02-22T15:08:15+00:00",
+  "generated_at": "2026-02-22T15:13:10+00:00",
   "repository": "pFDO-Specification",
   "standard_id": "RR-pFDO",
   "status": "Draft",
@@ -72,5 +72,31 @@
     "onepager": "https://github.com/joy7758/pFDO-Specification/blob/main/docs/onepager/RR-pFDO_ONEPAGER_CN_EN.md",
     "citation_file": "CITATION.cff",
     "security_file": "SECURITY.md"
+  },
+  "ab_test": {
+    "version": "1.0.0",
+    "recommended_variant": "B",
+    "variants": {
+      "A": {
+        "profile": "citation-first",
+        "hero_file": "docs/readme-ab/README_HERO_A_CN_EN.md",
+        "target_metrics": [
+          "citations",
+          "referring_sites",
+          "academic_mentions"
+        ]
+      },
+      "B": {
+        "profile": "adoption-first",
+        "hero_file": "docs/readme-ab/README_HERO_B_CN_EN.md",
+        "target_metrics": [
+          "stars",
+          "forks",
+          "integration_requests"
+        ]
+      }
+    },
+    "experiment_window_days": 14,
+    "switch_rule": "If citations grow faster, keep A; if stars/forks and issues grow faster, keep B."
   }
 }
