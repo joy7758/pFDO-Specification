@@ -232,3 +232,38 @@ https://github.com/joy7758/RedRock-Constitution
 
 - `RR-pFDO` Onepager / 一页纸：`docs/onepager/RR-pFDO_ONEPAGER_CN_EN.md`
 - Hub / 总入口：https://github.com/joy7758/RedRock-Constitution
+
+<!-- ECOSYSTEM_LINKS_BEGIN -->
+## Ecosystem Links / 生态关系链接
+
+![quality-baseline](https://github.com/joy7758/pFDO-Specification/actions/workflows/quality-baseline.yml/badge.svg)
+
+### CN
+- 总入口（宪章）：[RedRock-Constitution](https://github.com/joy7758/RedRock-Constitution)
+- 标准注册表：[STANDARDS_REGISTRY](https://github.com/joy7758/RedRock-Constitution/blob/main/docs/registry/STANDARDS_REGISTRY.md#rr-pfdo)
+- 仓库总索引：[REPOS_INDEX_CN_EN](https://github.com/joy7758/RedRock-Constitution/blob/main/docs/registry/REPOS_INDEX_CN_EN.md)
+- 全局生态图：[ECOSYSTEM_GRAPH_CN_EN](https://github.com/joy7758/RedRock-Constitution/blob/main/docs/registry/ECOSYSTEM_GRAPH_CN_EN.md)
+- 机器可读元数据：[`machine-readable/repository.json`](machine-readable/repository.json)
+
+### EN
+- Governance hub: [RedRock-Constitution](https://github.com/joy7758/RedRock-Constitution)
+- Standards registry: [STANDARDS_REGISTRY](https://github.com/joy7758/RedRock-Constitution/blob/main/docs/registry/STANDARDS_REGISTRY.md#rr-pfdo)
+- Repositories index: [REPOS_INDEX_CN_EN](https://github.com/joy7758/RedRock-Constitution/blob/main/docs/registry/REPOS_INDEX_CN_EN.md)
+- Global ecosystem graph: [ECOSYSTEM_GRAPH_CN_EN](https://github.com/joy7758/RedRock-Constitution/blob/main/docs/registry/ECOSYSTEM_GRAPH_CN_EN.md)
+- Machine-readable metadata: [`machine-readable/repository.json`](machine-readable/repository.json)
+
+### Related Repositories / 关联仓库
+- [DOIP-Segments-Specification](https://github.com/joy7758/DOIP-Segments-Specification)
+- [AASP-Core](https://github.com/joy7758/AASP-Core)
+- [ISAS-Core](https://github.com/joy7758/ISAS-Core)
+- [aro-audit](https://github.com/joy7758/aro-audit)
+- [safety-valve-spec](https://github.com/joy7758/safety-valve-spec)
+- [RedRock-Constitution](https://github.com/joy7758/RedRock-Constitution)
+
+### Search Keywords / 检索关键词
+`pfdo`, `fair-digital-object`, `physical-layer`, `compliance`, `doip`
+
+### Bilingual Project Abstract / 双语项目摘要
+- EN: Physical-layer FAIR Digital Object specification and compliance prototype platform.
+- CN: 物理层FAIR数字对象规范与合规原型平台。
+<!-- ECOSYSTEM_LINKS_END -->
