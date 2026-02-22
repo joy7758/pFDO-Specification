@@ -53,3 +53,17 @@ product_api/uploads/
 # --- reproducible experiment artifacts (do not commit) ---
 docs/paper/outputs/entropy_experiment_*.json
 docs/paper/figures/metabolism_activity.png
+
+# --- Codex baseline ignore rules ---
+.DS_Store
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+*.egg-info/
