@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/joy7758/pFDO-Specification/main/schemas/behavior-lifecycle-governance.schema.json",
+  "title": "Behavior-Influenced Lifecycle Governance Minimal Schema",
+  "description": "Minimal governance profile scaffold for behavior-influenced object lifecycle records. This schema defines an interoperable core record shape and is intentionally not a complete lifecycle governance standard.",
+  "$comment": "This scaffold preserves extensibility for profile-specific governance semantics and review workflows.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "object_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for the governed object."
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": [
+        "Declared",
+        "Active",
+        "Restricted",
+        "Suspended",
+        "Recoverable",
+        "Retired"
+      ],
+      "description": "Current governance-visible lifecycle state."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "References to audit, provenance, or policy evidence relevant to lifecycle review.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0
+    },
+    "policy_flags": {
+      "type": "array",
+      "description": "Policy-visible flags associated with the current lifecycle record.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "remediation_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "description": "Current remediation review outcome within the lifecycle process."
+    },
+    "last_reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent lifecycle review."
+    }
+  },
+  "required": [
+    "object_id",
+    "lifecycle_state"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "object_id": "pFDO:example:minimal-valid-001",
+  "lifecycle_state": "Active",
+  "evidence_refs": [
+    "aro-audit://bundle/minimal-valid-001"
+  ],
+  "policy_flags": [
+    "baseline-verified"
+  ],
+  "remediation_status": "none",
+  "last_reviewed_at": "2026-03-12T12:00:00Z"
+}

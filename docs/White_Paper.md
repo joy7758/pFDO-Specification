@@ -12,6 +12,12 @@ Active FDO extends the Digital Object Interface Protocol (DOIP) with machine-act
 
 ---
 
+## Evidence-Driven Lifecycle Adjustment
+
+Digital objects should not be governed only by their initial declaration, static metadata, or issuance-time policy bindings. In operational settings, verifiable behavioral evidence generated during execution, validation, access, update, and review can justify a Lifecycle State Transition that changes how an object is treated by governance controls. This extension defines an Evidence-Driven Lifecycle Adjustment model in which behavioral evidence may trigger privilege adjustment, renewal denial, temporary containment, mandatory review, evidence regeneration requests, or reinstatement after verified recovery. A current lifecycle state therefore becomes a governance-visible summary of declared intent, observed execution history, evidence freshness, and approved remediation status. The model does not replace identity, audit, provenance, or authorization mechanisms. Instead, it connects them into a closed loop: execution integrity produces observable signals, audit systems preserve reviewable evidence, and governance policies determine what state transition or remediation path is permitted. This positioning is particularly suited to alignment with MVK for machine-readable policy context, ARO-Audit for attestable review evidence, and K-FDO for embodied or kinetic object profiles that require behavior-sensitive lifecycle control. In this sense, Lifecycle Evolution is the closed-loop effect produced by Governance, Execution Integrity, and Audit Evidence.
+
+---
+
 ## 1. Technical Specification (v1.3.0)
 
 ### 1.1 Active Governance Header (16 Bytes, !HIIIH)

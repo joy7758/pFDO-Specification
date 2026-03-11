@@ -1,0 +1,11 @@
+{
+  "object_id": "pFDO:example:invalid-missing-state-001",
+  "evidence_refs": [
+    "aro-audit://bundle/invalid-missing-state-001"
+  ],
+  "policy_flags": [
+    "review-required"
+  ],
+  "remediation_status": "pending",
+  "last_reviewed_at": "2026-03-12T12:05:00Z"
+}

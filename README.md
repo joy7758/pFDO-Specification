@@ -275,6 +275,10 @@ https://github.com/joy7758/RedRock-Constitution
 - `RR-pFDO` Onepager / 一页纸：`docs/onepager/RR-pFDO_ONEPAGER_CN_EN.md`
 - Hub / 总入口：https://github.com/joy7758/RedRock-Constitution
 
+## Lifecycle Governance Extensions
+
+- Extension index: [`docs/extensions/README.md`](docs/extensions/README.md)
+
 <!-- ECOSYSTEM_LINKS_BEGIN -->
 ## Ecosystem Links / 生态关系链接
 
