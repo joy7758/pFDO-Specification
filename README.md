@@ -277,6 +277,8 @@ https://github.com/joy7758/RedRock-Constitution
 
 ## Lifecycle Governance Extensions
 
+This update introduces a bounded evidence-driven lifecycle governance extension for pFDO. It adds a minimal state model, a schema scaffold, conformance checks, and example fixtures for behavior-sensitive object governance.
+
 - Extension index: [`docs/extensions/README.md`](docs/extensions/README.md)
 
 <!-- ECOSYSTEM_LINKS_BEGIN -->
