@@ -1,6 +1,11 @@
 # pFDO-Specification: Physical FAIR Digital Objects for the 1.6Tbps Era
 # pFDO-Specification: 1.6Tbps 时代的物理层 FAIR 数字对象
 
+> Legacy lineage repository.
+> Historical context for the earlier DPP / sovereignty / governance formation phase.
+> Not part of the current canonical five-layer verifiable autonomous systems stack.
+> Current canonical entry: [joy7758](https://github.com/joy7758) profile and [digital-biosphere-architecture](https://github.com/joy7758/digital-biosphere-architecture).
+
 <!-- SEARCH_VISIBILITY_BEGIN -->
 ## Discoverability Snapshot / 检索曝光摘要
 
@@ -77,6 +82,10 @@ Hardware-level AI logic audit based on Q-LUT. When AI decision-making drifts log
 基于 Q-LUT 的硬件级 AI 逻辑审计。当 AI 决策发生逻辑漂移时，系统在物理层触发“安全悬停（Safety Hover）”，确保生命体征的绝对安全。
 
 ## ⚖️ Governance & Licensing / 治理与许可
+
+## Current relationship to the main line
+
+This repository is a predecessor from the physical-layer FDO and DPP formation phase. It contributes historical context for determinism, anchoring, and compliance thinking, but it is not part of the current VAST five-layer stack.
 
 - **Governance Plane (Protocol Layer) / 协议层**: Adheres to open standards, aiming to become the physical reference implementation of the FDO International Working Group. / 遵循开放标准，旨在成为 FDO 国际工作组的物理参考实现。
 - **Data Plane (Hardware Acceleration Layer) / 硬件加速层**: Retains specific private IP core authorizations to ensure commercial sustainability and technical sovereignty of the ecosystem. / 保留特定私有 IP 核授权，确保生态的商业可持续性与技术主权。
