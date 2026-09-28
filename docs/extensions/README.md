@@ -5,5 +5,6 @@ These materials provide a profile-ready extension set for evidence-driven lifecy
 - [`docs/extensions/behavior-influenced-lifecycle-governance.md`](behavior-influenced-lifecycle-governance.md): Definition document for behavior-influenced lifecycle governance and evidence-driven lifecycle adjustment.
 - [`docs/extensions/lifecycle-state-machine.md`](lifecycle-state-machine.md): Minimal state model describing bounded lifecycle transitions and associated governance actions.
 - [`docs/extensions/lifecycle-conformance-checks.md`](lifecycle-conformance-checks.md): Minimal conformance assertions for record shape and transition coherence.
+- [`docs/extensions/recovery-approval-conformance_CN_EN.md`](recovery-approval-conformance_CN_EN.md): Bilingual scope and validation cases for the represented recovery-to-active transition.
 - [`schemas/behavior-lifecycle-governance.schema.json`](../../schemas/behavior-lifecycle-governance.schema.json): JSON Schema scaffold for the minimal interoperable lifecycle governance record.
 - [`examples/lifecycle-governance/`](../../examples/lifecycle-governance): Example fixtures for minimal valid and invalid lifecycle governance records.
