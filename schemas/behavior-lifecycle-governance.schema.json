@@ -60,5 +60,24 @@
   "required": [
     "object_id",
     "lifecycle_state"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "required": ["previous_lifecycle_state", "lifecycle_state"],
+        "properties": {
+          "previous_lifecycle_state": {"const": "Recoverable"},
+          "lifecycle_state": {"const": "Active"}
+        }
+      },
+      "then": {
+        "required": ["evidence_refs", "remediation_status", "review_approved"],
+        "properties": {
+          "evidence_refs": {"minItems": 1},
+          "remediation_status": {"const": "accepted"},
+          "review_approved": {"const": true}
+        }
+      }
+    }
   ]
 }
